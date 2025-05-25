@@ -120,11 +120,6 @@ export function Sidebar() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl+K for search
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setSearchOpen(prev => !prev);
-      }
       // Escape to close search
       if (e.key === 'Escape' && searchOpen) {
         setSearchOpen(false);
@@ -250,9 +245,12 @@ export function Sidebar() {
               <span className="text-primary">Planner</span>
             </h1>
             <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSearchOpen(!searchOpen)}>
-                <Search className="h-4 w-4" />
-              </Button>
+              <div className="relative">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSearchOpen(!searchOpen)} aria-label="Search (Cmd+K)">
+                  <Search className="h-4 w-4" />
+                </Button>
+                <kbd className="absolute -bottom-0.5 -right-0.5 text-[7px] px-0.5 leading-none rounded bg-muted/60 text-muted-foreground/40 font-mono hidden sm:inline-block">⌘K</kbd>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
