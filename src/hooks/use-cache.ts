@@ -10,28 +10,24 @@ interface CacheEntry<T> {
 
 const cache = new Map<string, CacheEntry<unknown>>();
 const subscribers = new Map<string, Set<() => void>>();
-const TTL = 60000; // 1 minute for task data
+const TTL = 30000; // 30 seconds for task data
 const STATIC_TTL = 300000; // 5 minutes for lists/labels (rarely change)
+const STALE_TTL = 120000; // 2 minutes stale-while-revalidate for tasks
 
 // Debounce map to prevent rapid successive invalidations
 const invalidationTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const pendingInvalidations = new Set<string>();
 
 function notify(key: string) {
   subscribers.get(key)?.forEach(fn => fn());
 }
 
 export function invalidateCache(pattern: string) {
-  // Debounce rapid invalidations
-  if (pendingInvalidations.has(pattern)) return;
-  pendingInvalidations.add(pattern);
-
+  // Clear existing timer for this pattern
   if (invalidationTimers.has(pattern)) {
     clearTimeout(invalidationTimers.get(pattern)!);
   }
 
   invalidationTimers.set(pattern, setTimeout(() => {
-    pendingInvalidations.delete(pattern);
     invalidationTimers.delete(pattern);
     for (const key of cache.keys()) {
       if (key.startsWith(pattern)) {
@@ -39,7 +35,16 @@ export function invalidateCache(pattern: string) {
         notify(key);
       }
     }
-  }, 50));
+  }, 80));
+}
+
+export function invalidateCacheImmediate(pattern: string) {
+  for (const key of cache.keys()) {
+    if (key.startsWith(pattern)) {
+      cache.delete(key);
+      notify(key);
+    }
+  }
 }
 
 export function clearAllCache() {
