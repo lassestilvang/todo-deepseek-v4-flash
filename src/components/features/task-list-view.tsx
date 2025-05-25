@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Eye, EyeOff, Zap } from 'lucide-react';
+import { Plus, Eye, EyeOff, Zap, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
@@ -12,7 +12,7 @@ import type { EmptyStateType } from './empty-state';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeDate, isToday, isTomorrow } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 
 const TaskDialog = dynamic(() => import('./task-dialog').then(mod => mod.TaskDialog), {
@@ -242,6 +242,31 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   }, [quickAddValue, toast]);
 
   const displayedTasks = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
+
+  // Group tasks by date for upcoming/7-days views
+  const shouldGroupByDate = pathname.startsWith('/today') || pathname.startsWith('/next-7-days') || pathname.startsWith('/upcoming');
+  const groupedTasks = useMemo(() => {
+    if (!shouldGroupByDate) return null;
+    const groups: Record<string, TaskWithRelations[]> = {};
+    const activeTasks = displayedTasks.filter(t => !t.completed);
+    for (const task of activeTasks) {
+      const key = task.date || 'unscheduled';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(task);
+    }
+    return Object.entries(groups).sort(([a], [b]) => {
+      if (a === 'unscheduled') return 1;
+      if (b === 'unscheduled') return -1;
+      return a.localeCompare(b);
+    });
+  }, [displayedTasks, shouldGroupByDate]);
+
+  const getDateLabel = (dateStr: string) => {
+    if (dateStr === 'unscheduled') return 'Unscheduled';
+    if (isToday(dateStr)) return 'Today';
+    if (isTomorrow(dateStr)) return 'Tomorrow';
+    return formatRelativeDate(dateStr);
+  };
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
 
@@ -322,7 +347,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       <form
         onSubmit={(e) => { e.preventDefault(); handleQuickAdd(); }}
         className={cn(
-          'mb-4 flex items-center gap-2 rounded-xl border bg-card p-3 sm:p-3 min-h-[48px] transition-all duration-200',
+          'mb-4 flex items-center gap-2 rounded-xl border bg-card p-3 sm:p-3 min-h-[48px] transition-all duration-200 group',
           quickAddFocused ? 'border-primary/40 shadow-sm shadow-primary/5' : 'border-border hover:border-primary/20'
         )}
       >
@@ -331,14 +356,19 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
           ref={quickAddRef}
           value={quickAddValue}
           onChange={(e) => setQuickAddValue(e.target.value)}
-          placeholder="Quick add a task... (press ⌘A or Q to focus)"
+          placeholder="Quick add a task..."
           className="h-8 sm:h-8 border-0 bg-transparent px-0 text-base sm:text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
           onFocus={() => setQuickAddFocused(true)}
           onBlur={() => setQuickAddFocused(false)}
         />
-        <kbd className="hidden sm:inline-flex text-[10px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums">
-          ⏎
-        </kbd>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <kbd className="hidden sm:inline-flex text-[10px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/50 font-mono tabular-nums group-focus-within:text-muted-foreground/70 transition-colors">
+            <span className="text-[8px] mr-0.5 opacity-60">⌘</span>Q
+          </kbd>
+          <kbd className="hidden sm:inline-flex text-[10px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/50 font-mono tabular-nums group-focus-within:text-muted-foreground/70 transition-colors">
+            ⏎
+          </kbd>
+        </div>
       </form>
 
       {loading && (
@@ -364,15 +394,41 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
             ) : (
               <>
                 {/* Active Tasks */}
-                {displayedTasks.filter(t => !t.completed).map((task) => (
-                  <TaskCardMemo
-                    key={task.id}
-                    task={task}
-                    onToggle={handleToggle}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                ))}
+                {groupedTasks ? (
+                  // Date-grouped view (today, next-7-days, upcoming)
+                  groupedTasks.map(([dateStr, dateTasks]) => (
+                    <div key={dateStr}>
+                      <div className="flex items-center gap-2 px-1 py-2 mt-2 first:mt-0">
+                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                        <span className="text-xs font-semibold text-muted-foreground/60">{getDateLabel(dateStr)}</span>
+                        <span className="text-[10px] text-muted-foreground/30 tabular-nums">{dateTasks.length}</span>
+                        <div className="flex-1 h-px bg-border/50" />
+                      </div>
+                      <div className="space-y-2">
+                        {dateTasks.map((task) => (
+                          <TaskCardMemo
+                            key={task.id}
+                            task={task}
+                            onToggle={handleToggle}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Flat view (all, list, label)
+                  displayedTasks.filter(t => !t.completed).map((task) => (
+                    <TaskCardMemo
+                      key={task.id}
+                      task={task}
+                      onToggle={handleToggle}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))
+                )}
 
                 {/* Completed Tasks Section */}
                 {showCompleted && completedTasks.length > 0 && (
