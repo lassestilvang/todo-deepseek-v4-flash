@@ -1,21 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
 import {
-  CalendarIcon,
-  Clock,
-  Tag,
   Flag,
-  ListTodo,
-  Repeat,
   Plus,
   X,
-  Trash2,
-  GripVertical,
-  Paperclip,
-  Bell,
 } from 'lucide-react';
 import {
   Dialog,
@@ -26,12 +15,11 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label as ULabel } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import type { TaskWithRelations, Subtask, Label, List } from '@/types';
+import type { TaskWithRelations, Subtask, Label as LabelType, List } from '@/types';
 import { cn } from '@/lib/utils';
 
 const priorities = [
@@ -59,13 +47,13 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [subtasks, setSubtasks] = useState<Subtask[]>(task?.subtasks || []);
   const [newSubtask, setNewSubtask] = useState('');
   const [lists, setLists] = useState<List[]>([]);
-  const [labels, setLabels] = useState<Label[]>([]);
+  const [allLabels, setAllLabels] = useState<LabelType[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>(task?.labels || []);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetch('/api/lists').then(r => r.json()).then(setLists);
-    fetch('/api/labels').then(r => r.json()).then(setLabels);
+    fetch('/api/labels').then(r => r.json()).then(setAllLabels);
   }, []);
 
   useEffect(() => {
@@ -147,9 +135,6 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     setSubtasks(subtasks.filter(s => s.id !== id));
   };
 
-  const currentList = lists.find(l => l.id === listId);
-  const today = new Date().toISOString().split('T')[0];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
@@ -188,7 +173,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Date */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Date</Label>
+              <ULabel className="text-xs text-muted-foreground">Date</ULabel>
               <input
                 type="date"
                 value={date}
@@ -199,7 +184,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
             {/* Deadline */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Deadline</Label>
+              <ULabel className="text-xs text-muted-foreground">Deadline</ULabel>
               <input
                 type="datetime-local"
                 value={deadline}
@@ -210,7 +195,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
             {/* Estimate */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Estimate (HH:mm)</Label>
+              <ULabel className="text-xs text-muted-foreground">Estimate (HH:mm)</ULabel>
               <Input
                 type="time"
                 value={estimate}
@@ -221,7 +206,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
             {/* Priority */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Priority</Label>
+              <ULabel className="text-xs text-muted-foreground">Priority</ULabel>
               <div className="flex gap-1">
                 {priorities.map((p) => (
                   <Button
@@ -229,7 +214,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                     variant={priority === p.value ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 text-xs flex-1"
-                    onClick={() => setPriority(p.value)}
+                    onClick={() => setPriority(p.value as any)}
                   >
                     <Flag className={cn('h-3 w-3 mr-1', p.color)} />
                     {p.label}
@@ -240,7 +225,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
             {/* List */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">List</Label>
+              <ULabel className="text-xs text-muted-foreground">List</ULabel>
               <select
                 value={listId}
                 onChange={(e) => setListId(e.target.value)}
@@ -257,9 +242,9 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
           {/* Labels */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Labels</Label>
+            <ULabel className="text-xs text-muted-foreground">Labels</ULabel>
             <div className="flex flex-wrap gap-1.5">
-              {labels.map((label) => (
+              {allLabels.map((label) => (
                 <Badge
                   key={label.id}
                   variant={selectedLabels.includes(label.id) ? 'default' : 'outline'}
@@ -280,7 +265,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   {label.icon} {label.name}
                 </Badge>
               ))}
-              {labels.length === 0 && (
+              {allLabels.length === 0 && (
                 <span className="text-xs text-muted-foreground">No labels yet</span>
               )}
             </div>
@@ -290,7 +275,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
           {/* Subtasks */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Subtasks</Label>
+            <ULabel className="text-xs text-muted-foreground">Subtasks</ULabel>
             <div className="space-y-1">
               {subtasks.map((st) => (
                 <div key={st.id} className="flex items-center gap-2 group">
