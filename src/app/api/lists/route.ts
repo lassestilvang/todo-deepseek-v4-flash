@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getLists, createList, updateList, deleteList } from '@/lib/data';
+
+export async function GET() {
+  const lists = getLists();
+  return NextResponse.json(lists);
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const list = createList({
+    name: body.name,
+    color: body.color || '#6366f1',
+    icon: body.icon || '📋',
+  });
+  return NextResponse.json(list, { status: 201 });
+}
+
+export async function PUT(request: NextRequest) {
+  const body = await request.json();
+  const list = updateList(body.id, body);
+  if (!list) return NextResponse.json({ error: 'List not found' }, { status: 404 });
+  return NextResponse.json(list);
+}
+
+export async function DELETE(request: NextRequest) {
+  const body = await request.json();
+  try {
+    deleteList(body.id);
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
