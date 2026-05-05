@@ -17,7 +17,7 @@ import { cn, formatDate, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import type { TaskWithRelations, Label } from '@/types';
+import type { TaskWithRelations } from '@/types';
 
 const priorityColors: Record<string, string> = {
   high: 'text-red-500',
