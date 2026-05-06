@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, getTask, createTask, updateTask, deleteTask, toggleTaskCompletion } from '@/lib/data';
+import { getTasks, getTask, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView } from '@/lib/data';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
   const completed = searchParams.get('completed');
 
   if (view) {
-    const { getTasksForView } = await import('@/lib/data');
     const tasks = getTasksForView(view);
     return NextResponse.json(tasks);
   }

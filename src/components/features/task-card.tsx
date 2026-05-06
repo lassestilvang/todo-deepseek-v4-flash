@@ -113,7 +113,14 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
               {task.estimate && (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {task.estimate}h
+                  {(() => {
+                    const parts = task.estimate!.split(':');
+                    const h = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10);
+                    if (h > 0 && m > 0) return `${h}h ${m}m`;
+                    if (h > 0) return `${h}h`;
+                    return `${m}m`;
+                  })()}
                 </span>
               )}
 
