@@ -24,8 +24,9 @@ export function formatTime(date: string | Date): string {
 }
 
 export function isToday(date: string): boolean {
-  const d = new Date(date);
+  const d = new Date(date + 'T00:00:00');
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   return (
     d.getFullYear() === now.getFullYear() &&
     d.getMonth() === now.getMonth() &&
@@ -34,9 +35,10 @@ export function isToday(date: string): boolean {
 }
 
 export function isOverdue(date: string): boolean {
-  const d = new Date(date);
+  const d = new Date(date + 'T00:00:00');
   const now = new Date();
-  return d < now && !isToday(date);
+  now.setHours(0, 0, 0, 0);
+  return d < now;
 }
 
 export function generateId(): string {
