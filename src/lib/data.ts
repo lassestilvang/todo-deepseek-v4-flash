@@ -1,3 +1,4 @@
+import Database from 'better-sqlite3';
 import { getDb } from './db';
 import { generateId } from './utils';
 import type { List, Task, TaskWithRelations, Subtask, Attachment, Reminder, Label, ActivityLog, Recurrence, Priority } from '@/types';
@@ -104,7 +105,7 @@ function rowToTask(row: Record<string, any>): Task {
   };
 }
 
-function getBatchTaskLabelIds(db: any, taskIds: string[]): Record<string, string[]> {
+function getBatchTaskLabelIds(db: Database.Database, taskIds: string[]): Record<string, string[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
   const rows = db.prepare(`SELECT task_id, label_id FROM task_labels WHERE task_id IN (${placeholders})`).all(...taskIds) as { task_id: string; label_id: string }[];
@@ -117,7 +118,7 @@ function getBatchTaskLabelIds(db: any, taskIds: string[]): Record<string, string
   return result;
 }
 
-function getBatchSubtasks(db: any, taskIds: string[]): Record<string, Subtask[]> {
+function getBatchSubtasks(db: Database.Database, taskIds: string[]): Record<string, Subtask[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
   const rows = db.prepare(`SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
@@ -136,7 +137,7 @@ function getBatchSubtasks(db: any, taskIds: string[]): Record<string, Subtask[]>
   return result;
 }
 
-function getBatchAttachments(db: any, taskIds: string[]): Record<string, Attachment[]> {
+function getBatchAttachments(db: Database.Database, taskIds: string[]): Record<string, Attachment[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
   const rows = db.prepare(`SELECT * FROM attachments WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
@@ -157,7 +158,7 @@ function getBatchAttachments(db: any, taskIds: string[]): Record<string, Attachm
   return result;
 }
 
-function getBatchReminders(db: any, taskIds: string[]): Record<string, Reminder[]> {
+function getBatchReminders(db: Database.Database, taskIds: string[]): Record<string, Reminder[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
   const rows = db.prepare(`SELECT * FROM reminders WHERE task_id IN (${placeholders}) ORDER BY time ASC`).all(...taskIds) as any[];
@@ -176,7 +177,7 @@ function getBatchReminders(db: any, taskIds: string[]): Record<string, Reminder[
   return result;
 }
 
-function getBatchLists(db: any, listIds: string[]): Record<string, List> {
+function getBatchLists(db: Database.Database, listIds: string[]): Record<string, List> {
   if (listIds.length === 0) return {};
   const placeholders = listIds.map(() => '?').join(',');
   const rows = db.prepare(`SELECT * FROM lists WHERE id IN (${placeholders})`).all(...listIds) as any[];
@@ -187,7 +188,7 @@ function getBatchLists(db: any, listIds: string[]): Record<string, List> {
   return result;
 }
 
-function getBatchLabels(db: any, labelIds: string[]): Record<string, Label> {
+function getBatchLabels(db: Database.Database, labelIds: string[]): Record<string, Label> {
   if (labelIds.length === 0) return {};
   const placeholders = labelIds.map(() => '?').join(',');
   const rows = db.prepare(`SELECT * FROM labels WHERE id IN (${placeholders})`).all(...labelIds) as any[];
@@ -216,12 +217,12 @@ function rowToList(row: any): List {
   };
 }
 
-function getTaskLabelIds(db: any, taskId: string): string[] {
+function getTaskLabelIds(db: Database.Database, taskId: string): string[] {
   const rows = db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?').all(taskId) as { label_id: string }[];
   return rows.map(r => r.label_id);
 }
 
-function getSubtasks(db: any, taskId: string): Subtask[] {
+function getSubtasks(db: Database.Database, taskId: string): Subtask[] {
   return (db.prepare('SELECT * FROM subtasks WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
@@ -231,7 +232,7 @@ function getSubtasks(db: any, taskId: string): Subtask[] {
   }));
 }
 
-function getAttachments(db: any, taskId: string): Attachment[] {
+function getAttachments(db: Database.Database, taskId: string): Attachment[] {
   return (db.prepare('SELECT * FROM attachments WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
@@ -243,7 +244,7 @@ function getAttachments(db: any, taskId: string): Attachment[] {
   }));
 }
 
-function getReminders(db: any, taskId: string): Reminder[] {
+function getReminders(db: Database.Database, taskId: string): Reminder[] {
   return (db.prepare('SELECT * FROM reminders WHERE task_id = ? ORDER BY time ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
@@ -551,7 +552,7 @@ export function removeLabelFromTask(taskId: string, labelId: string): void {
 }
 
 // --- Activity Logs ---
-function logActivity(db: any, taskId: string, action: string, field: string, oldValue: string | null, newValue: string | null): void {
+function logActivity(db: Database.Database, taskId: string, action: string, field: string, oldValue: string | null, newValue: string | null): void {
   const id = generateId();
   db.prepare('INSERT INTO activity_logs (id, task_id, action, field, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?)')
     .run(id, taskId, action, field, oldValue, newValue);
