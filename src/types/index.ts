@@ -70,6 +70,7 @@ export interface TaskWithRelations extends Task {
   attachments: Attachment[];
   reminders: Reminder[];
   list?: List;
+  labelObjects?: Label[];
 }
 
 export interface Label {

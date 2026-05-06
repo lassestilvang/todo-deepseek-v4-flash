@@ -144,11 +144,21 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
               )}
 
               {/* Labels */}
-              {task.labels.length > 0 && (
+              {task.labelObjects && task.labelObjects.length > 0 ? (
+                task.labelObjects.slice(0, 3).map((label) => (
+                  <Badge
+                    key={label.id}
+                    className="text-[10px] px-1.5 py-0 h-5"
+                    style={{ backgroundColor: label.color, color: '#fff' }}
+                  >
+                    {label.icon} {label.name}
+                  </Badge>
+                ))
+              ) : task.labels.length > 0 ? (
                 <span className="text-xs text-muted-foreground">
                   {task.labels.length} label{task.labels.length > 1 ? 's' : ''}
                 </span>
-              )}
+              ) : null}
             </div>
 
             {/* Expand subtasks */}
