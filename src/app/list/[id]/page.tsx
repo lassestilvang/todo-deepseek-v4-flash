@@ -1,8 +1,8 @@
 import { TaskListView } from '@/components/features/task-list-view';
+import { getList } from '@/lib/data';
 
 export default async function ListPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { getList } = await import('@/lib/data');
   const list = getList(id);
 
   if (!list) {

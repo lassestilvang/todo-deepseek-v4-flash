@@ -1,8 +1,8 @@
 import { TaskListView } from '@/components/features/task-list-view';
+import { getLabel } from '@/lib/data';
 
 export default async function LabelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { getLabel } = await import('@/lib/data');
   const label = getLabel(id);
 
   if (!label) {
