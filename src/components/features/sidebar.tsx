@@ -45,6 +45,8 @@ export function Sidebar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showNewLabel, setShowNewLabel] = useState(false);
+  const [newLabelName, setNewLabelName] = useState('');
 
   useEffect(() => {
     fetchLists();
@@ -106,6 +108,33 @@ export function Sidebar() {
     if (confirm('Delete this list? Tasks will be moved to Inbox.')) {
       await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       fetchLists();
+    }
+  };
+
+  const createLabel = async () => {
+    if (!newLabelName.trim()) return;
+    const colors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    const icons = ['🏷️', '🔖', '⭐', '❤️', '💡', '🎯', '📌', '🔥', '💎', '⚡'];
+    const res = await fetch('/api/labels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newLabelName,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        icon: icons[Math.floor(Math.random() * icons.length)],
+      }),
+    });
+    if (res.ok) {
+      setNewLabelName('');
+      setShowNewLabel(false);
+      fetchLabels();
+    }
+  };
+
+  const deleteLabel = async (id: string) => {
+    if (confirm('Delete this label?')) {
+      await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      fetchLabels();
     }
   };
 
@@ -303,23 +332,69 @@ export function Sidebar() {
           <Separator className="my-3" />
 
           {/* Labels */}
-          <div className="px-2 py-1">
+          <div className="flex items-center justify-between px-2 py-1">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Labels</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowNewLabel(true)}>
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
           </div>
+
+          <AnimatePresence>
+            {showNewLabel && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="px-2"
+              >
+                <form
+                  onSubmit={(e) => { e.preventDefault(); createLabel(); }}
+                  className="flex items-center gap-1"
+                >
+                  <Input
+                    value={newLabelName}
+                    onChange={(e) => setNewLabelName(e.target.value)}
+                    placeholder="Label name..."
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                  <Button type="submit" size="icon" variant="ghost" className="h-8 w-8">
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowNewLabel(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {labels.map((label) => (
-            <Link
-              key={label.id}
-              href={`/label/${label.id}`}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive(`/label/${label.id}`)
-                  ? 'bg-accent text-accent-foreground'
-                  : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-              )}
-            >
-              <span className="text-base">{label.icon}</span>
-              <span className="flex-1 truncate">{label.name}</span>
-            </Link>
+            <div key={label.id} className="group relative">
+              <Link
+                href={`/label/${label.id}`}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  isActive(`/label/${label.id}`)
+                    ? 'bg-accent text-accent-foreground'
+                    : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                )}
+              >
+                <span className="text-base">{label.icon}</span>
+                <span className="flex-1 truncate">{label.name}</span>
+                <div className="hidden group-hover:flex items-center gap-0.5">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      deleteLabel(label.id);
+                    }}
+                    className="p-1 rounded hover:bg-destructive/20 text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </Link>
+            </div>
           ))}
         </div>
       </aside>
