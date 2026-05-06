@@ -421,7 +421,6 @@ export function updateTask(id: string, data: Partial<{
   const updates: string[] = [];
   const values: any[] = [];
 
-  type FieldMap = { [K in keyof typeof fieldMapping]?: string };
   const fieldMapping: Record<string, { field: string; col: string }> = {
     name: { field: 'name', col: 'name' },
     description: { field: 'description', col: 'description' },
