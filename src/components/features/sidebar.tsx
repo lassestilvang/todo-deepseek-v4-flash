@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Inbox,
   Calendar,
   CalendarRange,
   ListTodo,
@@ -14,7 +13,6 @@ import {
   Moon,
   Monitor,
   Plus,
-  MoreHorizontal,
   Trash2,
   Pencil,
   X,
@@ -47,7 +45,6 @@ export function Sidebar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     fetchLists();
@@ -166,11 +163,14 @@ export function Sidebar() {
                   {searchResults.map((task: any) => (
                     <Link
                       key={task.id}
-                      href={`/${task.listId === 'inbox' ? 'all' : `list/${task.listId}`}`}
+                      href={`/list/${task.listId}`}
                       className="block px-3 py-2 text-sm hover:bg-accent"
                     >
                       <div className="font-medium">{task.name}</div>
-                      {task.list && <div className="text-xs text-muted-foreground">{task.list.name}</div>}
+                      {task.description && (
+                        <div className="text-xs text-muted-foreground truncate">{task.description}</div>
+                      )}
+                      {task.list && <div className="text-xs text-muted-foreground">{task.list.icon} {task.list.name}</div>}
                     </Link>
                   ))}
                 </div>
