@@ -227,6 +227,7 @@ export function createTask(data: {
   listId?: string;
   labels?: string[];
   recurrence?: Recurrence | null;
+  subtasks?: { id: string; title: string; completed: boolean }[];
 }): TaskWithRelations {
   const db = getDb();
   const id = generateId();
@@ -258,6 +259,14 @@ export function createTask(data: {
     }
   }
 
+  // Add subtasks
+  if (data.subtasks) {
+    const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+    for (const st of data.subtasks) {
+      insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+    }
+  }
+
   // Log activity
   logActivity(db, id, 'created', '', null, data.name);
 
@@ -275,6 +284,8 @@ export function updateTask(id: string, data: Partial<{
   listId: string;
   completed: boolean;
   recurrence: Recurrence | null;
+  labels?: string[];
+  subtasks?: { id: string; title: string; completed: boolean }[];
 }>): TaskWithRelations | undefined {
   const db = getDb();
   const existing = getTask(id);
@@ -325,6 +336,24 @@ export function updateTask(id: string, data: Partial<{
   values.push(id);
 
   db.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+
+  // Sync labels if provided
+  if (data.labels !== undefined) {
+    db.prepare('DELETE FROM task_labels WHERE task_id = ?').run(id);
+    const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
+    for (const labelId of data.labels) {
+      insertLabel.run(id, labelId);
+    }
+  }
+
+  // Sync subtasks if provided
+  if (data.subtasks !== undefined) {
+    db.prepare('DELETE FROM subtasks WHERE task_id = ?').run(id);
+    const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+    for (const st of data.subtasks) {
+      insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+    }
+  }
   
   return getTask(id);
 }

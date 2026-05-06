@@ -93,6 +93,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
       priority,
       listId,
       labels: selectedLabels,
+      subtasks: subtasks.map(s => ({ id: s.id, title: s.title, completed: s.completed })),
     };
 
     try {
@@ -279,7 +280,12 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
             <div className="space-y-1">
               {subtasks.map((st) => (
                 <div key={st.id} className="flex items-center gap-2 group">
-                  <Checkbox checked={st.completed} onCheckedChange={() => {}} />
+                  <Checkbox
+                    checked={st.completed}
+                    onCheckedChange={() => {
+                      setSubtasks(subtasks.map(s => s.id === st.id ? { ...s, completed: !s.completed } : s));
+                    }}
+                  />
                   <span className={cn('flex-1 text-sm', st.completed && 'line-through text-muted-foreground')}>
                     {st.title}
                   </span>
