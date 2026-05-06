@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+    return NextResponse.json({ error: 'Task name is required' }, { status: 400 });
+  }
   const task = createTask(body);
   return NextResponse.json(task, { status: 201 });
 }

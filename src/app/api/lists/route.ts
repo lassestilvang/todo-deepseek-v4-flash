@@ -8,8 +8,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+    return NextResponse.json({ error: 'List name is required' }, { status: 400 });
+  }
   const list = createList({
-    name: body.name,
+    name: body.name.trim(),
     color: body.color || '#6366f1',
     icon: body.icon || '📋',
   });
@@ -18,6 +21,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const body = await request.json();
+  if (!body.id) {
+    return NextResponse.json({ error: 'List ID is required' }, { status: 400 });
+  }
   const list = updateList(body.id, body);
   if (!list) return NextResponse.json({ error: 'List not found' }, { status: 404 });
   return NextResponse.json(list);
@@ -25,6 +31,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const body = await request.json();
+  if (!body.id) {
+    return NextResponse.json({ error: 'List ID is required' }, { status: 400 });
+  }
   try {
     deleteList(body.id);
     return NextResponse.json({ success: true });
