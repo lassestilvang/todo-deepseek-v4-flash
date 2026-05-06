@@ -122,6 +122,13 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
                 </span>
               )}
 
+              {/* Deadline */}
+              {task.deadline && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="font-medium">Due:</span> {formatDate(task.deadline, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+
               {/* List */}
               {task.list && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
