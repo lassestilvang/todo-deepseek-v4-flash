@@ -9,13 +9,11 @@ import {
   CheckCircle2,
   Circle,
   ChevronRight,
-  MoreHorizontal,
   Trash2,
   Pencil,
 } from 'lucide-react';
 import { cn, formatDate, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import type { TaskWithRelations } from '@/types';
 
