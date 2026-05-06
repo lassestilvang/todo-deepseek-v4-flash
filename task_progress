@@ -1,0 +1,8 @@
+- [x] Analyze codebase and identify improvements
+- [ ] Improvement 1: Fix N+1 query problem in data.ts - batch load relations
+- [ ] Improvement 2: Add deadline display to task card
+- [ ] Improvement 3: Show label names/colors on task cards instead of just count
+- [ ] Improvement 4: Remove unused FieldMap type in data.ts
+- [ ] Improvement 5: Add recurrence UI to task dialog
+- [ ] Improvement 6: Replace `any` types with proper types in data.ts
+- [ ] Improvement 7: Build and verify the application compiles

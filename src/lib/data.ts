@@ -104,6 +104,101 @@ function rowToTask(row: Record<string, any>): Task {
   };
 }
 
+function getBatchTaskLabelIds(db: any, taskIds: string[]): Record<string, string[]> {
+  if (taskIds.length === 0) return {};
+  const placeholders = taskIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT task_id, label_id FROM task_labels WHERE task_id IN (${placeholders})`).all(...taskIds) as { task_id: string; label_id: string }[];
+  const result: Record<string, string[]> = {};
+  for (const taskId of taskIds) result[taskId] = [];
+  for (const row of rows) {
+    if (!result[row.task_id]) result[row.task_id] = [];
+    result[row.task_id].push(row.label_id);
+  }
+  return result;
+}
+
+function getBatchSubtasks(db: any, taskIds: string[]): Record<string, Subtask[]> {
+  if (taskIds.length === 0) return {};
+  const placeholders = taskIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
+  const result: Record<string, Subtask[]> = {};
+  for (const taskId of taskIds) result[taskId] = [];
+  for (const row of rows) {
+    if (!result[row.task_id]) result[row.task_id] = [];
+    result[row.task_id].push({
+      id: row.id,
+      taskId: row.task_id,
+      title: row.title,
+      completed: !!row.completed,
+      createdAt: row.created_at,
+    });
+  }
+  return result;
+}
+
+function getBatchAttachments(db: any, taskIds: string[]): Record<string, Attachment[]> {
+  if (taskIds.length === 0) return {};
+  const placeholders = taskIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT * FROM attachments WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
+  const result: Record<string, Attachment[]> = {};
+  for (const taskId of taskIds) result[taskId] = [];
+  for (const row of rows) {
+    if (!result[row.task_id]) result[row.task_id] = [];
+    result[row.task_id].push({
+      id: row.id,
+      taskId: row.task_id,
+      name: row.name,
+      url: row.url,
+      type: row.type,
+      size: row.size,
+      createdAt: row.created_at,
+    });
+  }
+  return result;
+}
+
+function getBatchReminders(db: any, taskIds: string[]): Record<string, Reminder[]> {
+  if (taskIds.length === 0) return {};
+  const placeholders = taskIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT * FROM reminders WHERE task_id IN (${placeholders}) ORDER BY time ASC`).all(...taskIds) as any[];
+  const result: Record<string, Reminder[]> = {};
+  for (const taskId of taskIds) result[taskId] = [];
+  for (const row of rows) {
+    if (!result[row.task_id]) result[row.task_id] = [];
+    result[row.task_id].push({
+      id: row.id,
+      taskId: row.task_id,
+      time: row.time,
+      type: row.type as Reminder['type'],
+      sent: !!row.sent,
+    });
+  }
+  return result;
+}
+
+function getBatchLists(db: any, listIds: string[]): Record<string, List> {
+  if (listIds.length === 0) return {};
+  const placeholders = listIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT * FROM lists WHERE id IN (${placeholders})`).all(...listIds) as any[];
+  const result: Record<string, List> = {};
+  for (const row of rows) {
+    result[row.id] = rowToList(row);
+  }
+  return result;
+}
+
+function rowToList(row: any): List {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    icon: row.icon,
+    isDefault: !!row.is_default,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function getTaskLabelIds(db: any, taskId: string): string[] {
   const rows = db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?').all(taskId) as { label_id: string }[];
   return rows.map(r => r.label_id);
@@ -187,15 +282,23 @@ export function getTasks(params?: {
 
   const rows = db.prepare(query).all(...values) as Record<string, any>[];
   
+  const taskIds = rows.map(r => r.id);
+  const labelsMap = getBatchTaskLabelIds(db, taskIds);
+  const subtasksMap = getBatchSubtasks(db, taskIds);
+  const attachmentsMap = getBatchAttachments(db, taskIds);
+  const remindersMap = getBatchReminders(db, taskIds);
+  const listIds = [...new Set(rows.map(r => r.list_id))];
+  const listsMap = getBatchLists(db, listIds);
+
   return rows.map(row => {
     const task = rowToTask(row);
-    task.labels = getTaskLabelIds(db, task.id);
-    const list = getList(task.listId);
+    task.labels = labelsMap[task.id] || [];
+    const list = listsMap[task.listId];
     return {
       ...task,
-      subtasks: getSubtasks(db, task.id),
-      attachments: getAttachments(db, task.id),
-      reminders: getReminders(db, task.id),
+      subtasks: subtasksMap[task.id] || [],
+      attachments: attachmentsMap[task.id] || [],
+      reminders: remindersMap[task.id] || [],
       list,
     };
   });
@@ -463,15 +566,24 @@ export function searchTasks(query: string): TaskWithRelations[] {
     LIMIT 50
   `).all(searchTerm, searchTerm, searchTerm, searchTerm) as Record<string, any>[];
 
+  const taskIds = rows.map(r => r.id);
+  const labelsMap = getBatchTaskLabelIds(db, taskIds);
+  const subtasksMap = getBatchSubtasks(db, taskIds);
+  const attachmentsMap = getBatchAttachments(db, taskIds);
+  const remindersMap = getBatchReminders(db, taskIds);
+  const listIds = [...new Set(rows.map(r => r.list_id))];
+  const listsMap = getBatchLists(db, listIds);
+
   return rows.map(row => {
     const task = rowToTask(row);
-    task.labels = getTaskLabelIds(db, task.id);
+    task.labels = labelsMap[task.id] || [];
+    const list = listsMap[task.listId];
     return {
       ...task,
-      subtasks: getSubtasks(db, task.id),
-      attachments: getAttachments(db, task.id),
-      reminders: getReminders(db, task.id),
-      list: getList(task.listId),
+      subtasks: subtasksMap[task.id] || [],
+      attachments: attachmentsMap[task.id] || [],
+      reminders: remindersMap[task.id] || [],
+      list,
     };
   });
 }
