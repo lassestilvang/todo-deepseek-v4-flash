@@ -7,7 +7,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: any;
+  try { body = await request.json(); }
+  catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 }); }
   if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
     return NextResponse.json({ error: 'Label name is required' }, { status: 400 });
   }
@@ -20,7 +22,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const body = await request.json();
+  let body: any;
+  try { body = await request.json(); }
+  catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 }); }
   if (!body.id) {
     return NextResponse.json({ error: 'Label ID is required' }, { status: 400 });
   }
@@ -30,7 +34,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const body = await request.json();
+  let body: any;
+  try { body = await request.json(); }
+  catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 }); }
   if (!body.id) {
     return NextResponse.json({ error: 'Label ID is required' }, { status: 400 });
   }
