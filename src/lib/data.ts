@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import Database from 'better-sqlite3';
 import { getDb } from './db';
 import { generateId } from './utils';

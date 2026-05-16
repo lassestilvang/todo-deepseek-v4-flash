@@ -37,6 +37,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   }, [endpoint]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTasks();
   }, [fetchTasks]);
 
