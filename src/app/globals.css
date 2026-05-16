@@ -157,14 +157,12 @@ body {
   to { opacity: 0; transform: translateY(4px); }
 }
 
-/* Apply animations to Radix primitives */
-[data-state="open"] .radix-overlay,
-[data-state="open"][role="dialog"] + [data-radix-popper-content-wrapper] {
+/* Dialog animations */
+.dialog-overlay[data-state="open"] {
   animation: overlayShow 200ms ease-out;
 }
 
-[data-state="closed"] .radix-overlay,
-[data-state="closed"][role="dialog"] + [data-radix-popper-content-wrapper] {
+.dialog-overlay[data-state="closed"] {
   animation: overlayHide 150ms ease-in;
 }
 
@@ -176,6 +174,7 @@ body {
   animation: contentHide 150ms ease-in;
 }
 
+/* Popover/Select animations */
 [data-side="bottom"][data-state="open"] {
   animation: slideUp 150ms ease-out;
 }
