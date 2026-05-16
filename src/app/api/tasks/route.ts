@@ -34,8 +34,12 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const body = await request.json();
+  if (!body.id) {
+    return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+  }
   if (body._action === 'toggle') {
     const task = toggleTaskCompletion(body.id);
+    if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     return NextResponse.json(task);
   }
   const task = updateTask(body.id, body);
@@ -45,6 +49,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const body = await request.json();
+  if (!body.id) {
+    return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+  }
   deleteTask(body.id);
   return NextResponse.json({ success: true });
 }
