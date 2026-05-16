@@ -617,14 +617,6 @@ export function searchTasks(query: string): TaskWithRelations[] {
   });
 }
 
-export function getUpcomingTasks(startDate: string, endDate?: string): TaskWithRelations[] {
-  return getTasks({
-    completed: false,
-    startDate,
-    endDate,
-  });
-}
-
 export function getTasksForView(view: string): TaskWithRelations[] {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
