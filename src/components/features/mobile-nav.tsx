@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, CalendarRange, Layers, ListTodo, Plus } from 'lucide-react';
+import { Calendar, CalendarRange, Layers, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const items = [

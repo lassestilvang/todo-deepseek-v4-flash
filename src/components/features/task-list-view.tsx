@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { TaskCard } from './task-card';
 import { TaskDialog } from './task-dialog';
 import type { TaskWithRelations } from '@/types';
-import { cn } from '@/lib/utils';
 
 interface TaskListViewProps {
   title: string;

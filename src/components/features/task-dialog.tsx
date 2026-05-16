@@ -225,7 +225,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                     variant={priority === p.value ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 text-xs flex-1"
-                    onClick={() => setPriority(p.value as any)}
+                    onClick={() => setPriority(p.value as Priority)}
                   >
                     <Flag className={cn('h-3 w-3 mr-1', p.color)} />
                     {p.label}

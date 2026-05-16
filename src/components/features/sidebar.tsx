@@ -48,11 +48,6 @@ export function Sidebar() {
   const [showNewLabel, setShowNewLabel] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
 
-  useEffect(() => {
-    fetchLists();
-    fetchLabels();
-  }, []);
-
   const fetchLists = async () => {
     try {
       const res = await fetch('/api/lists');
@@ -72,6 +67,11 @@ export function Sidebar() {
       console.error('Failed to fetch labels', e);
     }
   };
+
+  useEffect(() => {
+    fetchLists();
+    fetchLabels();
+  }, []);
 
   const createList = async () => {
     if (!newListName.trim()) return;

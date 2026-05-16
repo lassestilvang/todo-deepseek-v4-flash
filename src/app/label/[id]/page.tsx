@@ -9,7 +9,7 @@ export default async function LabelPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="p-8 text-center">
         <h1 className="text-2xl font-bold">Label not found</h1>
-        <p className="text-muted-foreground mt-2">This label doesn't exist.</p>
+        <p className="text-muted-foreground mt-2">This label doesn&rsquo;t exist.</p>
       </div>
     );
   }
