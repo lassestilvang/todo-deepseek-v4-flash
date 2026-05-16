@@ -43,9 +43,11 @@ export function deleteList(id: string): void {
   const db = getDb();
   const list = getList(id);
   if (list?.isDefault) throw new Error('Cannot delete default list');
-  // Move tasks to inbox
-  db.prepare('UPDATE tasks SET list_id = ? WHERE list_id = ?').run('inbox', id);
-  db.prepare('DELETE FROM lists WHERE id = ? AND is_default = 0').run(id);
+  const removeList = db.transaction(() => {
+    db.prepare('UPDATE tasks SET list_id = ? WHERE list_id = ?').run('inbox', id);
+    db.prepare('DELETE FROM lists WHERE id = ? AND is_default = 0').run(id);
+  });
+  removeList();
 }
 
 // --- Labels ---
@@ -361,42 +363,45 @@ export function createTask(data: {
   const now = new Date().toISOString();
   const listId = data.listId || 'inbox';
 
-  db.prepare(`
-    INSERT INTO tasks (id, name, description, date, deadline, estimate, priority, list_id, recurrence, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    id,
-    data.name,
-    data.description || '',
-    data.date || null,
-    data.deadline || null,
-    data.estimate || null,
-    data.priority || 'none',
-    listId,
-    data.recurrence ? JSON.stringify(data.recurrence) : null,
-    now,
-    now
-  );
+  const insert = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO tasks (id, name, description, date, deadline, estimate, priority, list_id, recurrence, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      data.name,
+      data.description || '',
+      data.date || null,
+      data.deadline || null,
+      data.estimate || null,
+      data.priority || 'none',
+      listId,
+      data.recurrence ? JSON.stringify(data.recurrence) : null,
+      now,
+      now
+    );
 
-  // Add labels
-  if (data.labels) {
-    const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
-    for (const labelId of data.labels) {
-      insertLabel.run(id, labelId);
+    // Add labels
+    if (data.labels) {
+      const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
+      for (const labelId of data.labels) {
+        insertLabel.run(id, labelId);
+      }
     }
-  }
 
-  // Add subtasks
-  if (data.subtasks) {
-    const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
-    for (const st of data.subtasks) {
-      insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+    // Add subtasks
+    if (data.subtasks) {
+      const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+      for (const st of data.subtasks) {
+        insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+      }
     }
-  }
 
-  // Log activity
-  logActivity(db, id, 'created', '', null, data.name);
+    // Log activity
+    logActivity(db, id, 'created', '', null, data.name);
+  });
 
+  insert();
   return getTask(id)!;
 }
 
@@ -434,53 +439,56 @@ export function updateTask(id: string, data: Partial<{
     recurrence: { field: 'recurrence', col: 'recurrence' },
   };
 
-  for (const [key, mapping] of Object.entries(fieldMapping)) {
-    if ((data as any)[key] !== undefined) {
-      const oldVal = (existing as any)[key];
-      const newVal = (data as any)[key];
-      const dbVal = key === 'recurrence' ? (newVal ? JSON.stringify(newVal) : null) : (newVal !== null ? String(newVal) : null);
-      
-      updates.push(`${mapping.col} = ?`);
-      values.push(dbVal);
-      
-      if (String(oldVal) !== String(newVal)) {
-        logActivity(db, id, 'update', mapping.field, String(oldVal ?? ''), String(newVal ?? ''));
+  const update = db.transaction(() => {
+    for (const [key, mapping] of Object.entries(fieldMapping)) {
+      if ((data as any)[key] !== undefined) {
+        const oldVal = (existing as any)[key];
+        const newVal = (data as any)[key];
+        const dbVal = key === 'recurrence' ? (newVal ? JSON.stringify(newVal) : null) : (newVal !== null ? String(newVal) : null);
+        
+        updates.push(`${mapping.col} = ?`);
+        values.push(dbVal);
+        
+        if (String(oldVal) !== String(newVal)) {
+          logActivity(db, id, 'update', mapping.field, String(oldVal ?? ''), String(newVal ?? ''));
+        }
       }
     }
-  }
 
-  if (data.completed !== undefined) {
-    updates.push('completed = ?');
-    values.push(data.completed ? 1 : 0);
-    updates.push('completed_at = ?');
-    values.push(data.completed ? now : null);
-    logActivity(db, id, data.completed ? 'completed' : 'uncompleted', 'completed', '', '');
-  }
-
-  updates.push('updated_at = ?');
-  values.push(now);
-  values.push(id);
-
-  db.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
-
-  // Sync labels if provided
-  if (data.labels !== undefined) {
-    db.prepare('DELETE FROM task_labels WHERE task_id = ?').run(id);
-    const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
-    for (const labelId of data.labels) {
-      insertLabel.run(id, labelId);
+    if (data.completed !== undefined) {
+      updates.push('completed = ?');
+      values.push(data.completed ? 1 : 0);
+      updates.push('completed_at = ?');
+      values.push(data.completed ? now : null);
+      logActivity(db, id, data.completed ? 'completed' : 'uncompleted', 'completed', '', '');
     }
-  }
 
-  // Sync subtasks if provided
-  if (data.subtasks !== undefined) {
-    db.prepare('DELETE FROM subtasks WHERE task_id = ?').run(id);
-    const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
-    for (const st of data.subtasks) {
-      insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+    updates.push('updated_at = ?');
+    values.push(now);
+    values.push(id);
+
+    db.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+
+    // Sync labels if provided
+    if (data.labels !== undefined) {
+      db.prepare('DELETE FROM task_labels WHERE task_id = ?').run(id);
+      const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
+      for (const labelId of data.labels) {
+        insertLabel.run(id, labelId);
+      }
     }
-  }
-  
+
+    // Sync subtasks if provided
+    if (data.subtasks !== undefined) {
+      db.prepare('DELETE FROM subtasks WHERE task_id = ?').run(id);
+      const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+      for (const st of data.subtasks) {
+        insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+      }
+    }
+  });
+
+  update();
   return getTask(id);
 }
 
