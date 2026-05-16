@@ -19,7 +19,7 @@ import { Label as ULabel } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority, Recurrence } from '@/types';
+import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority } from '@/types';
 import { cn } from '@/lib/utils';
 
 const priorities = [
