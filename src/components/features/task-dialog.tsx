@@ -19,7 +19,7 @@ import { Label as ULabel } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { TaskWithRelations, Subtask, Label as LabelType, List } from '@/types';
+import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority, Recurrence } from '@/types';
 import { cn } from '@/lib/utils';
 
 const priorities = [
@@ -84,13 +84,23 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     if (!name.trim()) return;
     setSaving(true);
 
-    const body: any = {
+    const body: {
+      name: string;
+      description: string;
+      date: string | null;
+      deadline: string | null;
+      estimate: string | null;
+      priority: Priority;
+      listId: string;
+      labels: string[];
+      subtasks: { id: string; title: string; completed: boolean }[];
+    } = {
       name: name.trim(),
       description,
       date: date || null,
       deadline: deadline || null,
       estimate: estimate || null,
-      priority,
+      priority: priority as Priority,
       listId,
       labels: selectedLabels,
       subtasks: subtasks.map(s => ({ id: s.id, title: s.title, completed: s.completed })),
