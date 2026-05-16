@@ -37,7 +37,7 @@ export async function DELETE(request: NextRequest) {
   try {
     deleteList(body.id);
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed to delete list' }, { status: 400 });
   }
 }
