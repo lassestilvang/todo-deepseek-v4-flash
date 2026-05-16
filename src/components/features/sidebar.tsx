@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
-import type { List, Label } from '@/types';
+import type { List, Label, TaskWithRelations } from '@/types';
 
 const views = [
   { id: 'today', label: 'Today', icon: Calendar, href: '/today' },
@@ -44,7 +44,7 @@ export function Sidebar() {
   const [editListName, setEditListName] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<TaskWithRelations[]>([]);
   const [showNewLabel, setShowNewLabel] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
 
@@ -189,7 +189,7 @@ export function Sidebar() {
               />
               {searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
-                  {searchResults.map((task: any) => (
+                  {searchResults.map((task) => (
                     <Link
                       key={task.id}
                       href={`/list/${task.listId}`}
