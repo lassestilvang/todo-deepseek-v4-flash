@@ -635,7 +635,7 @@ export function getTasksForView(view: string): TaskWithRelations[] {
     }
     case 'next-7-days': {
       const end = new Date(now);
-      end.setDate(end.getDate() + 7);
+      end.setDate(end.getDate() + 6);
       return getTasks({ startDate: today, endDate: end.toISOString().split('T')[0] });
     }
     case 'upcoming': {
