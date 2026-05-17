@@ -524,6 +524,7 @@ export function toggleSubtask(id: string): Subtask | undefined {
   if (!row) return undefined;
   const newCompleted = row.completed ? 0 : 1;
   db.prepare('UPDATE subtasks SET completed = ? WHERE id = ?').run(newCompleted, id);
+  logActivity(db, row.task_id, 'update', 'subtask', row.title, String(!!newCompleted));
   return {
     id: row.id,
     taskId: row.task_id,
@@ -535,6 +536,10 @@ export function toggleSubtask(id: string): Subtask | undefined {
 
 export function deleteSubtask(id: string): void {
   const db = getDb();
+  const row = db.prepare('SELECT task_id, title FROM subtasks WHERE id = ?').get(id) as { task_id: string; title: string } | undefined;
+  if (row) {
+    logActivity(db, row.task_id, 'delete', 'subtask', row.title, '');
+  }
   db.prepare('DELETE FROM subtasks WHERE id = ?').run(id);
 }
 
