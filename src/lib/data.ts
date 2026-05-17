@@ -46,6 +46,10 @@ export function deleteList(id: string): void {
   const list = getList(id);
   if (list?.isDefault) throw new Error('Cannot delete default list');
   const deleteListTx = db.transaction(() => {
+    const affectedTasks = db.prepare('SELECT id, name FROM tasks WHERE list_id = ?').all(id) as { id: string; name: string }[];
+    for (const task of affectedTasks) {
+      logActivity(db, task.id, 'moved', 'list', list?.name || '', 'Inbox');
+    }
     db.prepare('UPDATE tasks SET list_id = ? WHERE list_id = ?').run('inbox', id);
     db.prepare('DELETE FROM lists WHERE id = ? AND is_default = 0').run(id);
   });
