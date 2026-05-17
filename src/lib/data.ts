@@ -45,11 +45,11 @@ export function deleteList(id: string): void {
   const db = getDb();
   const list = getList(id);
   if (list?.isDefault) throw new Error('Cannot delete default list');
-  const removeList = db.transaction(() => {
+  const deleteListTx = db.transaction(() => {
     db.prepare('UPDATE tasks SET list_id = ? WHERE list_id = ?').run('inbox', id);
     db.prepare('DELETE FROM lists WHERE id = ? AND is_default = 0').run(id);
   });
-  removeList();
+  deleteListTx();
 }
 
 // --- Labels ---
