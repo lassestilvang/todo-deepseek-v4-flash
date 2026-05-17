@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus, Eye, EyeOff, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,10 +22,11 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [showCompleted, setShowCompleted] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskWithRelations | undefined>();
+  const isFirstLoad = useRef(true);
 
   const fetchTasks = useCallback(async () => {
     try {
-      setLoading(true);
+      if (isFirstLoad.current) setLoading(true);
       const res = await fetch(endpoint);
       const data = await res.json();
       setTasks(data);
@@ -33,6 +34,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       console.error('Failed to fetch tasks', e);
     } finally {
       setLoading(false);
+      isFirstLoad.current = false;
     }
   }, [endpoint]);
 
