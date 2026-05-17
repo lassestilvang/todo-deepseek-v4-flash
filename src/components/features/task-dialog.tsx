@@ -22,6 +22,9 @@ import { Separator } from '@/components/ui/separator';
 import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority } from '@/types';
 import { cn } from '@/lib/utils';
 
+let cachedLists: List[] | null = null;
+let cachedLabels: LabelType[] | null = null;
+
 const priorities = [
   { value: 'none', label: 'None', color: 'text-muted-foreground' },
   { value: 'low', label: 'Low', color: 'text-blue-500' },
@@ -52,8 +55,10 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch('/api/lists').then(r => r.json()).then(setLists);
-    fetch('/api/labels').then(r => r.json()).then(setAllLabels);
+    if (cachedLists) { setLists(cachedLists); }
+    else { fetch('/api/lists').then(r => r.json()).then(data => { cachedLists = data; setLists(data); }); }
+    if (cachedLabels) { setAllLabels(cachedLabels); }
+    else { fetch('/api/labels').then(r => r.json()).then(data => { cachedLabels = data; setAllLabels(data); }); }
   }, []);
 
   const prevOpen = useRef(open);
