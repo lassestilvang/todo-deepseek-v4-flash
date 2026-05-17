@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Flag,
   Plus,
@@ -56,29 +56,33 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     fetch('/api/labels').then(r => r.json()).then(setAllLabels);
   }, []);
 
+  const prevOpen = useRef(open);
+
   useEffect(() => {
-    if (task) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setName(task.name);
-      setDescription(task.description);
-      setDate(task.date || '');
-      setDeadline(task.deadline || '');
-      setEstimate(task.estimate || '');
-      setPriority(task.priority);
-      setListId(task.listId);
-      setSubtasks(task.subtasks);
-      setSelectedLabels(task.labels);
-    } else {
-      setName('');
-      setDescription('');
-      setDate('');
-      setDeadline('');
-      setEstimate('');
-      setPriority('none');
-      setListId('inbox');
-      setSubtasks([]);
-      setSelectedLabels([]);
+    if (!prevOpen.current && open) {
+      if (task) {
+        setName(task.name);
+        setDescription(task.description);
+        setDate(task.date || '');
+        setDeadline(task.deadline || '');
+        setEstimate(task.estimate || '');
+        setPriority(task.priority);
+        setListId(task.listId);
+        setSubtasks(task.subtasks);
+        setSelectedLabels(task.labels);
+      } else {
+        setName('');
+        setDescription('');
+        setDate('');
+        setDeadline('');
+        setEstimate('');
+        setPriority('none');
+        setListId('inbox');
+        setSubtasks([]);
+        setSelectedLabels([]);
+      }
     }
+    prevOpen.current = open;
   }, [task, open]);
 
   const handleSave = async () => {
