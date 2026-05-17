@@ -523,7 +523,13 @@ export function toggleSubtask(id: string): Subtask | undefined {
   if (!row) return undefined;
   const newCompleted = row.completed ? 0 : 1;
   db.prepare('UPDATE subtasks SET completed = ? WHERE id = ?').run(newCompleted, id);
-  return { ...row, completed: !!newCompleted, taskId: row.task_id, createdAt: row.created_at };
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    title: row.title,
+    completed: !!newCompleted,
+    createdAt: row.created_at,
+  };
 }
 
 export function deleteSubtask(id: string): void {
