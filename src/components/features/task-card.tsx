@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Trash2,
   Pencil,
+  X,
 } from 'lucide-react';
 import { cn, formatDate, formatEstimate, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const overdue = task.date ? isOverdue(task.date) && !task.completed : false;
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
 
@@ -87,9 +89,20 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (confirm('Delete this task?')) onDelete(); }}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {confirmingDelete ? (
+                  <span className="flex items-center gap-1 text-xs">
+                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => { onDelete(); setConfirmingDelete(false); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setConfirmingDelete(false)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </span>
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setConfirmingDelete(true)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
 

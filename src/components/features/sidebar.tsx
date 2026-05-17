@@ -47,6 +47,7 @@ export function Sidebar() {
   const [searchResults, setSearchResults] = useState<TaskWithRelations[]>([]);
   const [showNewLabel, setShowNewLabel] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   const fetchLists = async () => {
     try {
@@ -106,10 +107,9 @@ export function Sidebar() {
   };
 
   const deleteList = async (id: string) => {
-    if (confirm('Delete this list? Tasks will be moved to Inbox.')) {
-      await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      fetchLists();
-    }
+    await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    fetchLists();
+    setConfirmingDelete(null);
   };
 
   const createLabel = async () => {
@@ -133,10 +133,9 @@ export function Sidebar() {
   };
 
   const deleteLabel = async (id: string) => {
-    if (confirm('Delete this label?')) {
-      await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      fetchLabels();
-    }
+    await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    fetchLabels();
+    setConfirmingDelete(null);
   };
 
   const doSearch = async (q: string) => {
@@ -314,15 +313,32 @@ export function Sidebar() {
                       >
                         <Pencil className="h-3 w-3" />
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          deleteList(list.id);
-                        }}
-                        className="p-1 rounded hover:bg-destructive/20 text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      {confirmingDelete === list.id ? (
+                        <span className="flex items-center gap-1 text-xs">
+                          <button
+                            onClick={(e) => { e.preventDefault(); deleteList(list.id); }}
+                            className="p-1 rounded text-destructive hover:bg-destructive/20 font-medium"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
+                            className="p-1 rounded hover:bg-sidebar-accent"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setConfirmingDelete(list.id);
+                          }}
+                          className="p-1 rounded hover:bg-destructive/20 text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </Link>
@@ -384,15 +400,32 @@ export function Sidebar() {
                 <span className="text-base">{label.icon}</span>
                 <span className="flex-1 truncate">{label.name}</span>
                 <div className="hidden group-hover:flex items-center gap-0.5">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      deleteLabel(label.id);
-                    }}
-                    className="p-1 rounded hover:bg-destructive/20 text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                  {confirmingDelete === label.id ? (
+                    <span className="flex items-center gap-1 text-xs">
+                      <button
+                        onClick={(e) => { e.preventDefault(); deleteLabel(label.id); }}
+                        className="p-1 rounded text-destructive hover:bg-destructive/20 font-medium"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
+                        className="p-1 rounded hover:bg-sidebar-accent"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setConfirmingDelete(label.id);
+                      }}
+                      className="p-1 rounded hover:bg-destructive/20 text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </Link>
             </div>
