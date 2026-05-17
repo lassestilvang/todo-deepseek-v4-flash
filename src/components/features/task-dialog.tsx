@@ -61,6 +61,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   useEffect(() => {
     if (!prevOpen.current && open) {
       if (task) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setName(task.name);
         setDescription(task.description);
         setDate(task.date || '');

@@ -294,6 +294,7 @@ export function getTasks(params?: {
   startDate?: string;
   endDate?: string;
   search?: string;
+  includeUndated?: boolean;
 }): TaskWithRelations[] {
   const db = getDb();
   let query = 'SELECT * FROM tasks WHERE 1=1';
@@ -312,7 +313,7 @@ export function getTasks(params?: {
     values.push(params.date);
   }
   if (params?.startDate) {
-    query += ' AND (date >= ? OR date IS NULL)';
+    query += params?.includeUndated === false ? ' AND date >= ?' : ' AND (date >= ? OR date IS NULL)';
     values.push(params.startDate);
   }
   if (params?.endDate) {
@@ -621,10 +622,10 @@ export function getTasksForView(view: string): TaskWithRelations[] {
     case 'next-7-days': {
       const end = new Date(now);
       end.setDate(end.getDate() + 6);
-      return getTasks({ startDate: today, endDate: end.toISOString().split('T')[0] });
+      return getTasks({ startDate: today, endDate: end.toISOString().split('T')[0], includeUndated: false });
     }
     case 'upcoming': {
-      return getTasks({ startDate: today });
+      return getTasks({ startDate: today, includeUndated: false });
     }
     case 'all': {
       return getTasks({});
