@@ -26,7 +26,6 @@ export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'planner-theme',
-  ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
