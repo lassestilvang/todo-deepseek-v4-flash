@@ -60,7 +60,6 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     if (task) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(task.name);
-      setName(task.name);
       setDescription(task.description);
       setDate(task.date || '');
       setDeadline(task.deadline || '');
