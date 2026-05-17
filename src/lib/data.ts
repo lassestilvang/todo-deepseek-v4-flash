@@ -258,6 +258,34 @@ function getReminders(db: Database.Database, taskId: string): Reminder[] {
   }));
 }
 
+function hydrateTasks(db: Database.Database, rows: Record<string, any>[]): TaskWithRelations[] {
+  const taskIds = rows.map(r => r.id);
+  if (taskIds.length === 0) return [];
+  const labelsMap = getBatchTaskLabelIds(db, taskIds);
+  const subtasksMap = getBatchSubtasks(db, taskIds);
+  const attachmentsMap = getBatchAttachments(db, taskIds);
+  const remindersMap = getBatchReminders(db, taskIds);
+  const listIds = [...new Set(rows.map(r => r.list_id))];
+  const listsMap = getBatchLists(db, listIds);
+  const allLabelIds = [...new Set(Object.values(labelsMap).flat())];
+  const labelObjMap = getBatchLabels(db, allLabelIds);
+
+  return rows.map(row => {
+    const task = rowToTask(row);
+    const labelIds = labelsMap[task.id] || [];
+    task.labels = labelIds;
+    const list = listsMap[task.listId];
+    return {
+      ...task,
+      subtasks: subtasksMap[task.id] || [],
+      attachments: attachmentsMap[task.id] || [],
+      reminders: remindersMap[task.id] || [],
+      list,
+      labelObjects: labelIds.map(id => labelObjMap[id]).filter(Boolean),
+    };
+  });
+}
+
 export function getTasks(params?: {
   listId?: string;
   labelId?: string;
@@ -303,33 +331,7 @@ export function getTasks(params?: {
   query += ' ORDER BY completed ASC, priority DESC, date ASC, created_at DESC';
 
   const rows = db.prepare(query).all(...values) as Record<string, any>[];
-  
-  const taskIds = rows.map(r => r.id);
-  const labelsMap = getBatchTaskLabelIds(db, taskIds);
-  const subtasksMap = getBatchSubtasks(db, taskIds);
-  const attachmentsMap = getBatchAttachments(db, taskIds);
-  const remindersMap = getBatchReminders(db, taskIds);
-  const listIds = [...new Set(rows.map(r => r.list_id))];
-  const listsMap = getBatchLists(db, listIds);
-
-  // Resolve all unique label IDs to Label objects
-  const allLabelIds = [...new Set(Object.values(labelsMap).flat())];
-  const labelObjMap = getBatchLabels(db, allLabelIds);
-
-  return rows.map(row => {
-    const task = rowToTask(row);
-    const labelIds = labelsMap[task.id] || [];
-    task.labels = labelIds;
-    const list = listsMap[task.listId];
-    return {
-      ...task,
-      subtasks: subtasksMap[task.id] || [],
-      attachments: attachmentsMap[task.id] || [],
-      reminders: remindersMap[task.id] || [],
-      list,
-      labelObjects: labelIds.map(id => labelObjMap[id]).filter(Boolean),
-    };
-  });
+  return hydrateTasks(db, rows);
 }
 
 export function getTask(id: string): TaskWithRelations | undefined {
@@ -599,32 +601,7 @@ export function searchTasks(query: string): TaskWithRelations[] {
     LIMIT 50
   `).all(searchTerm, searchTerm, searchTerm, searchTerm) as Record<string, any>[];
 
-  const taskIds = rows.map(r => r.id);
-  const labelsMap = getBatchTaskLabelIds(db, taskIds);
-  const subtasksMap = getBatchSubtasks(db, taskIds);
-  const attachmentsMap = getBatchAttachments(db, taskIds);
-  const remindersMap = getBatchReminders(db, taskIds);
-  const listIds = [...new Set(rows.map(r => r.list_id))];
-  const listsMap = getBatchLists(db, listIds);
-
-  // Resolve all unique label IDs to Label objects
-  const allLabelIds = [...new Set(Object.values(labelsMap).flat())];
-  const labelObjMap = getBatchLabels(db, allLabelIds);
-
-  return rows.map(row => {
-    const task = rowToTask(row);
-    const labelIds = labelsMap[task.id] || [];
-    task.labels = labelIds;
-    const list = listsMap[task.listId];
-    return {
-      ...task,
-      subtasks: subtasksMap[task.id] || [],
-      attachments: attachmentsMap[task.id] || [],
-      reminders: remindersMap[task.id] || [],
-      list,
-      labelObjects: labelIds.map(id => labelObjMap[id]).filter(Boolean),
-    };
-  });
+  return hydrateTasks(db, rows);
 }
 
 export function getTasksForView(view: string): TaskWithRelations[] {
