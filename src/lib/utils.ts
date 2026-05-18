@@ -15,14 +15,6 @@ export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOpt
   });
 }
 
-export function formatTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function isToday(date: string): boolean {
   const d = new Date(date + 'T00:00:00');
   const now = new Date();
