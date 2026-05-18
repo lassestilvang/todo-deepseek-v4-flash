@@ -90,5 +90,3 @@ export interface ActivityLog {
   newValue: string | null;
   timestamp: string;
 }
-
-export type ViewType = 'today' | 'next-7-days' | 'upcoming' | 'all';
