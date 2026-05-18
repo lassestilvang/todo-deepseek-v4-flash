@@ -13,7 +13,7 @@ import {
   Pencil,
   X,
 } from 'lucide-react';
-import { cn, formatDate, formatEstimate, isOverdue } from '@/lib/utils';
+import { cn, formatDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { TaskWithRelations } from '@/types';
@@ -155,7 +155,7 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
                   <Badge
                     key={label.id}
                     className="text-[10px] px-1.5 py-0 h-5"
-                    style={{ backgroundColor: label.color, color: '#fff' }}
+                    style={{ backgroundColor: label.color, color: getContrastColor(label.color) }}
                   >
                     {label.icon} {label.name}
                   </Badge>

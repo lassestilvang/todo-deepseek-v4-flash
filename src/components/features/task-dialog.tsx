@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getContrastColor } from '@/lib/utils';
 
 const priorities = [
   { value: 'none', label: 'None', color: 'text-muted-foreground' },
@@ -238,7 +238,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   className="cursor-pointer text-xs"
                   style={
                     selectedLabels.includes(label.id)
-                      ? { backgroundColor: label.color }
+                      ? { backgroundColor: label.color, color: getContrastColor(label.color) }
                       : {}
                   }
                   onClick={() => {
