@@ -81,9 +81,8 @@ export function Sidebar() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchLists();
-    fetchLabels();
+    fetch('/api/lists').then(r => r.json()).then(data => setLists(data)).catch(() => {});
+    fetch('/api/labels').then(r => r.json()).then(data => setLabels(data)).catch(() => {});
   }, []);
 
   useEffect(() => {

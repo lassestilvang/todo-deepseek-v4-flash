@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus, Eye, EyeOff, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,26 +23,25 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskWithRelations | undefined>();
   const [dialogKey, setDialogKey] = useState(0);
-  const isFirstLoad = useRef(true);
 
   const fetchTasks = useCallback(async () => {
     try {
-      if (isFirstLoad.current) setLoading(true);
       const res = await fetch(endpoint);
       const data = await res.json();
       setTasks(data);
     } catch (e) {
       console.error('Failed to fetch tasks', e);
-    } finally {
-      setLoading(false);
-      isFirstLoad.current = false;
     }
   }, [endpoint]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchTasks();
-  }, [fetchTasks]);
+    fetch(endpoint).then(r => r.json()).then(data => {
+      setTasks(data);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+    });
+  }, [endpoint]);
 
   const toggleCompletion = async (task: TaskWithRelations) => {
     await fetch('/api/tasks', {
