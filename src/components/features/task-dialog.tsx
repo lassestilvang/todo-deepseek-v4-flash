@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Flag,
   Plus,
@@ -21,9 +21,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority } from '@/types';
 import { cn } from '@/lib/utils';
-
-let cachedLists: List[] | null = null;
-let cachedLabels: LabelType[] | null = null;
 
 const priorities = [
   { value: 'none', label: 'None', color: 'text-muted-foreground' },
@@ -55,41 +52,9 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (cachedLists) { setLists(cachedLists); }
-    else { fetch('/api/lists').then(r => r.json()).then(data => { cachedLists = data; setLists(data); }); }
-    if (cachedLabels) { setAllLabels(cachedLabels); }
-    else { fetch('/api/labels').then(r => r.json()).then(data => { cachedLabels = data; setAllLabels(data); }); }
+    fetch('/api/lists').then(r => r.json()).then(data => setLists(data)).catch(() => {});
+    fetch('/api/labels').then(r => r.json()).then(data => setAllLabels(data)).catch(() => {});
   }, []);
-
-  const prevOpen = useRef(open);
-
-  useEffect(() => {
-    if (!prevOpen.current && open) {
-      if (task) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setName(task.name);
-        setDescription(task.description);
-        setDate(task.date || '');
-        setDeadline(task.deadline || '');
-        setEstimate(task.estimate || '');
-        setPriority(task.priority);
-        setListId(task.listId);
-        setSubtasks(task.subtasks);
-        setSelectedLabels(task.labels);
-      } else {
-        setName('');
-        setDescription('');
-        setDate('');
-        setDeadline('');
-        setEstimate('');
-        setPriority('none');
-        setListId('inbox');
-        setSubtasks([]);
-        setSelectedLabels([]);
-      }
-    }
-    prevOpen.current = open;
-  }, [task, open]);
 
   const handleSave = async () => {
     if (!name.trim()) return;

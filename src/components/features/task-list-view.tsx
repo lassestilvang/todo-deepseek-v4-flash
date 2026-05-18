@@ -22,6 +22,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [showCompleted, setShowCompleted] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskWithRelations | undefined>();
+  const [dialogKey, setDialogKey] = useState(0);
   const isFirstLoad = useRef(true);
 
   const fetchTasks = useCallback(async () => {
@@ -63,11 +64,13 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
   const openEdit = (task: TaskWithRelations) => {
     setEditingTask(task);
+    setDialogKey(k => k + 1);
     setDialogOpen(true);
   };
 
   const openCreate = () => {
     setEditingTask(undefined);
+    setDialogKey(k => k + 1);
     setDialogOpen(true);
   };
 
@@ -155,6 +158,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
       {/* Task Dialog */}
       <TaskDialog
+        key={dialogKey}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         task={editingTask}
