@@ -6,9 +6,12 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get('q');
 
   if (!q || q.length < 2) {
-    return NextResponse.json([]);
+    return NextResponse.json([], {
+      headers: { 'Cache-Control': 'private, no-cache, must-revalidate' },
+    });
   }
 
-  const results = searchTasks(q);
-  return NextResponse.json(results);
+  return NextResponse.json(searchTasks(q), {
+    headers: { 'Cache-Control': 'private, no-cache, must-revalidate' },
+  });
 }

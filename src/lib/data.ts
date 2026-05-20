@@ -487,12 +487,26 @@ export function updateTask(id: string, data: Partial<{
       }
     }
 
-    // Sync subtasks if provided
+    // Sync subtasks if provided — preserve created_at for existing ones
     if (data.subtasks !== undefined) {
-      db.prepare('DELETE FROM subtasks WHERE task_id = ?').run(id);
-      const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+      const existingRows = db.prepare('SELECT id, created_at FROM subtasks WHERE task_id = ?').all(id) as { id: string; created_at: string }[];
+      const existingMap = new Map(existingRows.map(r => [r.id, r.created_at]));
+      const incomingIds = new Set(data.subtasks.map(s => s.id));
+
+      // Delete subtasks removed by user
+      for (const row of existingRows) {
+        if (!incomingIds.has(row.id)) {
+          db.prepare('DELETE FROM subtasks WHERE id = ?').run(row.id);
+        }
+      }
+
+      const upsert = db.prepare(`
+        INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET title = excluded.title, completed = excluded.completed
+      `);
       for (const st of data.subtasks) {
-        insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+        const origCreatedAt = existingMap.get(st.id);
+        upsert.run(st.id, id, st.title, st.completed ? 1 : 0, origCreatedAt || now);
       }
     }
   });
