@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ToastProvider } from '@/components/toast-provider';
 import { Sidebar } from '@/components/features/sidebar';
 import { MobileNav } from '@/components/features/mobile-nav';
 
@@ -48,13 +49,15 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-background">
-              {children}
-            </main>
-          </div>
-          <MobileNav />
+          <ToastProvider>
+            <div className="flex h-screen overflow-hidden">
+              <Sidebar />
+              <main className="flex-1 overflow-y-auto bg-background">
+                {children}
+              </main>
+            </div>
+            <MobileNav />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

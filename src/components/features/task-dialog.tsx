@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority } from '@/types';
+import { useToast } from '@/components/toast-provider';
 import { cn, getContrastColor } from '@/lib/utils';
 
 const priorities = [
@@ -56,6 +57,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [allLabels, setAllLabels] = useState<LabelType[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>(task?.labels || []);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
   const listsFetched = useRef(false);
   const labelsFetched = useRef(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -127,9 +129,11 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
           body: JSON.stringify(body),
         });
       }
+      toast(task ? 'Task updated' : 'Task created', 'success');
       onSave();
       onOpenChange(false);
     } catch (e) {
+      toast('Failed to save task', 'error');
       console.error('Failed to save task', e);
     } finally {
       setSaving(false);

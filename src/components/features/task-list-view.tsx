@@ -6,6 +6,7 @@ import { Plus, Eye, EyeOff, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from './task-card';
 import { TaskDialog } from './task-dialog';
+import { useToast } from '@/components/toast-provider';
 import type { TaskWithRelations } from '@/types';
 
 interface TaskListViewProps {
@@ -24,6 +25,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [editingTask, setEditingTask] = useState<TaskWithRelations | undefined>();
   const [dialogKey, setDialogKey] = useState(0);
   const fetchRef = useRef(0);
+  const { toast } = useToast();
 
   const fetchTasks = useCallback(async (signal?: AbortSignal) => {
     const id = ++fetchRef.current;
@@ -75,13 +77,15 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       startTransition(() => {
         setTasks(prev => prev.map(t => t.id === id ? updated : t));
       });
+      toast(toggled.completed ? 'Task completed' : 'Task reopened', 'success');
     } catch (e) {
       startTransition(() => {
         setTasks(prev => prev.map(t => t.id === id ? task : t));
       });
+      toast('Failed to update task', 'error');
       console.error('Toggle failed, reverted', e);
     }
-  }, [tasks]);
+  }, [tasks, toast]);
 
   const handleDelete = useCallback(async (id: string) => {
     const previousTasks = tasks;
@@ -96,13 +100,15 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error('Failed to delete');
+      toast('Task deleted', 'success');
     } catch (e) {
       startTransition(() => {
         setTasks(previousTasks);
       });
+      toast('Failed to delete task', 'error');
       console.error('Delete failed, reverted', e);
     }
-  }, [tasks]);
+  }, [tasks, toast]);
 
   const handleEdit = useCallback((id: string) => {
     const task = tasks.find(t => t.id === id);
