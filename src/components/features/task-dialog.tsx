@@ -5,7 +5,7 @@ import {
   Flag,
   Plus,
   X,
-  List,
+  List as ListIcon,
   Tags,
   Clock,
   Calendar,
@@ -259,7 +259,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
             <div className="space-y-2 sm:col-span-2">
               <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <List className="h-3.5 w-3.5" />
+                <ListIcon className="h-3.5 w-3.5" />
                 List
               </ULabel>
               <select

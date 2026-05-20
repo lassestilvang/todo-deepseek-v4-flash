@@ -52,7 +52,7 @@ export function Sidebar() {
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
