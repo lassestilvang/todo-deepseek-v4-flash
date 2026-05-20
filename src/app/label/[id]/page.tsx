@@ -1,5 +1,14 @@
+import type { Metadata } from 'next';
 import { TaskListView } from '@/components/features/task-list-view';
 import { getLabel } from '@/lib/data';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const label = getLabel(id);
+  return {
+    title: label ? `${label.icon} ${label.name} — Daily Planner` : 'Label not found',
+  };
+}
 
 export default async function LabelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

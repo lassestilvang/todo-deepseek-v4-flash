@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { TaskListView } from '@/components/features/task-list-view';
+
+export const metadata: Metadata = {
+  title: 'All Tasks — Daily Planner',
+};
 
 export default function AllPage() {
   return (

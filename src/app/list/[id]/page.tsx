@@ -1,5 +1,14 @@
+import type { Metadata } from 'next';
 import { TaskListView } from '@/components/features/task-list-view';
 import { getList } from '@/lib/data';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const list = getList(id);
+  return {
+    title: list ? `${list.icon} ${list.name} — Daily Planner` : 'List not found',
+  };
+}
 
 export default async function ListPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
