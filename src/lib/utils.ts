@@ -15,10 +15,14 @@ export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOpt
   });
 }
 
+function dateFromDateOnly(date: string): Date {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export function isToday(date: string): boolean {
-  const d = new Date(date + 'T00:00:00');
+  const d = dateFromDateOnly(date);
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
   return (
     d.getFullYear() === now.getFullYear() &&
     d.getMonth() === now.getMonth() &&
@@ -27,7 +31,7 @@ export function isToday(date: string): boolean {
 }
 
 export function isOverdue(date: string): boolean {
-  const d = new Date(date + 'T00:00:00');
+  const d = dateFromDateOnly(date);
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   return d < now;

@@ -51,36 +51,39 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     return () => ac.abort();
   }, [fetchTasks]);
 
-  const toggleCompletion = async (task: TaskWithRelations) => {
+  const handleToggle = useCallback(async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
     const toggled = {
       ...task,
       completed: !task.completed,
       completedAt: !task.completed ? new Date().toISOString() : null,
     };
     startTransition(() => {
-      setTasks(prev => prev.map(t => t.id === task.id ? toggled : t));
+      setTasks(prev => prev.map(t => t.id === id ? toggled : t));
     });
 
     try {
       const res = await fetch('/api/tasks', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: task.id, _action: 'toggle' }),
+        body: JSON.stringify({ id, _action: 'toggle' }),
       });
       if (!res.ok) throw new Error('Failed to toggle');
       const updated = await res.json();
       startTransition(() => {
-        setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
+        setTasks(prev => prev.map(t => t.id === id ? updated : t));
       });
     } catch (e) {
       startTransition(() => {
-        setTasks(prev => prev.map(t => t.id === task.id ? task : t));
+        setTasks(prev => prev.map(t => t.id === id ? task : t));
       });
       console.error('Toggle failed, reverted', e);
     }
-  };
+  }, [tasks]);
 
-  const deleteTask = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     const previousTasks = tasks;
     startTransition(() => {
       setTasks(prev => prev.filter(t => t.id !== id));
@@ -99,19 +102,22 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       });
       console.error('Delete failed, reverted', e);
     }
-  };
+  }, [tasks]);
 
-  const openEdit = (task: TaskWithRelations) => {
-    setEditingTask(task);
-    setDialogKey(k => k + 1);
-    setDialogOpen(true);
-  };
+  const handleEdit = useCallback((id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      setEditingTask(task);
+      setDialogKey(k => k + 1);
+      setDialogOpen(true);
+    }
+  }, [tasks]);
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setEditingTask(undefined);
     setDialogKey(k => k + 1);
     setDialogOpen(true);
-  };
+  }, []);
 
   const displayedTasks = showCompleted ? tasks : tasks.filter(t => !t.completed);
   const activeTasks = tasks.filter(t => !t.completed);
@@ -184,9 +190,9 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 <TaskCard
                   key={task.id}
                   task={task}
-                  onToggle={() => toggleCompletion(task)}
-                  onEdit={() => openEdit(task)}
-                  onDelete={() => deleteTask(task.id)}
+                  onToggle={handleToggle}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
                 />
               ))
             )}

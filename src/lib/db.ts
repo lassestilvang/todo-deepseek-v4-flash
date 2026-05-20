@@ -102,6 +102,17 @@ function initializeSchema(db: Database.Database) {
     );
   `);
 
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_tasks_date ON tasks(date);
+    CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed);
+    CREATE INDEX IF NOT EXISTS idx_tasks_list_id ON tasks(list_id);
+    CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
+    CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at);
+    CREATE INDEX IF NOT EXISTS idx_subtasks_task_id ON subtasks(task_id);
+    CREATE INDEX IF NOT EXISTS idx_task_labels_task_id ON task_labels(task_id);
+    CREATE INDEX IF NOT EXISTS idx_task_labels_label_id ON task_labels(label_id);
+  `);
+
   // Seed default inbox list if not exists
   const existing = db.prepare('SELECT id FROM lists WHERE is_default = 1').get();
   if (!existing) {

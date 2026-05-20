@@ -374,13 +374,13 @@ export function Sidebar() {
                       >
                         <Pencil className="h-3 w-3" />
                       </button>
-                      {confirmingDelete === list.id ? (
+                      {confirmingDelete === `list:${list.id}` ? (
                         <span className="flex items-center gap-0.5 text-xs">
                           <button
                             onClick={(e) => { e.preventDefault(); deleteList(list.id); }}
                             className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
                           >
-                            Del
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
@@ -393,7 +393,7 @@ export function Sidebar() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            setConfirmingDelete(list.id);
+                            setConfirmingDelete(`list:${list.id}`);
                           }}
                           className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
                         >
@@ -463,13 +463,13 @@ export function Sidebar() {
                 <span className="text-base shrink-0">{label.icon}</span>
                 <span className="flex-1 truncate">{label.name}</span>
                 <div className="hidden group-hover:flex items-center gap-0.5">
-                  {confirmingDelete === label.id ? (
+                  {confirmingDelete === `label:${label.id}` ? (
                     <span className="flex items-center gap-0.5 text-xs">
                       <button
                         onClick={(e) => { e.preventDefault(); deleteLabel(label.id); }}
                         className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
                       >
-                        Del
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
@@ -482,7 +482,7 @@ export function Sidebar() {
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        setConfirmingDelete(label.id);
+                        setConfirmingDelete(`label:${label.id}`);
                       }}
                       className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
                     >

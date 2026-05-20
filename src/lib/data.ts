@@ -507,9 +507,20 @@ export function deleteTask(id: string): void {
 }
 
 export function toggleTaskCompletion(id: string): TaskWithRelations | undefined {
-  const task = getTask(id);
-  if (!task) return undefined;
-  return updateTask(id, { completed: !task.completed });
+  const db = getDb();
+  const existing = getTask(id);
+  if (!existing) return undefined;
+  const now = new Date().toISOString();
+  const newCompleted = existing.completed ? 0 : 1;
+  db.prepare(`
+    UPDATE tasks
+    SET completed = ?,
+        completed_at = CASE WHEN ? THEN ? ELSE NULL END,
+        updated_at = ?
+    WHERE id = ?
+  `).run(newCompleted, newCompleted, now, now, id);
+  logActivity(db, id, newCompleted ? 'completed' : 'uncompleted', 'completed', '', '');
+  return getTask(id);
 }
 
 // --- Subtasks ---

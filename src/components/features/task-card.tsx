@@ -27,9 +27,9 @@ const priorityConfig: Record<string, { color: string; label: string }> = {
 
 interface TaskCardProps {
   task: TaskWithRelations;
-  onToggle: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onToggle: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
@@ -60,7 +60,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       <div className="p-3 sm:p-4">
         <div className="flex items-start gap-3">
           <button
-            onClick={onToggle}
+            onClick={() => onToggle(task.id)}
             className={cn(
               'mt-0.5 shrink-0 transition-all duration-200',
               'hover:scale-110 active:scale-95'
@@ -83,7 +83,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                     'hover:text-primary',
                     task.completed && 'line-through text-muted-foreground/70'
                   )}
-                  onClick={onEdit}
+                  onClick={() => onEdit(task.id)}
                 >
                   {task.name}
                 </h3>
@@ -95,12 +95,12 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
               </div>
 
               <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={onEdit}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => onEdit(task.id)}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
                 {confirmingDelete ? (
                   <span className="flex items-center gap-0.5">
-                    <Button variant="destructive" size="icon" className="h-7 w-7 rounded-lg" onClick={() => { onDelete(); setConfirmingDelete(false); }}>
+                    <Button variant="destructive" size="icon" className="h-7 w-7 rounded-lg" onClick={() => { onDelete(task.id); setConfirmingDelete(false); }}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => setConfirmingDelete(false)}>
