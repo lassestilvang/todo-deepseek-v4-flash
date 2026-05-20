@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,8 @@ import {
   X,
   Check,
   Search,
+  LayoutList,
+  Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -48,7 +50,9 @@ export function Sidebar() {
   const [showNewLabel, setShowNewLabel] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -60,30 +64,28 @@ export function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchLists = async () => {
+  const fetchLists = useCallback(async () => {
     try {
       const res = await fetch('/api/lists');
-      const data = await res.json();
-      setLists(data);
+      setLists(await res.json());
     } catch (e) {
       console.error('Failed to fetch lists', e);
     }
-  };
+  }, []);
 
-  const fetchLabels = async () => {
+  const fetchLabels = useCallback(async () => {
     try {
       const res = await fetch('/api/labels');
-      const data = await res.json();
-      setLabels(data);
+      setLabels(await res.json());
     } catch (e) {
       console.error('Failed to fetch labels', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetch('/api/lists').then(r => r.json()).then(data => setLists(data)).catch(() => {});
-    fetch('/api/labels').then(r => r.json()).then(data => setLabels(data)).catch(() => {});
-  }, []);
+    fetchLists();
+    fetchLabels();
+  }, [fetchLists, fetchLabels]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,7 +105,7 @@ export function Sidebar() {
 
   const createList = async () => {
     if (!newListName.trim()) return;
-    const colors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    const colors = ['#d97706', '#059669', '#6366f1', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
     const icons = ['📋', '🎯', '⭐', '💼', '🏠', '📚', '🎨', '💪', '🎵', '✈️'];
     const res = await fetch('/api/lists', {
       method: 'POST',
@@ -145,7 +147,7 @@ export function Sidebar() {
 
   const createLabel = async () => {
     if (!newLabelName.trim()) return;
-    const colors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    const colors = ['#d97706', '#059669', '#6366f1', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
     const icons = ['🏷️', '🔖', '⭐', '❤️', '💡', '🎯', '📌', '🔥', '💎', '⚡'];
     const res = await fetch('/api/labels', {
       method: 'POST',
@@ -174,39 +176,45 @@ export function Sidebar() {
     setConfirmingDelete(null);
   };
 
-  const doSearch = async (q: string) => {
+  const doSearch = (q: string) => {
     setSearchQuery(q);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     if (q.length < 2) {
       setSearchResults([]);
+      setSearching(false);
       return;
     }
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setSearchResults(data);
-    } catch (e) {
-      console.error(e);
-    }
+    setSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        setSearchResults(await res.json());
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setSearching(false);
+      }
+    }, 200);
   };
 
   const isActive = (href: string) => pathname === href;
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside ref={sidebarRef} className="hidden md:flex flex-col w-64 border-r bg-sidebar text-sidebar-foreground shrink-0 overflow-hidden">
-        {/* Header */}
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-bold tracking-tight">Planner</h1>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSearchOpen(!searchOpen)}>
+            <h1 className="text-lg font-bold tracking-tight">
+              <span className="text-primary">Planner</span>
+            </h1>
+            <div className="flex items-center gap-0.5">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSearchOpen(!searchOpen)}>
                 <Search className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 rounded-lg"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
               >
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : theme === 'light' ? <Moon className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
@@ -214,66 +222,83 @@ export function Sidebar() {
             </div>
           </div>
           {searchOpen && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative"
+            >
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/60" />
               <Input
                 placeholder="Search tasks..."
-                className="pl-8 h-8 text-sm"
+                className="pl-8 h-8 text-sm rounded-lg"
                 value={searchQuery}
                 onChange={(e) => doSearch(e.target.value)}
                 autoFocus
               />
+              {searching && (
+                <div className="absolute right-2.5 top-2.5">
+                  <span className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin block" />
+                </div>
+              )}
               {searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-xl shadow-xl max-h-72 overflow-y-auto z-50 p-1">
                   {searchResults.map((task) => (
                     <Link
                       key={task.id}
                       href={`/list/${task.listId}`}
-                      className="block px-3 py-2 text-sm hover:bg-accent"
+                      className="block px-3 py-2.5 text-sm rounded-lg hover:bg-accent/50 transition-colors"
                     >
-                      <div className="font-medium">{task.name}</div>
+                      <div className="font-medium leading-tight">{task.name}</div>
                       {task.description && (
-                        <div className="text-xs text-muted-foreground truncate">{task.description}</div>
+                        <div className="text-xs text-muted-foreground/70 truncate mt-0.5">{task.description}</div>
                       )}
-                      {task.list && <div className="text-xs text-muted-foreground">{task.list.icon} {task.list.name}</div>}
+                      {task.list && <div className="text-xs text-muted-foreground/50 mt-0.5">{task.list.icon} {task.list.name}</div>}
                     </Link>
                   ))}
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {/* Views */}
-          <div className="px-2 py-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Views</span>
+        <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
+          <div className="px-2 py-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Views</span>
           </div>
           {views.map((view) => {
             const Icon = view.icon;
+            const active = isActive(view.href);
             return (
               <Link
                 key={view.id}
                 href={view.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive(view.href)
-                    ? 'bg-accent text-accent-foreground'
+                  'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
+                  active
+                    ? 'bg-primary/10 text-primary shadow-sm'
                     : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
                 <span>{view.label}</span>
+                {active && (
+                  <motion.div
+                    layoutId="activeNav"
+                    className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                  />
+                )}
               </Link>
             );
           })}
 
           <Separator className="my-3" />
 
-          {/* Lists */}
-          <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Lists</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowNewList(true)}>
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
+              <LayoutList className="h-3 w-3" />
+              Lists
+            </span>
+            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md" onClick={() => setShowNewList(true)}>
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -284,24 +309,24 @@ export function Sidebar() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="px-2"
+                className="overflow-hidden"
               >
                 <form
                   onSubmit={(e) => { e.preventDefault(); createList(); }}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 px-1 py-1"
                 >
                   <Input
                     value={newListName}
                     onChange={(e) => setNewListName(e.target.value)}
                     placeholder="List name..."
-                    className="h-8 text-sm"
+                    className="h-8 text-sm rounded-lg"
                     autoFocus
                   />
-                  <Button type="submit" size="icon" variant="ghost" className="h-8 w-8">
-                    <Check className="h-4 w-4" />
+                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
+                    <Check className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowNewList(false)}>
-                    <X className="h-4 w-4" />
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md" onClick={() => setShowNewList(false)}>
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </form>
               </motion.div>
@@ -313,15 +338,15 @@ export function Sidebar() {
               {editingList === list.id ? (
                 <form
                   onSubmit={(e) => { e.preventDefault(); updateList(list.id); }}
-                  className="flex items-center gap-1 px-2"
+                  className="flex items-center gap-1 px-1 py-1"
                 >
                   <Input
                     value={editListName}
                     onChange={(e) => setEditListName(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-8 text-sm rounded-lg"
                     autoFocus
                   />
-                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7">
+                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
                     <Check className="h-3.5 w-3.5" />
                   </Button>
                 </form>
@@ -329,13 +354,13 @@ export function Sidebar() {
                 <Link
                   href={`/list/${list.id}`}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 group/link',
                     isActive(`/list/${list.id}`)
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                      : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                   )}
                 >
-                  <span className="text-base">{list.icon}</span>
+                  <span className="text-base shrink-0">{list.icon}</span>
                   <span className="flex-1 truncate">{list.name}</span>
                   {!list.isDefault && (
                     <div className="hidden group-hover:flex items-center gap-0.5">
@@ -345,21 +370,21 @@ export function Sidebar() {
                           setEditingList(list.id);
                           setEditListName(list.name);
                         }}
-                        className="p-1 rounded hover:bg-sidebar-accent"
+                        className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
                       >
                         <Pencil className="h-3 w-3" />
                       </button>
                       {confirmingDelete === list.id ? (
-                        <span className="flex items-center gap-1 text-xs">
+                        <span className="flex items-center gap-0.5 text-xs">
                           <button
                             onClick={(e) => { e.preventDefault(); deleteList(list.id); }}
-                            className="p-1 rounded text-destructive hover:bg-destructive/20 font-medium"
+                            className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
                           >
-                            Delete
+                            Del
                           </button>
                           <button
                             onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
-                            className="p-1 rounded hover:bg-sidebar-accent"
+                            className="p-1 rounded-md hover:bg-sidebar-accent"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -370,7 +395,7 @@ export function Sidebar() {
                             e.preventDefault();
                             setConfirmingDelete(list.id);
                           }}
-                          className="p-1 rounded hover:bg-destructive/20 text-destructive"
+                          className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -384,10 +409,12 @@ export function Sidebar() {
 
           <Separator className="my-3" />
 
-          {/* Labels */}
-          <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Labels</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowNewLabel(true)}>
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
+              <Tag className="h-3 w-3" />
+              Labels
+            </span>
+            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md" onClick={() => setShowNewLabel(true)}>
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -398,24 +425,24 @@ export function Sidebar() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="px-2"
+                className="overflow-hidden"
               >
                 <form
                   onSubmit={(e) => { e.preventDefault(); createLabel(); }}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 px-1 py-1"
                 >
                   <Input
                     value={newLabelName}
                     onChange={(e) => setNewLabelName(e.target.value)}
                     placeholder="Label name..."
-                    className="h-8 text-sm"
+                    className="h-8 text-sm rounded-lg"
                     autoFocus
                   />
-                  <Button type="submit" size="icon" variant="ghost" className="h-8 w-8">
-                    <Check className="h-4 w-4" />
+                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
+                    <Check className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowNewLabel(false)}>
-                    <X className="h-4 w-4" />
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md" onClick={() => setShowNewLabel(false)}>
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </form>
               </motion.div>
@@ -427,26 +454,26 @@ export function Sidebar() {
               <Link
                 href={`/label/${label.id}`}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
                   isActive(`/label/${label.id}`)
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                    : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                 )}
               >
-                <span className="text-base">{label.icon}</span>
+                <span className="text-base shrink-0">{label.icon}</span>
                 <span className="flex-1 truncate">{label.name}</span>
                 <div className="hidden group-hover:flex items-center gap-0.5">
                   {confirmingDelete === label.id ? (
-                    <span className="flex items-center gap-1 text-xs">
+                    <span className="flex items-center gap-0.5 text-xs">
                       <button
                         onClick={(e) => { e.preventDefault(); deleteLabel(label.id); }}
-                        className="p-1 rounded text-destructive hover:bg-destructive/20 font-medium"
+                        className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
                       >
-                        Delete
+                        Del
                       </button>
                       <button
                         onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
-                        className="p-1 rounded hover:bg-sidebar-accent"
+                        className="p-1 rounded-md hover:bg-sidebar-accent"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -457,7 +484,7 @@ export function Sidebar() {
                         e.preventDefault();
                         setConfirmingDelete(label.id);
                       }}
-                      className="p-1 rounded hover:bg-destructive/20 text-destructive"
+                      className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
