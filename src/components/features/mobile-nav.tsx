@@ -30,6 +30,7 @@ export function MobileNav() {
                 'relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors',
                 active ? 'text-primary' : 'text-muted-foreground/60 hover:text-muted-foreground'
               )}
+              aria-current={active ? 'page' : undefined}
             >
               {active && (
                 <motion.div

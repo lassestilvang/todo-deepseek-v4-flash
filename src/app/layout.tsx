@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ToastProvider } from '@/components/toast-provider';
+import { NavigationProgress } from '@/components/navigation-progress';
 import { Sidebar } from '@/components/features/sidebar';
 import { MobileNav } from '@/components/features/mobile-nav';
 
@@ -19,6 +20,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Daily Planner',
   description: 'A warm, beautiful daily task planner',
+  icons: { icon: '/favicon.ico' },
+  other: {
+    'theme-color': '#fbf8f4',
+    'dark:theme-color': '#1a1612',
+  },
 };
 
 export default function RootLayout({
@@ -50,9 +56,16 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <ToastProvider>
+            <NavigationProgress />
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[300] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-sm focus:font-medium focus:shadow-lg"
+            >
+              Skip to main content
+            </a>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-background">
+              <main id="main-content" className="flex-1 overflow-y-auto bg-background focus:outline-none" tabIndex={-1}>
                 {children}
               </main>
             </div>

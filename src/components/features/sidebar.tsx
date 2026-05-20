@@ -278,6 +278,7 @@ export function Sidebar() {
                     ? 'bg-primary/10 text-primary shadow-sm'
                     : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
+                aria-current={active ? 'page' : undefined}
               >
                 <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
                 <span>{view.label}</span>
@@ -359,6 +360,7 @@ export function Sidebar() {
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
                       : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                   )}
+                  aria-current={isActive(`/list/${list.id}`) ? 'page' : undefined}
                 >
                   <span className="text-base shrink-0">{list.icon}</span>
                   <span className="flex-1 truncate">{list.name}</span>
@@ -459,6 +461,7 @@ export function Sidebar() {
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
                     : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                 )}
+                aria-current={isActive(`/label/${label.id}`) ? 'page' : undefined}
               >
                 <span className="text-base shrink-0">{label.icon}</span>
                 <span className="flex-1 truncate">{label.name}</span>
