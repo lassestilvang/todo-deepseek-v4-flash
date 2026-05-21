@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus, Eye, EyeOff, ListTodo } from 'lucide-react';
+import { Plus, Eye, EyeOff, ListTodo, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from './task-card';
 import { TaskDialog } from './task-dialog';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
 import type { TaskWithRelations } from '@/types';
 
 interface TaskListViewProps {
@@ -128,6 +129,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     setDialogOpen(true);
   }, []);
 
+  useKeyboardShortcuts([
+    { key: 'n', handler: openCreate, enabled: !dialogOpen },
+  ]);
+
   const displayedTasks = showCompleted ? tasks : tasks.filter(t => !t.completed);
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
@@ -157,9 +162,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
               {showCompleted ? 'Hide' : 'Show'} completed
             </Button>
           )}
-          <Button size="sm" className="h-8 text-xs rounded-xl shadow-sm" onClick={openCreate}>
+          <Button size="sm" className="h-8 text-xs rounded-xl shadow-sm relative" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add Task
+            <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded bg-primary-foreground/20 text-primary-foreground/70 tabular-nums hidden sm:inline">N</span>
           </Button>
         </div>
       </div>
@@ -183,17 +189,24 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         <div className="space-y-2">
           <AnimatePresence mode="popLayout">
             {displayedTasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-5">
-                  <ListTodo className="h-8 w-8 text-muted-foreground/40" />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="flex flex-col items-center justify-center py-20 text-center"
+              >
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex items-center justify-center mb-6 ring-1 ring-primary/10">
+                  <Sparkles className="h-9 w-9 text-primary/40" />
                 </div>
-                <p className="text-muted-foreground/70 font-medium">{emptyMessage}</p>
-                <p className="text-xs text-muted-foreground/50 mt-1 mb-4">Stay productive, stay organized</p>
-                <Button variant="outline" size="sm" className="rounded-xl" onClick={openCreate}>
-                  <Plus className="h-4 w-4 mr-1" />
+                <p className="text-foreground/80 font-semibold text-lg">{emptyMessage}</p>
+                <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs">
+                  Everything has its beginning. Press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70 tabular-nums">N</kbd> to create your first task
+                </p>
+                <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={openCreate}>
+                  <Plus className="h-4 w-4 mr-1.5" />
                   Create your first task
                 </Button>
-              </div>
+              </motion.div>
             ) : (
               displayedTasks.map((task) => (
                 <TaskCard

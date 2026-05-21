@@ -129,6 +129,15 @@ body {
   @apply bg-background text-foreground font-sans;
 }
 
+:focus-visible {
+  @apply outline-none ring-2 ring-ring/30 ring-offset-2 ring-offset-background;
+  transition: ring 0.15s ease;
+}
+
+kbd {
+  @apply border border-border bg-muted/50;
+}
+
 ::selection {
   background-color: oklch(0.65 0.18 40 / 0.2);
   color: inherit;
