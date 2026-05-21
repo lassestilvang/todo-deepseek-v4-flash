@@ -11,6 +11,7 @@ import {
   Calendar,
   AlignLeft,
   GripVertical,
+  Repeat,
 } from 'lucide-react';
 import {
   Dialog,
@@ -25,7 +26,7 @@ import { Label as ULabel } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { TaskWithRelations, Subtask, Priority } from '@/types';
+import type { TaskWithRelations, Subtask, Priority, Recurrence, RecurrenceType } from '@/types';
 import { useToast } from '@/components/toast-provider';
 import { useListCache, useLabelCache } from '@/hooks/use-cache';
 import { cn, getContrastColor } from '@/lib/utils';
@@ -51,6 +52,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [deadline, setDeadline] = useState(task?.deadline || '');
   const [estimate, setEstimate] = useState(task?.estimate || '');
   const [priority, setPriority] = useState(task?.priority || 'none');
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrence?.type || 'none');
   const [listId, setListId] = useState(task?.listId || 'inbox');
   const [subtasks, setSubtasks] = useState<Subtask[]>(task?.subtasks || []);
   const [newSubtask, setNewSubtask] = useState('');
@@ -73,6 +75,8 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     if (!name.trim()) return;
     setSaving(true);
 
+    const recurrence: Recurrence | null = recurrenceType === 'none' ? null : { type: recurrenceType };
+
     const body: {
       name: string;
       description: string;
@@ -83,6 +87,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
       listId: string;
       labels: string[];
       subtasks: { id: string; title: string; completed: boolean }[];
+      recurrence: Recurrence | null;
     } = {
       name: name.trim(),
       description,
@@ -93,6 +98,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
       listId,
       labels: selectedLabels,
       subtasks: subtasks.map(s => ({ id: s.id, title: s.title, completed: s.completed })),
+      recurrence,
     };
 
     try {
@@ -290,6 +296,26 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-1.5 sm:space-y-2">
+              <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <Repeat className="h-3.5 w-3.5" />
+                Repeat
+              </ULabel>
+              <div className="flex flex-wrap gap-1.5">
+                {(['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly'] as const).map((type) => (
+                  <Button
+                    key={type}
+                    variant={recurrenceType === type ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn('h-8 text-xs rounded-lg transition-all capitalize', recurrenceType === type && 'shadow-sm')}
+                    onClick={() => setRecurrenceType(type)}
+                  >
+                    {type === 'none' ? 'No repeat' : type}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
 
