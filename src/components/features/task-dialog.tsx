@@ -41,7 +41,7 @@ interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: TaskWithRelations;
-  onSave: () => void;
+  onSave: (saved: TaskWithRelations) => void;
 }
 
 export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps) {
@@ -96,21 +96,24 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     };
 
     try {
+      let res;
       if (task) {
-        await fetch('/api/tasks', {
+        res = await fetch('/api/tasks', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: task.id, ...body }),
         });
       } else {
-        await fetch('/api/tasks', {
+        res = await fetch('/api/tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
       }
+      if (!res.ok) throw new Error('Failed to save');
+      const saved = await res.json();
       toast(task ? 'Task updated' : 'Task created', 'success');
-      onSave();
+      onSave(saved);
       onOpenChange(false);
     } catch (e) {
       toast('Failed to save task', 'error');

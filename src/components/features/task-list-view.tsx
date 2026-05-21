@@ -228,8 +228,14 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         task={editingTask}
-        onSave={() => {
-          fetchTasks();
+        onSave={(saved) => {
+          startTransition(() => {
+            setTasks(prev => {
+              const exists = prev.find(t => t.id === saved.id);
+              if (exists) return prev.map(t => t.id === saved.id ? saved : t);
+              return [...prev, saved];
+            });
+          });
           invalidateCache('task-counts');
           setDialogOpen(false);
         }}
