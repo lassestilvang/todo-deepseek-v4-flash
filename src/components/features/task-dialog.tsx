@@ -25,8 +25,9 @@ import { Label as ULabel } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { TaskWithRelations, Subtask, Label as LabelType, List, Priority } from '@/types';
+import type { TaskWithRelations, Subtask, Priority } from '@/types';
 import { useToast } from '@/components/toast-provider';
+import { useListCache, useLabelCache } from '@/hooks/use-cache';
 import { cn, getContrastColor } from '@/lib/utils';
 
 const priorities = [
@@ -53,41 +54,25 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [listId, setListId] = useState(task?.listId || 'inbox');
   const [subtasks, setSubtasks] = useState<Subtask[]>(task?.subtasks || []);
   const [newSubtask, setNewSubtask] = useState('');
-  const [lists, setLists] = useState<List[]>([]);
-  const [allLabels, setAllLabels] = useState<LabelType[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>(task?.labels || []);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-  const listsFetched = useRef(false);
-  const labelsFetched = useRef(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const { lists } = useListCache();
+  const { labels: allLabels } = useLabelCache();
 
   useEffect(() => {
-    if (open) {
-      if (!listsFetched.current) {
-        fetch('/api/lists').then(r => r.json()).then(data => {
-          setLists(data);
-          listsFetched.current = true;
-        }).catch(() => {});
-      }
-      if (!labelsFetched.current) {
-        fetch('/api/labels').then(r => r.json()).then(data => {
-          setAllLabels(data);
-          labelsFetched.current = true;
-        }).catch(() => {});
-      }
-      if (!task) {
-        setTimeout(() => nameInputRef.current?.focus(), 100);
-      }
+    if (open && !task) {
+      setTimeout(() => nameInputRef.current?.focus(), 100);
     }
   }, [open, task]);
 
   useEffect(() => {
     if (!open) {
-      listsFetched.current = false;
-      labelsFetched.current = false;
+      setSelectedLabels(task?.labels || []);
+      setSubtasks(task?.subtasks || []);
     }
-  }, [open]);
+  }, [open, task]);
 
   const handleSave = async () => {
     if (!name.trim()) return;

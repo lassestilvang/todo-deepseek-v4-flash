@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
+import { useListCache, useLabelCache, invalidateCache } from '@/hooks/use-cache';
 import type { List, Label, TaskWithRelations } from '@/types';
 
 const views = [
@@ -38,8 +39,8 @@ const views = [
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const [lists, setLists] = useState<List[]>([]);
-  const [labels, setLabels] = useState<Label[]>([]);
+  const { lists, refresh: refreshLists } = useListCache();
+  const { labels, refresh: refreshLabels } = useLabelCache();
   const [showNewList, setShowNewList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [editingList, setEditingList] = useState<string | null>(null);
@@ -64,29 +65,6 @@ export function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchLists = useCallback(async () => {
-    try {
-      const res = await fetch('/api/lists');
-      setLists(await res.json());
-    } catch (e) {
-      console.error('Failed to fetch lists', e);
-    }
-  }, []);
-
-  const fetchLabels = useCallback(async () => {
-    try {
-      const res = await fetch('/api/labels');
-      setLabels(await res.json());
-    } catch (e) {
-      console.error('Failed to fetch labels', e);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchLists();
-    fetchLabels();
-  }, [fetchLists, fetchLabels]);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -107,7 +85,7 @@ export function Sidebar() {
     if (!newListName.trim()) return;
     const colors = ['#d97706', '#059669', '#6366f1', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
     const icons = ['📋', '🎯', '⭐', '💼', '🏠', '📚', '🎨', '💪', '🎵', '✈️'];
-    const res = await fetch('/api/lists', {
+    await fetch('/api/lists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -116,11 +94,9 @@ export function Sidebar() {
         icon: icons[Math.floor(Math.random() * icons.length)],
       }),
     });
-    if (res.ok) {
-      setNewListName('');
-      setShowNewList(false);
-      fetchLists();
-    }
+    invalidateCache('lists');
+    setNewListName('');
+    setShowNewList(false);
   };
 
   const updateList = async (id: string) => {
@@ -130,26 +106,26 @@ export function Sidebar() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, name: editListName }),
     });
+    invalidateCache('lists');
     setEditingList(null);
-    fetchLists();
   };
 
   const deleteList = async (id: string) => {
+    invalidateCache('lists');
+    setConfirmingDelete(null);
     try {
       const res = await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       if (!res.ok) { console.error('Failed to delete list', await res.text()); return; }
-      fetchLists();
     } catch (e) {
       console.error('Failed to delete list', e);
     }
-    setConfirmingDelete(null);
   };
 
   const createLabel = async () => {
     if (!newLabelName.trim()) return;
     const colors = ['#d97706', '#059669', '#6366f1', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
     const icons = ['🏷️', '🔖', '⭐', '❤️', '💡', '🎯', '📌', '🔥', '💎', '⚡'];
-    const res = await fetch('/api/labels', {
+    await fetch('/api/labels', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -158,22 +134,20 @@ export function Sidebar() {
         icon: icons[Math.floor(Math.random() * icons.length)],
       }),
     });
-    if (res.ok) {
-      setNewLabelName('');
-      setShowNewLabel(false);
-      fetchLabels();
-    }
+    invalidateCache('labels');
+    setNewLabelName('');
+    setShowNewLabel(false);
   };
 
   const deleteLabel = async (id: string) => {
+    invalidateCache('labels');
+    setConfirmingDelete(null);
     try {
       const res = await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       if (!res.ok) { console.error('Failed to delete label', await res.text()); return; }
-      fetchLabels();
     } catch (e) {
       console.error('Failed to delete label', e);
     }
-    setConfirmingDelete(null);
   };
 
   const doSearch = (q: string) => {
