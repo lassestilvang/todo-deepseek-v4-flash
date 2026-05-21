@@ -183,12 +183,24 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                 <Calendar className="h-3.5 w-3.5" />
                 Date
               </ULabel>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full h-9 rounded-xl border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
+                />
+                {date && (
+                  <button
+                    type="button"
+                    onClick={() => setDate('')}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-muted transition-colors"
+                    aria-label="Clear date"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground/60" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
@@ -196,12 +208,24 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                 <Clock className="h-3.5 w-3.5" />
                 Deadline
               </ULabel>
-              <input
-                type="datetime-local"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full h-9 rounded-xl border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
-              />
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
+                />
+                {deadline && (
+                  <button
+                    type="button"
+                    onClick={() => setDeadline('')}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-muted transition-colors"
+                    aria-label="Clear deadline"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground/60" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
