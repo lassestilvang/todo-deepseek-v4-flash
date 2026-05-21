@@ -224,7 +224,7 @@ export function Sidebar() {
                   {searchResults.map((task) => (
                     <Link
                       key={task.id}
-                      href={`/list/${task.listId}`}
+                      href={`/list/${task.listId}?edit=${task.id}`}
                       className="block px-3 py-2.5 text-sm rounded-lg hover:bg-accent/50 transition-colors"
                     >
                       <div className="font-medium leading-tight">{task.name}</div>
@@ -234,6 +234,11 @@ export function Sidebar() {
                       {task.list && <div className="text-xs text-muted-foreground/50 mt-0.5">{task.list.icon} {task.list.name}</div>}
                     </Link>
                   ))}
+                </div>
+              )}
+              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-xl shadow-xl z-50 p-3 text-center">
+                  <p className="text-xs text-muted-foreground/70">No tasks found for &ldquo;{searchQuery}&rdquo;</p>
                 </div>
               )}
             </motion.div>

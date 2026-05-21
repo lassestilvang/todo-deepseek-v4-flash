@@ -56,6 +56,29 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     return () => ac.abort();
   }, [fetchTasks]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const editId = params.get('edit');
+    if (editId) {
+      const task = tasks.find(t => t.id === editId);
+      if (task && tasks.length > 0) {
+        setEditingTask(task);
+        setDialogKey(k => k + 1);
+        setDialogOpen(true);
+      }
+    }
+  }, [tasks]);
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('edit')) {
+        url.searchParams.delete('edit');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [dialogOpen]);
+
   const toggleRef = useRef<((id: string) => void) | null>(null);
 
   const handleToggle = useCallback(async (id: string) => {
