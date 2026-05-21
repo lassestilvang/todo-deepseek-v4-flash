@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
-import type { List, Label, TaskWithRelations } from '@/types';
+import type { TaskWithRelations } from '@/types';
 
 const views = [
   { id: 'today', label: 'Today', icon: Calendar, href: '/today' },

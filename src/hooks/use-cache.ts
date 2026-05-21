@@ -95,6 +95,7 @@ export function useCachedFetch<T>(url: string | null, key: string): {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetching pattern
     fetchData();
     const unsub = subscribe(key, () => {
       const updated = getCached<T>(key);

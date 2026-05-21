@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { Plus, Eye, EyeOff, ListTodo, Sparkles } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Plus, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from './task-card';
 import { TaskDialog } from './task-dialog';
@@ -49,6 +49,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   }, [endpoint]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional loading state
     setLoading(true);
     const ac = new AbortController();
     fetchTasks(ac.signal);

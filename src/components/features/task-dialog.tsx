@@ -67,12 +67,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     }
   }, [open, task]);
 
-  useEffect(() => {
-    if (!open) {
-      setSelectedLabels(task?.labels || []);
-      setSubtasks(task?.subtasks || []);
-    }
-  }, [open, task]);
+  // Reset state is handled by key prop in parent component
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -144,22 +139,22 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto gap-0 p-0">
-        <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="text-xl">{task ? 'Edit Task' : 'New Task'}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-none sm:rounded-xl">
+        <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
+          <DialogTitle className="text-lg sm:text-xl">{task ? 'Edit Task' : 'New Task'}</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             {task ? 'Update your task details.' : 'Create a new task to stay organized.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 pb-6 space-y-5">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 sm:space-y-5">
           <div>
             <Input
               ref={nameInputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="What needs to be done?"
-              className="text-lg font-semibold h-11 px-4 rounded-xl border-2 focus:border-primary/50"
+              className="text-base sm:text-lg font-semibold h-10 sm:h-11 px-3 sm:px-4 rounded-xl border-2 focus:border-primary/50"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -182,8 +177,8 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
           <Separator />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2">
               <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 Date
@@ -196,7 +191,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 Deadline
@@ -209,7 +204,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 Estimate (HH:mm)
@@ -222,7 +217,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Flag className="h-3.5 w-3.5" />
                 Priority
@@ -246,7 +241,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
               </div>
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
               <ULabel className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <ListIcon className="h-3.5 w-3.5" />
                 List
@@ -358,15 +353,15 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-6 py-4 bg-muted/30 border-t">
-          <span className="text-xs text-muted-foreground/60">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 bg-muted/30 border-t sticky bottom-0">
+          <span className="text-xs text-muted-foreground/60 hidden sm:inline">
             {task ? 'Editing existing task' : 'Press Enter to save quickly'}
           </span>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl">
+          <div className="flex items-center gap-2 ml-auto">
+            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="rounded-xl">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!name.trim() || saving} className="rounded-xl shadow-sm">
+            <Button size="sm" onClick={handleSave} disabled={!name.trim() || saving} className="rounded-xl shadow-sm">
               {saving ? (
                 <span className="flex items-center gap-1.5">
                   <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />

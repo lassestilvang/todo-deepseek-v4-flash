@@ -10,11 +10,12 @@ export function NavigationProgress() {
 
   useEffect(() => {
     if (pending) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional navigation progress
       setVisible(true);
       setProgress(0);
-      const t1 = setTimeout(() => setProgress(30), 50);
-      const t2 = setTimeout(() => setProgress(60), 300);
-      const t3 = setTimeout(() => setProgress(85), 800);
+      const t1 = setTimeout(() => { setProgress(30); }, 50);
+      const t2 = setTimeout(() => { setProgress(60); }, 300);
+      const t3 = setTimeout(() => { setProgress(85); }, 800);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
@@ -22,7 +23,7 @@ export function NavigationProgress() {
       };
     } else if (visible) {
       setProgress(100);
-      const t = setTimeout(() => setVisible(false), 400);
+      const t = setTimeout(() => { setVisible(false); }, 400);
       return () => clearTimeout(t);
     }
   }, [pending, visible]);
