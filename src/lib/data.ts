@@ -262,13 +262,13 @@ function getReminders(db: Database.Database, taskId: string): Reminder[] {
   }));
 }
 
-function hydrateTasks(db: Database.Database, rows: Record<string, any>[]): TaskWithRelations[] {
+function hydrateTasks(db: Database.Database, rows: Record<string, any>[], options?: { includeAttachments?: boolean; includeReminders?: boolean }): TaskWithRelations[] {
   const taskIds = rows.map(r => r.id);
   if (taskIds.length === 0) return [];
   const labelsMap = getBatchTaskLabelIds(db, taskIds);
   const subtasksMap = getBatchSubtasks(db, taskIds);
-  const attachmentsMap = getBatchAttachments(db, taskIds);
-  const remindersMap = getBatchReminders(db, taskIds);
+  const attachmentsMap = options?.includeAttachments ? getBatchAttachments(db, taskIds) : {};
+  const remindersMap = options?.includeReminders ? getBatchReminders(db, taskIds) : {};
   const listIds = [...new Set(rows.map(r => r.list_id))];
   const listsMap = getBatchLists(db, listIds);
   const allLabelIds = [...new Set(Object.values(labelsMap).flat())];
@@ -299,6 +299,8 @@ export function getTasks(params?: {
   endDate?: string;
   search?: string;
   includeUndated?: boolean;
+  includeAttachments?: boolean;
+  includeReminders?: boolean;
 }): TaskWithRelations[] {
   const db = getDb();
   let query = 'SELECT * FROM tasks WHERE 1=1';
@@ -336,7 +338,10 @@ export function getTasks(params?: {
   query += ' ORDER BY completed ASC, priority DESC, date ASC, created_at DESC';
 
   const rows = db.prepare(query).all(...values) as Record<string, any>[];
-  return hydrateTasks(db, rows);
+  return hydrateTasks(db, rows, {
+    includeAttachments: params?.includeAttachments,
+    includeReminders: params?.includeReminders,
+  });
 }
 
 export function getTask(id: string): TaskWithRelations | undefined {
