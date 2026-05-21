@@ -129,9 +129,22 @@ body {
   @apply bg-background text-foreground font-sans;
 }
 
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .theme-transition {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+}
+
 :focus-visible {
   @apply outline-none ring-2 ring-ring/30 ring-offset-2 ring-offset-background;
-  transition: ring 0.15s ease;
 }
 
 kbd {

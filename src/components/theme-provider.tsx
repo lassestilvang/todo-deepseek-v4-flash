@@ -53,12 +53,17 @@ export function ThemeProvider({
     }
   }, [theme]);
 
+  const setThemeWithTransition = (newTheme: Theme) => {
+    const root = window.document.documentElement;
+    root.classList.add('theme-transition');
+    localStorage.setItem(storageKey, newTheme);
+    setTheme(newTheme);
+    setTimeout(() => root.classList.remove('theme-transition'), 300);
+  };
+
   const value = {
     theme,
-    setTheme: (newTheme: Theme) => {
-      localStorage.setItem(storageKey, newTheme);
-      setTheme(newTheme);
-    },
+    setTheme: setThemeWithTransition,
   };
 
   return (
