@@ -609,6 +609,43 @@ export function removeLabelFromTask(taskId: string, labelId: string): void {
   }
 }
 
+// --- Task Counts ---
+export function getTaskCounts(): {
+  total: number;
+  today: number;
+  upcoming: number;
+  next7Days: number;
+  byList: Record<string, number>;
+  byLabel: Record<string, number>;
+} {
+  const db = getDb();
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const end7 = new Date(now);
+  end7.setDate(end7.getDate() + 6);
+
+  const total = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE completed = 0').get() as { c: number }).c;
+  const todayCount = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE date = ? AND completed = 0').get(today) as { c: number }).c;
+  const upcomingCount = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE date >= ? AND completed = 0').get(today) as { c: number }).c;
+  const next7Count = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE date >= ? AND date <= ? AND completed = 0').get(today, end7.toISOString().split('T')[0]) as { c: number }).c;
+
+  const byListRows = db.prepare('SELECT list_id, COUNT(*) as c FROM tasks WHERE completed = 0 GROUP BY list_id').all() as { list_id: string; c: number }[];
+  const byList: Record<string, number> = {};
+  for (const row of byListRows) byList[row.list_id] = row.c;
+
+  const byLabelRows = db.prepare(`
+    SELECT tl.label_id, COUNT(*) as c
+    FROM task_labels tl
+    JOIN tasks t ON t.id = tl.task_id
+    WHERE t.completed = 0
+    GROUP BY tl.label_id
+  `).all() as { label_id: string; c: number }[];
+  const byLabel: Record<string, number> = {};
+  for (const row of byLabelRows) byLabel[row.label_id] = row.c;
+
+  return { total, today: todayCount, upcoming: upcomingCount, next7Days: next7Count, byList, byLabel };
+}
+
 // --- Activity Logs ---
 function logActivity(db: Database.Database, taskId: string, action: string, field: string, oldValue: string | null, newValue: string | null): void {
   const id = generateId();

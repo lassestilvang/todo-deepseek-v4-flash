@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
-import { useListCache, useLabelCache, invalidateCache } from '@/hooks/use-cache';
+import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
 import type { List, Label, TaskWithRelations } from '@/types';
 
 const views = [
@@ -39,8 +39,9 @@ const views = [
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { lists, refresh: refreshLists } = useListCache();
-  const { labels, refresh: refreshLabels } = useLabelCache();
+  const { lists } = useListCache();
+  const { labels } = useLabelCache();
+  const { counts } = useTaskCounts();
   const [showNewList, setShowNewList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [editingList, setEditingList] = useState<string | null>(null);
@@ -95,6 +96,7 @@ export function Sidebar() {
       }),
     });
     invalidateCache('lists');
+    invalidateCache('task-counts');
     setNewListName('');
     setShowNewList(false);
   };
@@ -112,6 +114,7 @@ export function Sidebar() {
 
   const deleteList = async (id: string) => {
     invalidateCache('lists');
+    invalidateCache('task-counts');
     setConfirmingDelete(null);
     try {
       const res = await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
@@ -135,12 +138,14 @@ export function Sidebar() {
       }),
     });
     invalidateCache('labels');
+    invalidateCache('task-counts');
     setNewLabelName('');
     setShowNewLabel(false);
   };
 
   const deleteLabel = async (id: string) => {
     invalidateCache('labels');
+    invalidateCache('task-counts');
     setConfirmingDelete(null);
     try {
       const res = await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
@@ -242,6 +247,10 @@ export function Sidebar() {
           {views.map((view) => {
             const Icon = view.icon;
             const active = isActive(view.href);
+            const count = view.id === 'today' ? counts.today
+              : view.id === 'next-7-days' ? counts.next7Days
+              : view.id === 'upcoming' ? counts.upcoming
+              : view.id === 'all' ? counts.total : 0;
             return (
               <Link
                 key={view.id}
@@ -255,11 +264,19 @@ export function Sidebar() {
                 aria-current={active ? 'page' : undefined}
               >
                 <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
-                <span>{view.label}</span>
+                <span className="flex-1">{view.label}</span>
+                {count > 0 && (
+                  <span className={cn(
+                    'text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md',
+                    active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground/70'
+                  )}>
+                    {count}
+                  </span>
+                )}
                 {active && (
                   <motion.div
                     layoutId="activeNav"
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                    className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
                   />
                 )}
               </Link>
@@ -308,80 +325,87 @@ export function Sidebar() {
             )}
           </AnimatePresence>
 
-          {lists.map((list) => (
-            <div key={list.id} className="group relative">
-              {editingList === list.id ? (
-                <form
-                  onSubmit={(e) => { e.preventDefault(); updateList(list.id); }}
-                  className="flex items-center gap-1 px-1 py-1"
-                >
-                  <Input
-                    value={editListName}
-                    onChange={(e) => setEditListName(e.target.value)}
-                    className="h-8 text-sm rounded-lg"
-                    autoFocus
-                  />
-                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
-                    <Check className="h-3.5 w-3.5" />
-                  </Button>
-                </form>
-              ) : (
-                <Link
-                  href={`/list/${list.id}`}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 group/link',
-                    isActive(`/list/${list.id}`)
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                      : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-                  )}
-                  aria-current={isActive(`/list/${list.id}`) ? 'page' : undefined}
-                >
-                  <span className="text-base shrink-0">{list.icon}</span>
-                  <span className="flex-1 truncate">{list.name}</span>
-                  {!list.isDefault && (
-                    <div className="hidden group-hover:flex items-center gap-0.5">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setEditingList(list.id);
-                          setEditListName(list.name);
-                        }}
-                        className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </button>
-                      {confirmingDelete === `list:${list.id}` ? (
-                        <span className="flex items-center gap-0.5 text-xs">
-                          <button
-                            onClick={(e) => { e.preventDefault(); deleteList(list.id); }}
-                            className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
-                            className="p-1 rounded-md hover:bg-sidebar-accent"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ) : (
+          {lists.map((list) => {
+            const listCount = counts.byList[list.id] || 0;
+            const active = isActive(`/list/${list.id}`);
+            return (
+              <div key={list.id} className="group relative">
+                {editingList === list.id ? (
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); updateList(list.id); }}
+                    className="flex items-center gap-1 px-1 py-1"
+                  >
+                    <Input
+                      value={editListName}
+                      onChange={(e) => setEditListName(e.target.value)}
+                      className="h-8 text-sm rounded-lg"
+                      autoFocus
+                    />
+                    <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
+                      <Check className="h-3.5 w-3.5" />
+                    </Button>
+                  </form>
+                ) : (
+                  <Link
+                    href={`/list/${list.id}`}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 group/link',
+                      active
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                        : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                    )}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <span className="text-base shrink-0">{list.icon}</span>
+                    <span className="flex-1 truncate">{list.name}</span>
+                    {listCount > 0 && (
+                      <span className="text-[11px] tabular-nums text-muted-foreground/60 mr-1">{listCount}</span>
+                    )}
+                    {!list.isDefault && (
+                      <div className="hidden group-hover:flex items-center gap-0.5">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            setConfirmingDelete(`list:${list.id}`);
+                            setEditingList(list.id);
+                            setEditListName(list.name);
                           }}
-                          className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
+                          className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Pencil className="h-3 w-3" />
                         </button>
-                      )}
-                    </div>
-                  )}
-                </Link>
-              )}
-            </div>
-          ))}
+                        {confirmingDelete === `list:${list.id}` ? (
+                          <span className="flex items-center gap-0.5 text-xs">
+                            <button
+                              onClick={(e) => { e.preventDefault(); deleteList(list.id); }}
+                              className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
+                              className="p-1 rounded-md hover:bg-sidebar-accent"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setConfirmingDelete(`list:${list.id}`);
+                            }}
+                            className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
 
           <Separator className="my-3" />
 
@@ -425,51 +449,57 @@ export function Sidebar() {
             )}
           </AnimatePresence>
 
-          {labels.map((label) => (
-            <div key={label.id} className="group relative">
-              <Link
-                href={`/label/${label.id}`}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
-                  isActive(`/label/${label.id}`)
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                    : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-                )}
-                aria-current={isActive(`/label/${label.id}`) ? 'page' : undefined}
-              >
-                <span className="text-base shrink-0">{label.icon}</span>
-                <span className="flex-1 truncate">{label.name}</span>
-                <div className="hidden group-hover:flex items-center gap-0.5">
-                  {confirmingDelete === `label:${label.id}` ? (
-                    <span className="flex items-center gap-0.5 text-xs">
-                      <button
-                        onClick={(e) => { e.preventDefault(); deleteLabel(label.id); }}
-                        className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
-                        className="p-1 rounded-md hover:bg-sidebar-accent"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setConfirmingDelete(`label:${label.id}`);
-                      }}
-                      className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+          {labels.map((label) => {
+            const labelCount = counts.byLabel[label.id] || 0;
+            return (
+              <div key={label.id} className="group relative">
+                <Link
+                  href={`/label/${label.id}`}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
+                    isActive(`/label/${label.id}`)
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                      : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                   )}
-                </div>
-              </Link>
-            </div>
-          ))}
+                  aria-current={isActive(`/label/${label.id}`) ? 'page' : undefined}
+                >
+                  <span className="text-base shrink-0">{label.icon}</span>
+                  <span className="flex-1 truncate">{label.name}</span>
+                  {labelCount > 0 && (
+                    <span className="text-[11px] tabular-nums text-muted-foreground/60 mr-1">{labelCount}</span>
+                  )}
+                  <div className="hidden group-hover:flex items-center gap-0.5">
+                    {confirmingDelete === `label:${label.id}` ? (
+                      <span className="flex items-center gap-0.5 text-xs">
+                        <button
+                          onClick={(e) => { e.preventDefault(); deleteLabel(label.id); }}
+                          className="p-1 rounded-md text-destructive hover:bg-destructive/15 font-medium"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.preventDefault(); setConfirmingDelete(null); }}
+                          className="p-1 rounded-md hover:bg-sidebar-accent"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setConfirmingDelete(`label:${label.id}`);
+                        }}
+                        className="p-1 rounded-md hover:bg-destructive/15 text-destructive/70 hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </aside>
     </>

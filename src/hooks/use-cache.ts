@@ -120,3 +120,17 @@ export function useLabelCache() {
 }
 
 import type { List, Label } from '@/types';
+
+export interface TaskCounts {
+  total: number;
+  today: number;
+  upcoming: number;
+  next7Days: number;
+  byList: Record<string, number>;
+  byLabel: Record<string, number>;
+}
+
+export function useTaskCounts() {
+  const { data: counts, refresh } = useCachedFetch<TaskCounts>('/api/counts', 'task-counts');
+  return { counts: counts || { total: 0, today: 0, upcoming: 0, next7Days: 0, byList: {}, byLabel: {} }, refresh };
+}

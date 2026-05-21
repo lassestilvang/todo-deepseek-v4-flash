@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { TaskCard } from './task-card';
 import { TaskDialog } from './task-dialog';
 import { useToast } from '@/components/toast-provider';
+import { invalidateCache } from '@/hooks/use-cache';
 import type { TaskWithRelations } from '@/types';
 
 interface TaskListViewProps {
@@ -77,6 +78,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       startTransition(() => {
         setTasks(prev => prev.map(t => t.id === id ? updated : t));
       });
+      invalidateCache('task-counts');
       toast(toggled.completed ? 'Task completed' : 'Task reopened', 'success');
     } catch (e) {
       startTransition(() => {
@@ -100,6 +102,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error('Failed to delete');
+      invalidateCache('task-counts');
       toast('Task deleted', 'success');
     } catch (e) {
       startTransition(() => {
@@ -213,6 +216,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         task={editingTask}
         onSave={() => {
           fetchTasks();
+          invalidateCache('task-counts');
           setDialogOpen(false);
         }}
       />
