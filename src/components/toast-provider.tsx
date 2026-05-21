@@ -1,19 +1,26 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { X, CheckCircle2, AlertTriangle, Info, AlertCircle } from 'lucide-react';
+import { X, CheckCircle2, AlertTriangle, Info, AlertCircle, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
 
 interface Toast {
   id: number;
   message: string;
   type: ToastType;
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
-  toast: (message: string, type?: ToastType) => void;
+  toast: (message: string, type?: ToastType, action?: ToastAction) => void;
 }
 
 const ToastContext = createContext<ToastContextValue>({ toast: () => {} });
@@ -42,10 +49,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const toast = useCallback((message: string, type: ToastType = 'info') => {
+  const toast = useCallback((message: string, type: ToastType = 'info', action?: ToastAction) => {
     const id = ++idRef.current;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => removeToast(id), 3500);
+    setToasts(prev => [...prev, { id, message, type, action }]);
+    setTimeout(() => removeToast(id), action ? 5000 : 3500);
   }, [removeToast]);
 
   return (
@@ -66,6 +73,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           >
             {icons[t.type]}
             <p className="text-sm text-foreground/90 flex-1">{t.message}</p>
+            {t.action && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs font-semibold rounded-lg px-2 shrink-0"
+                onClick={() => {
+                  t.action!.onClick();
+                  removeToast(t.id);
+                }}
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                {t.action.label}
+              </Button>
+            )}
             <button
               onClick={() => removeToast(t.id)}
               className="shrink-0 p-0.5 rounded-md hover:bg-muted transition-colors"

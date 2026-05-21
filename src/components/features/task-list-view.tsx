@@ -56,6 +56,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     return () => ac.abort();
   }, [fetchTasks]);
 
+  const toggleRef = useRef<((id: string) => void) | null>(null);
+
   const handleToggle = useCallback(async (id: string) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
@@ -65,6 +67,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       completed: !task.completed,
       completedAt: !task.completed ? new Date().toISOString() : null,
     };
+    const wasCompleted = task.completed;
     startTransition(() => {
       setTasks(prev => prev.map(t => t.id === id ? toggled : t));
     });
@@ -81,7 +84,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         setTasks(prev => prev.map(t => t.id === id ? updated : t));
       });
       invalidateCache('task-counts');
-      toast(toggled.completed ? 'Task completed' : 'Task reopened', 'success');
+      toast(wasCompleted ? 'Task reopened' : 'Task completed', 'success', {
+        label: 'Undo',
+        onClick: () => toggleRef.current?.(id),
+      });
     } catch (e) {
       startTransition(() => {
         setTasks(prev => prev.map(t => t.id === id ? task : t));
@@ -90,6 +96,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       console.error('Toggle failed, reverted', e);
     }
   }, [tasks, toast]);
+
+  useEffect(() => { toggleRef.current = handleToggle; }, [handleToggle]);
 
   const handleDelete = useCallback(async (id: string) => {
     const previousTasks = tasks;
@@ -105,7 +113,21 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       });
       if (!res.ok) throw new Error('Failed to delete');
       invalidateCache('task-counts');
-      toast('Task deleted', 'success');
+      toast('Task deleted', 'success', {
+        label: 'Undo',
+        onClick: async () => {
+          const prev = previousTasks.find(t => t.id === id);
+          if (prev) {
+            startTransition(() => setTasks(p => [...p, prev]));
+            await fetch('/api/tasks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: prev.name, description: prev.description, date: prev.date, priority: prev.priority, listId: prev.listId }),
+            });
+            invalidateCache('task-counts');
+          }
+        },
+      });
     } catch (e) {
       startTransition(() => {
         setTasks(previousTasks);
