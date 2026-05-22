@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import {
   Flag,
   Plus,
@@ -148,9 +149,27 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-none sm:rounded-xl">
+      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-none sm:rounded-xl sm:shadow-2xl">
         <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
-          <DialogTitle className="text-lg sm:text-xl">{task ? 'Edit Task' : 'New Task'}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">
+            {task ? (
+              <motion.span
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                key="edit"
+              >
+                Edit Task
+              </motion.span>
+            ) : (
+              <motion.span
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                key="new"
+              >
+                New Task
+              </motion.span>
+            )}
+          </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
             {task ? 'Update your task details.' : 'Create a new task to stay organized.'}
           </DialogDescription>
