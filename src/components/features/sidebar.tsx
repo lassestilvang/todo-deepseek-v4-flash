@@ -273,12 +273,17 @@ export function Sidebar() {
                 <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
                 <span className="flex-1">{view.label}</span>
                 {count > 0 && (
-                  <span className={cn(
-                    'text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md',
-                    active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground/70'
-                  )}>
+                  <motion.span
+                    key={count}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className={cn(
+                      'text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md',
+                      active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground/70'
+                    )}
+                  >
                     {count}
-                  </span>
+                  </motion.span>
                 )}
                 {active && (
                   <motion.div
@@ -367,7 +372,14 @@ export function Sidebar() {
                     <span className="text-base shrink-0">{list.icon}</span>
                     <span className="flex-1 truncate">{list.name}</span>
                     {listCount > 0 && (
-                      <span className="text-[11px] tabular-nums text-muted-foreground/60 mr-1">{listCount}</span>
+                      <motion.span
+                        key={listCount}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="text-[11px] tabular-nums text-muted-foreground/60 mr-1"
+                      >
+                        {listCount}
+                      </motion.span>
                     )}
                     {!list.isDefault && (
                       <div className="hidden group-hover:flex items-center gap-0.5">
@@ -475,7 +487,14 @@ export function Sidebar() {
                   <span className="text-base shrink-0">{label.icon}</span>
                   <span className="flex-1 truncate">{label.name}</span>
                   {labelCount > 0 && (
-                    <span className="text-[11px] tabular-nums text-muted-foreground/60 mr-1">{labelCount}</span>
+                    <motion.span
+                      key={labelCount}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-[11px] tabular-nums text-muted-foreground/60 mr-1"
+                    >
+                      {labelCount}
+                    </motion.span>
                   )}
                   <div className="hidden group-hover:flex items-center gap-0.5">
                     {confirmingDelete === `label:${label.id}` ? (
