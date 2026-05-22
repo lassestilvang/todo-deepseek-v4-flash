@@ -65,7 +65,7 @@ export default function RootLayout({
             </a>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
-              <main id="main-content" className="flex-1 overflow-y-auto bg-background focus:outline-none" tabIndex={-1}>
+              <main id="main-content" className="flex-1 overflow-y-auto bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30" tabIndex={-1}>
                 {children}
               </main>
             </div>

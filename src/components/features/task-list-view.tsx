@@ -62,6 +62,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     if (editId) {
       const task = tasks.find(t => t.id === editId);
       if (task && tasks.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional dialog open from URL
         setEditingTask(task);
         setDialogKey(k => k + 1);
         setDialogOpen(true);
