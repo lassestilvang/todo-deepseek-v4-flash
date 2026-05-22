@@ -2,6 +2,7 @@
 
 import { useLinkStatus } from 'next/link';
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function NavigationProgress() {
   const { pending } = useLinkStatus();
@@ -10,7 +11,6 @@ export function NavigationProgress() {
 
   useEffect(() => {
     if (pending) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional navigation progress
       setVisible(true);
       setProgress(0);
       const t1 = setTimeout(() => { setProgress(30); }, 50);
@@ -20,28 +20,40 @@ export function NavigationProgress() {
         clearTimeout(t1);
         clearTimeout(t2);
         clearTimeout(t3);
+        setProgress(100);
       };
     } else if (visible) {
       setProgress(100);
-      const t = setTimeout(() => { setVisible(false); }, 400);
+      const t = setTimeout(() => { setVisible(false); setProgress(0); }, 400);
       return () => clearTimeout(t);
     }
   }, [pending, visible]);
 
-  if (!visible) return null;
-
   return (
-    <div className="fixed top-0 left-0 right-0 z-[200] h-0.5 pointer-events-none">
-      <div
-        className="h-full bg-primary transition-all duration-300 ease-out"
-        style={{
-          width: `${progress}%`,
-          opacity: progress === 100 ? 0 : 1,
-          transition: progress === 100
-            ? 'width 0.2s ease-out, opacity 0.4s ease-out'
-            : 'width 0.3s ease-out',
-        }}
-      />
-    </div>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed top-0 left-0 right-0 z-[200] h-1 pointer-events-none"
+        >
+          <motion.div
+            className="h-full bg-gradient-to-r from-primary/80 via-primary to-primary/80 rounded-full"
+            style={{ width: `${progress}%` }}
+            animate={{ width: `${progress}%`, opacity: progress === 100 ? 0 : 1 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent rounded-full"
+            style={{
+              width: `${progress}%`,
+              opacity: progress === 100 ? 0 : 0.6,
+              transition: 'width 0.3s ease-out, opacity 0.2s ease-out',
+            }}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
