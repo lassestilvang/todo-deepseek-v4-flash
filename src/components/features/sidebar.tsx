@@ -225,6 +225,7 @@ export function Sidebar() {
                     <Link
                       key={task.id}
                       href={`/list/${task.listId}?edit=${task.id}`}
+                      prefetch={true}
                       className="block px-3 py-2.5 text-sm rounded-lg hover:bg-accent/50 transition-colors"
                     >
                       <div className="font-medium leading-tight">{task.name}</div>
@@ -260,6 +261,7 @@ export function Sidebar() {
               <Link
                 key={view.id}
                 href={view.href}
+                prefetch={true}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
                   active
@@ -353,6 +355,7 @@ export function Sidebar() {
                 ) : (
                   <Link
                     href={`/list/${list.id}`}
+                    prefetch={true}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 group/link',
                       active
@@ -460,6 +463,7 @@ export function Sidebar() {
               <div key={label.id} className="group relative">
                 <Link
                   href={`/label/${label.id}`}
+                  prefetch={true}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
                     isActive(`/label/${label.id}`)
