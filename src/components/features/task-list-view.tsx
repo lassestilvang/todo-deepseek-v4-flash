@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
+import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ interface TaskListViewProps {
   emptyMessage?: string;
 }
 
+const TaskCardMemo = memo(TaskCard);
+
 export function TaskListView({ title, description, endpoint, showViewToggle = true, emptyMessage = 'No tasks yet' }: TaskListViewProps) {
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [dialogKey, setDialogKey] = useState(0);
   const fetchRef = useRef(0);
   const { toast } = useToast();
+
+  // Use deferred value for rendered tasks to avoid jank during updates
+  const deferredTasks = useDeferredValue(tasks);
+  const isStale = tasks !== deferredTasks;
 
   const fetchTasks = useCallback(async (signal?: AbortSignal) => {
     const id = ++fetchRef.current;
@@ -56,19 +62,23 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     return () => ac.abort();
   }, [fetchTasks]);
 
+  // Track if we've handled the edit URL param to avoid re-triggers
+  const handledEditRef = useRef(false);
+
   useEffect(() => {
+    if (handledEditRef.current || tasks.length === 0) return;
     const params = new URLSearchParams(window.location.search);
     const editId = params.get('edit');
     if (editId) {
       const task = tasks.find(t => t.id === editId);
-      if (task && tasks.length > 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional dialog open from URL
+      if (task && !dialogOpen) {
+        handledEditRef.current = true;
         setEditingTask(task);
         setDialogKey(k => k + 1);
         setDialogOpen(true);
       }
     }
-  }, [tasks]);
+  }, [tasks, dialogOpen]);
 
   useEffect(() => {
     if (!dialogOpen) {
@@ -76,6 +86,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       if (url.searchParams.has('edit')) {
         url.searchParams.delete('edit');
         window.history.replaceState({}, '', url.toString());
+        handledEditRef.current = false;
       }
     }
   }, [dialogOpen]);
@@ -180,9 +191,21 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     { key: 'n', handler: openCreate, enabled: !dialogOpen },
   ]);
 
-  const displayedTasks = showCompleted ? tasks : tasks.filter(t => !t.completed);
+  const displayedTasks = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
+
+  const handleSave = useCallback((saved: TaskWithRelations) => {
+    startTransition(() => {
+      setTasks(prev => {
+        const exists = prev.find(t => t.id === saved.id);
+        if (exists) return prev.map(t => t.id === saved.id ? saved : t);
+        return [saved, ...prev];
+      });
+    });
+    invalidateCache('task-counts');
+    setDialogOpen(false);
+  }, []);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-4xl mx-auto animate-fade-in">
@@ -209,7 +232,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
               {showCompleted ? 'Hide' : 'Show'} completed
             </Button>
           )}
-          <Button size="sm" className="h-8 text-xs rounded-xl shadow-sm relative" onClick={openCreate}>
+          <Button size="sm" className="h-8 text-xs rounded-xl shadow-sm relative active:scale-95 transition-transform" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add Task
             <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded bg-primary-foreground/20 text-primary-foreground/70 tabular-nums hidden sm:inline">N</span>
@@ -256,7 +279,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
               </motion.div>
             ) : (
               displayedTasks.map((task) => (
-                <TaskCard
+                <TaskCardMemo
                   key={task.id}
                   task={task}
                   onToggle={handleToggle}
@@ -274,17 +297,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         task={editingTask}
-        onSave={(saved) => {
-          startTransition(() => {
-            setTasks(prev => {
-              const exists = prev.find(t => t.id === saved.id);
-              if (exists) return prev.map(t => t.id === saved.id ? saved : t);
-              return [...prev, saved];
-            });
-          });
-          invalidateCache('task-counts');
-          setDialogOpen(false);
-        }}
+        onSave={handleSave}
       />
     </div>
   );
