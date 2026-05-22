@@ -48,9 +48,11 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+      whileHover={{ scale: 1.005 }}
+      whileTap={{ scale: 0.995 }}
       className={cn(
-        'group relative overflow-hidden rounded-xl border bg-card transition-all duration-200',
-        'hover:shadow-md hover:shadow-primary/5 hover:border-primary/20',
+        'group relative overflow-hidden rounded-xl border bg-card transition-colors duration-200',
+        'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20',
         task.completed && 'opacity-60'
       )}
     >
@@ -64,20 +66,28 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
 
       <div className="p-3 sm:p-4">
         <div className="flex items-start gap-3">
-          <button
+          <motion.button
             onClick={() => onToggle(task.id)}
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
             className={cn(
-              'mt-0.5 shrink-0 transition-all duration-200',
-              'hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-ring/30 rounded-full'
+              'mt-0.5 shrink-0',
+              'focus:outline-none focus:ring-2 focus:ring-ring/30 rounded-full'
             )}
             aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
           >
             {task.completed ? (
-              <CheckCircle2 className="h-5 w-5 text-primary drop-shadow-sm" />
+              <motion.div
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              >
+                <CheckCircle2 className="h-5 w-5 text-primary drop-shadow-sm" />
+              </motion.div>
             ) : (
-              <Circle className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary/70 transition-colors duration-200" />
+              <Circle className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary/70 transition-colors duration-200" />
             )}
-          </button>
+          </motion.button>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
