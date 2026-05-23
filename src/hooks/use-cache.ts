@@ -10,19 +10,36 @@ interface CacheEntry<T> {
 
 const cache = new Map<string, CacheEntry<unknown>>();
 const subscribers = new Map<string, Set<() => void>>();
-const TTL = 30000;
+const TTL = 60000; // 1 minute for task data
+const STATIC_TTL = 300000; // 5 minutes for lists/labels (rarely change)
+
+// Debounce map to prevent rapid successive invalidations
+const invalidationTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const pendingInvalidations = new Set<string>();
 
 function notify(key: string) {
   subscribers.get(key)?.forEach(fn => fn());
 }
 
 export function invalidateCache(pattern: string) {
-  for (const key of cache.keys()) {
-    if (key.startsWith(pattern)) {
-      cache.delete(key);
-      notify(key);
-    }
+  // Debounce rapid invalidations
+  if (pendingInvalidations.has(pattern)) return;
+  pendingInvalidations.add(pattern);
+
+  if (invalidationTimers.has(pattern)) {
+    clearTimeout(invalidationTimers.get(pattern)!);
   }
+
+  invalidationTimers.set(pattern, setTimeout(() => {
+    pendingInvalidations.delete(pattern);
+    invalidationTimers.delete(pattern);
+    for (const key of cache.keys()) {
+      if (key.startsWith(pattern)) {
+        cache.delete(key);
+        notify(key);
+      }
+    }
+  }, 50));
 }
 
 export function clearAllCache() {
@@ -32,10 +49,11 @@ export function clearAllCache() {
   }
 }
 
-function getCached<T>(key: string): T | null {
+function getCached<T>(key: string, isStatic: boolean = false): T | null {
   const entry = cache.get(key);
   if (!entry) return null;
-  if (Date.now() - entry.timestamp > TTL) {
+  const ttl = isStatic ? STATIC_TTL : TTL;
+  if (Date.now() - entry.timestamp > ttl) {
     cache.delete(key);
     return null;
   }
@@ -56,20 +74,20 @@ function subscribe(key: string, fn: () => void) {
   };
 }
 
-export function useCachedFetch<T>(url: string | null, key: string): {
+export function useCachedFetch<T>(url: string | null, key: string, options?: { staticCache?: boolean }): {
   data: T | null;
   loading: boolean;
   error: Error | null;
   refresh: () => void;
 } {
-  const [data, setData] = useState<T | null>(() => url ? getCached<T>(key) : null);
+  const [data, setData] = useState<T | null>(() => url ? getCached<T>(key, options?.staticCache) : null);
   const [loading, setLoading] = useState(!data && !!url);
   const [error, setError] = useState<Error | null>(null);
   const mountedRef = useRef(true);
 
   const fetchData = useCallback(async () => {
     if (!url) return;
-    const cached = getCached<T>(key);
+    const cached = getCached<T>(key, options?.staticCache);
     if (cached) {
       setData(cached);
       setLoading(false);
@@ -111,12 +129,12 @@ export function useCachedFetch<T>(url: string | null, key: string): {
 }
 
 export function useListCache() {
-  const { data: lists, loading, error, refresh } = useCachedFetch<List[]>('/api/lists', 'lists');
+  const { data: lists, loading, error, refresh } = useCachedFetch<List[]>('/api/lists', 'lists', { staticCache: true });
   return { lists: lists || [], loading, error, refresh };
 }
 
 export function useLabelCache() {
-  const { data: labels, loading, error, refresh } = useCachedFetch<Label[]>('/api/labels', 'labels');
+  const { data: labels, loading, error, refresh } = useCachedFetch<Label[]>('/api/labels', 'labels', { staticCache: true });
   return { labels: labels || [], loading, error, refresh };
 }
 
