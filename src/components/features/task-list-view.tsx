@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Plus, Eye, EyeOff, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
 import { TaskDialog } from './task-dialog';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
+import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 
 interface TaskListViewProps {
@@ -28,6 +30,9 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskWithRelations | undefined>();
   const [dialogKey, setDialogKey] = useState(0);
+  const [quickAddValue, setQuickAddValue] = useState('');
+  const [quickAddFocused, setQuickAddFocused] = useState(false);
+  const quickAddRef = useRef<HTMLInputElement>(null);
   const fetchRef = useRef(0);
   const { toast } = useToast();
 
@@ -189,7 +194,32 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
   useKeyboardShortcuts([
     { key: 'n', handler: openCreate, enabled: !dialogOpen },
+    { key: 'a', handler: () => quickAddRef.current?.focus(), enabled: !dialogOpen },
+    { key: 'q', handler: () => quickAddRef.current?.focus(), enabled: !dialogOpen },
   ]);
+
+  const handleQuickAdd = useCallback(async () => {
+    if (!quickAddValue.trim()) return;
+    const name = quickAddValue.trim();
+    setQuickAddValue('');
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to create task');
+      const saved = await res.json();
+      startTransition(() => {
+        setTasks(prev => [saved, ...prev]);
+      });
+      invalidateCache('task-counts');
+      toast('Task created', 'success');
+    } catch (e) {
+      toast('Failed to create task', 'error');
+      console.error('Quick add failed', e);
+    }
+  }, [quickAddValue, toast]);
 
   const displayedTasks = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
   const activeTasks = tasks.filter(t => !t.completed);
@@ -243,6 +273,29 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       <div className="text-xs text-muted-foreground/60 mb-4 tabular-nums">
         {activeTasks.length} active{completedTasks.length > 0 && `, ${completedTasks.length} completed`}
       </div>
+
+      {/* Quick Add */}
+      <form
+        onSubmit={(e) => { e.preventDefault(); handleQuickAdd(); }}
+        className={cn(
+          'mb-4 flex items-center gap-2 rounded-xl border bg-card p-3 transition-all duration-200',
+          quickAddFocused ? 'border-primary/40 shadow-sm shadow-primary/5' : 'border-border hover:border-primary/20'
+        )}
+      >
+        <Zap className={cn('h-4 w-4 shrink-0 transition-colors', quickAddFocused ? 'text-primary' : 'text-muted-foreground/40')} />
+        <Input
+          ref={quickAddRef}
+          value={quickAddValue}
+          onChange={(e) => setQuickAddValue(e.target.value)}
+          placeholder="Quick add a task... (press ⌘A or Q to focus)"
+          className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+          onFocus={() => setQuickAddFocused(true)}
+          onBlur={() => setQuickAddFocused(false)}
+        />
+        <kbd className="hidden sm:inline-flex text-[10px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums">
+          ⏎
+        </kbd>
+      </form>
 
       {loading && (
         <div className="space-y-3">
