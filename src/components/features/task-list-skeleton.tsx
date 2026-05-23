@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils';
 
 function SkeletonBar({ className }: { className?: string }) {
   return (
-    <div className={cn('relative overflow-hidden rounded-lg bg-muted/70', className)}>
-      <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent bg-[length:200%_100%]" />
+    <div className={cn('relative overflow-hidden rounded-lg bg-muted/60', className)}>
+      <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/10 dark:via-white/5 to-transparent bg-[length:200%_100%] rounded-lg" />
     </div>
   );
 }
@@ -28,7 +28,7 @@ export function TaskListViewSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="rounded-xl border bg-card p-4">
             <div className="flex items-start gap-3">
-              <SkeletonBar className="h-5 w-5 rounded-full shrink-0 mt-0.5" />
+              <div className="h-5 w-5 rounded-full shrink-0 mt-0.5 bg-muted/60 animate-pulse" />
               <div className="flex-1 space-y-2.5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 space-y-1.5">
