@@ -120,12 +120,8 @@ body {
 }
 
 html {
-  color-scheme: light;
+  color-scheme: light dark;
   scroll-behavior: smooth;
-}
-
-html.dark {
-  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: no-preference) {
