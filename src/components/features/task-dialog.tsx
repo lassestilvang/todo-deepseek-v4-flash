@@ -217,6 +217,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="w-full h-9 rounded-xl border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); } }}
                 />
                 {date && (
                   <button
