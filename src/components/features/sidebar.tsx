@@ -68,14 +68,25 @@ export function Sidebar() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+K for search
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setSearchOpen(prev => !prev);
       }
+      // Escape to close search
       if (e.key === 'Escape' && searchOpen) {
         setSearchOpen(false);
         setSearchQuery('');
         setSearchResults([]);
+      }
+      // Quick view switching (no modifiers unless input focused)
+      const activeEl = document.activeElement;
+      const isInput = activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
+      if (!isInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (e.key === '1') { window.location.href = '/today'; }
+        if (e.key === '2') { window.location.href = '/next-7-days'; }
+        if (e.key === '3') { window.location.href = '/upcoming'; }
+        if (e.key === '4') { window.location.href = '/all'; }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -272,6 +283,11 @@ export function Sidebar() {
               >
                 <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
                 <span className="flex-1">{view.label}</span>
+                {!active && (
+                  <kbd className="text-[9px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
+                    {view.id === 'today' ? '1' : view.id === 'next-7-days' ? '2' : view.id === 'upcoming' ? '3' : '4'}
+                  </kbd>
+                )}
                 {count > 0 && (
                   <motion.span
                     key={count}
