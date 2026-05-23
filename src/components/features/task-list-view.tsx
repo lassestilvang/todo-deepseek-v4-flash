@@ -323,7 +323,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 </div>
                 <p className="text-foreground/80 font-semibold text-lg">{emptyMessage}</p>
                 <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs">
-                  Everything has its beginning. Press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70 tabular-nums">N</kbd> to create your first task
+                  Start by typing above or press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70 tabular-nums">Q</kbd> to quick-add, or <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70 tabular-nums">N</kbd> for details
                 </p>
                 <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={openCreate}>
                   <Plus className="h-4 w-4 mr-1.5" />

@@ -51,17 +51,17 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       whileHover={{ scale: 1.005 }}
       whileTap={{ scale: 0.995 }}
       className={cn(
-        'group relative overflow-hidden rounded-xl border bg-card transition-colors duration-200',
+        'group relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
         'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20',
-        task.completed && 'opacity-60'
+        task.completed && 'opacity-70 border-primary/10 bg-gradient-to-br from-card via-primary/[0.02] to-transparent'
       )}
     >
       {overdue && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 rounded-l-xl" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-red-400 rounded-l-xl" />
       )}
 
       {task.completed && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/[0.03] via-transparent to-transparent pointer-events-none" />
       )}
 
       <div className="p-3 sm:p-4">
@@ -109,21 +109,21 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                 )}
               </div>
 
-              <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-200">
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => onEdit(task.id)}>
+              <div className="flex items-center gap-0.5 shrink-0 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all duration-200">
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => onEdit(task.id)} aria-label="Edit task">
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
                 {confirmingDelete ? (
                   <span className="flex items-center gap-0.5">
-                    <Button variant="destructive" size="icon" className="h-7 w-7 rounded-lg" onClick={() => { onDelete(task.id); setConfirmingDelete(false); }}>
+                    <Button variant="destructive" size="icon" className="h-7 w-7 rounded-lg animate-scale-in" onClick={() => { onDelete(task.id); setConfirmingDelete(false); }}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => setConfirmingDelete(false)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg animate-scale-in" onClick={() => setConfirmingDelete(false)}>
                       <X className="h-3.5 w-3.5" />
                     </Button>
                   </span>
                 ) : (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-destructive" onClick={() => setConfirmingDelete(true)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-all duration-200" onClick={() => setConfirmingDelete(true)} aria-label="Delete task">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
