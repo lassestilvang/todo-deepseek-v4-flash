@@ -225,6 +225,28 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
 
+  const handleClearCompleted = useCallback(async () => {
+    const completed = tasks.filter(t => t.completed);
+    if (completed.length === 0) return;
+    startTransition(() => {
+      setTasks(prev => prev.filter(t => !t.completed));
+    });
+    try {
+      for (const task of completed) {
+        await fetch('/api/tasks', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: task.id }),
+        });
+      }
+      invalidateCache('task-counts');
+      toast(`Cleared ${completed.length} completed task${completed.length > 1 ? 's' : ''}`, 'success');
+    } catch (e) {
+      toast('Failed to clear completed tasks', 'error');
+      console.error('Clear completed failed', e);
+    }
+  }, [tasks, toast]);
+
   const handleSave = useCallback((saved: TaskWithRelations) => {
     startTransition(() => {
       setTasks(prev => {
@@ -331,15 +353,48 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 </Button>
               </motion.div>
             ) : (
-              displayedTasks.map((task) => (
-                <TaskCardMemo
-                  key={task.id}
-                  task={task}
-                  onToggle={handleToggle}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))
+              <>
+                {/* Active Tasks */}
+                {displayedTasks.filter(t => !t.completed).map((task) => (
+                  <TaskCardMemo
+                    key={task.id}
+                    task={task}
+                    onToggle={handleToggle}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+
+                {/* Completed Tasks Section */}
+                {showCompleted && completedTasks.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-3 pt-4 pb-2">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-[11px] font-medium text-muted-foreground/50 shrink-0">
+                        Completed ({completedTasks.length})
+                      </span>
+                      <div className="flex-1 h-px bg-border" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[10px] text-muted-foreground/50 hover:text-destructive rounded-lg shrink-0"
+                        onClick={handleClearCompleted}
+                      >
+                        Clear all
+                      </Button>
+                    </div>
+                    {displayedTasks.filter(t => t.completed).map((task) => (
+                      <TaskCardMemo
+                        key={task.id}
+                        task={task}
+                        onToggle={handleToggle}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </>
+                )}
+              </>
             )}
           </AnimatePresence>
         </div>
