@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView } from '@/lib/data';
+import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask } from '@/lib/data';
 
 function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
@@ -52,6 +52,12 @@ export async function PUT(request: NextRequest) {
     const task = toggleTaskCompletion(body.id);
     if (!task) return json({ error: 'Task not found' }, { status: 404 });
     return json(task);
+  }
+  if (body._action === 'toggle-subtask') {
+    if (!body.subtaskId) return json({ error: 'Subtask ID is required' }, { status: 400 });
+    const subtask = toggleSubtask(body.subtaskId);
+    if (!subtask) return json({ error: 'Subtask not found' }, { status: 404 });
+    return json(subtask);
   }
   const task = updateTask(body.id, body);
   if (!task) return json({ error: 'Task not found' }, { status: 404 });

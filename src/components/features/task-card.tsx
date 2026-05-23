@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Calendar,
@@ -13,10 +13,13 @@ import {
   Pencil,
   X,
   Timer,
+  Repeat,
+  Check,
 } from 'lucide-react';
-import { cn, formatDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
+import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/toast-provider';
 import type { TaskWithRelations } from '@/types';
 
 const priorityConfig: Record<string, { color: string; label: string; bar: string }> = {
@@ -36,10 +39,27 @@ interface TaskCardProps {
 export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
+  const { toast } = useToast();
   const overdue = task.date ? isOverdue(task.date) && !task.completed : false;
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
   const subtaskProgress = task.subtasks.length > 0 ? completedSubtasks / task.subtasks.length : 0;
   const priority = priorityConfig[task.priority];
+
+  const handleToggleSubtask = useCallback(async (subtaskId: string) => {
+    setTogglingSubtask(subtaskId);
+    try {
+      await fetch('/api/tasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: task.id, _action: 'toggle-subtask', subtaskId }),
+      });
+    } catch (e) {
+      console.error('Failed to toggle subtask', e);
+    } finally {
+      setTogglingSubtask(null);
+    }
+  }, [task.id]);
 
   return (
     <motion.div
@@ -56,6 +76,16 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
         task.completed && 'opacity-70 border-primary/10 bg-gradient-to-br from-card via-primary/[0.02] to-transparent'
       )}
     >
+      {/* Priority left bar */}
+      {task.priority !== 'none' && !task.completed && (
+        <div className={cn(
+          'absolute left-0 top-0 bottom-0 w-1 rounded-l-xl',
+          task.priority === 'high' ? 'bg-gradient-to-b from-red-500 to-red-400' :
+          task.priority === 'medium' ? 'bg-gradient-to-b from-amber-500 to-amber-400' :
+          'bg-gradient-to-b from-blue-500 to-blue-400'
+        )} />
+      )}
+
       {overdue && (
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-red-400 rounded-l-xl" />
       )}
@@ -146,7 +176,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                     : 'text-muted-foreground/70'
                 )}>
                   <Calendar className="h-3 w-3" />
-                  {formatDate(task.date, { month: 'short', day: 'numeric' })}
+                  {formatRelativeDate(task.date)}
                 </span>
               )}
 
@@ -190,6 +220,19 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                   +{task.labelObjects.length - 2}
                 </span>
               )}
+
+              {task.recurrence && task.recurrence.type !== 'none' && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-primary/70 px-1.5 py-0.5 rounded-md bg-primary/5">
+                  <Repeat className="h-3 w-3" />
+                  {task.recurrence.type}
+                </span>
+              )}
+
+              {task.completed && task.completedAt && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/50">
+                  Done {formatRelativeDate(task.completedAt)}
+                </span>
+              )}
             </div>
 
             {task.subtasks.length > 0 && (
@@ -221,14 +264,29 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                     className="mt-2 space-y-0.5 pl-1 overflow-hidden"
                   >
                     {task.subtasks.map((st) => (
-                      <div key={st.id} className="flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-muted/40 transition-colors">
-                        <div className={cn(
-                          'w-1.5 h-1.5 rounded-full shrink-0',
-                          st.completed ? 'bg-primary' : 'bg-muted-foreground/30'
-                        )} />
+                      <div
+                        key={st.id}
+                        className="flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group/sub"
+                        onClick={() => handleToggleSubtask(st.id)}
+                      >
+                        <div
+                          className={cn(
+                            'w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200',
+                            st.completed
+                              ? 'bg-primary border-primary'
+                              : 'border-muted-foreground/30 group-hover/sub:border-primary/60'
+                          )}
+                        >
+                          {st.completed && (
+                            <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                          )}
+                          {togglingSubtask === st.id && (
+                            <span className="h-2.5 w-2.5 rounded-full border-2 border-current border-t-transparent animate-spin block" />
+                          )}
+                        </div>
                         <span className={cn(
-                          'text-[13px] text-muted-foreground/80',
-                          st.completed && 'line-through text-muted-foreground/40'
+                          'text-[13px] transition-colors flex-1',
+                          st.completed ? 'line-through text-muted-foreground/40' : 'text-muted-foreground/80'
                         )}>
                           {st.title}
                         </span>

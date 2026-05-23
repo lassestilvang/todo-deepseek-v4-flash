@@ -65,10 +65,10 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const { labels: allLabels } = useLabelCache();
 
   useEffect(() => {
-    if (open && !task) {
+    if (open) {
       setTimeout(() => nameInputRef.current?.focus(), 100);
     }
-  }, [open, task]);
+  }, [open]);
 
   // Reset state is handled by key prop in parent component
 
@@ -149,7 +149,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-none sm:rounded-xl sm:shadow-2xl">
+      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl sm:rounded-xl sm:shadow-2xl">
         <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
           <DialogTitle className="text-lg sm:text-xl">
             {task ? (
