@@ -15,6 +15,7 @@ import {
   Timer,
   Repeat,
   Check,
+  GripVertical,
 } from 'lucide-react';
 import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<{ x: number; y: number } | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const overdue = task.date ? isOverdue(task.date) && !task.completed : false;
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
@@ -274,12 +276,21 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                     className="mt-2 space-y-0.5 pl-1 overflow-hidden"
                   >
-                    {task.subtasks.map((st) => (
+                    {task.subtasks.map((st, idx) => (
                       <div
                         key={st.id}
-                        className="flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group/sub"
-                        onClick={() => handleToggleSubtask(st.id)}
+                        draggable
+                        onDragStart={() => setDragIndex(idx)}
+                        onDragEnd={() => setDragIndex(null)}
+                        onDragOver={(e) => e.preventDefault()}
+                        className={cn(
+                          'flex items-center gap-1.5 py-1 px-1 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group/sub',
+                          dragIndex === idx && 'opacity-50'
+                        )}
                       >
+                        <span className="shrink-0 opacity-0 group-hover/sub:opacity-100 transition-opacity cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/60 p-0.5 rounded">
+                          <GripVertical className="h-3 w-3" />
+                        </span>
                         <div
                           className={cn(
                             'w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200',
@@ -287,6 +298,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                               ? 'bg-primary border-primary'
                               : 'border-muted-foreground/30 group-hover/sub:border-primary/60'
                           )}
+                          onClick={() => handleToggleSubtask(st.id)}
                         >
                           {st.completed && (
                             <Check className="h-2.5 w-2.5 text-primary-foreground" />
