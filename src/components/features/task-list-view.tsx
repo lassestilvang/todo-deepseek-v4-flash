@@ -303,17 +303,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       <form
         onSubmit={(e) => { e.preventDefault(); handleQuickAdd(); }}
         className={cn(
-          'mb-4 flex items-center gap-2 rounded-xl border bg-card p-3 transition-all duration-200',
+          'mb-4 flex items-center gap-2 rounded-xl border bg-card p-3 sm:p-3 min-h-[48px] transition-all duration-200',
           quickAddFocused ? 'border-primary/40 shadow-sm shadow-primary/5' : 'border-border hover:border-primary/20'
         )}
       >
-        <Zap className={cn('h-4 w-4 shrink-0 transition-colors', quickAddFocused ? 'text-primary' : 'text-muted-foreground/40')} />
+        <Zap className={cn('h-4 w-4 sm:h-4 sm:w-4 shrink-0 transition-colors', quickAddFocused ? 'text-primary' : 'text-muted-foreground/40')} />
         <Input
           ref={quickAddRef}
           value={quickAddValue}
           onChange={(e) => setQuickAddValue(e.target.value)}
           placeholder="Quick add a task... (press ⌘A or Q to focus)"
-          className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+          className="h-8 sm:h-8 border-0 bg-transparent px-0 text-base sm:text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
           onFocus={() => setQuickAddFocused(true)}
           onBlur={() => setQuickAddFocused(false)}
         />

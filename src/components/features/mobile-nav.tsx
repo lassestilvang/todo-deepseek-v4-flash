@@ -165,14 +165,14 @@ export function MobileNav() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md md:hidden"
               onClick={() => setDrawerOpen(false)}
             />
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              transition={{ type: "spring", stiffness: 500, damping: 40, mass: 0.8 }}
               className="fixed right-0 top-0 bottom-0 z-[70] w-[300px] max-w-[85vw] bg-background border-l shadow-2xl md:hidden flex flex-col"
             >
               <div className="flex items-center justify-between p-4 border-b">
@@ -187,6 +187,7 @@ export function MobileNav() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-muted-foreground/20" />
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
                 <div className="flex items-center justify-between px-2 py-1.5 mt-2">
@@ -252,7 +253,7 @@ export function MobileNav() {
                       key={list.id}
                       href={`/list/${list.id}`}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-90",
                         active
                           ? "bg-primary/10 text-primary"
                           : "hover:bg-muted",
@@ -283,7 +284,7 @@ export function MobileNav() {
                           key={label.id}
                           href={`/label/${label.id}`}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-90",
                             isActive(`/label/${label.id}`)
                               ? "bg-primary/10 text-primary"
                               : "hover:bg-muted",
