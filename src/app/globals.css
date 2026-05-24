@@ -154,6 +154,10 @@ kbd {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.contain-layout {
+  contain: layout;
+}
+
 @keyframes overlayShow {
   from { opacity: 0; }
   to { opacity: 1; }

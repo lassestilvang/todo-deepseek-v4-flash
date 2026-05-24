@@ -84,6 +84,7 @@ export function useCachedFetch<T>(url: string | null, key: string, options?: { s
   const [loading, setLoading] = useState(!data && !!url);
   const [error, setError] = useState<Error | null>(null);
   const mountedRef = useRef(true);
+  const fetchVersionRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     if (!url) return;
@@ -96,20 +97,21 @@ export function useCachedFetch<T>(url: string | null, key: string, options?: { s
     }
     setLoading(true);
     setError(null);
+    const version = ++fetchVersionRef.current;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || version !== fetchVersionRef.current) return;
       setCached(key, json);
       setData(json);
     } catch (e) {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || version !== fetchVersionRef.current) return;
       setError(e as Error);
     } finally {
-      if (mountedRef.current) setLoading(false);
+      if (mountedRef.current && version === fetchVersionRef.current) setLoading(false);
     }
-  }, [url, key]);
+  }, [url, key, options?.staticCache]);
 
   useEffect(() => {
     mountedRef.current = true;

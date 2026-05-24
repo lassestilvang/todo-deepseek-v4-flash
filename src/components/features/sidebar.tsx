@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
 import type { TaskWithRelations } from '@/types';
+import type { TaskCounts } from '@/hooks/use-cache';
 
 const views = [
   { id: 'today', label: 'Today', icon: Calendar, href: '/today' },
@@ -35,6 +36,57 @@ const views = [
   { id: 'upcoming', label: 'Upcoming', icon: Layers, href: '/upcoming' },
   { id: 'all', label: 'All Tasks', icon: ListTodo, href: '/all' },
 ];
+
+const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname: string; counts: TaskCounts }) {
+  return (
+    <>
+      {views.map((view) => {
+        const Icon = view.icon;
+        const active = pathname === view.href;
+        const count = view.id === 'today' ? counts.today
+          : view.id === 'next-7-days' ? counts.next7Days
+          : view.id === 'upcoming' ? counts.upcoming
+          : view.id === 'all' ? counts.total : 0;
+        return (
+          <Link
+            key={view.id}
+            href={view.href}
+            prefetch={true}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
+              active
+                ? 'bg-primary/10 text-primary shadow-sm'
+                : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            )}
+            aria-current={active ? 'page' : undefined}
+          >
+            <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
+            <span className="flex-1">{view.label}</span>
+            {!active && (
+              <kbd className="text-[9px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
+                {view.id === 'today' ? '1' : view.id === 'next-7-days' ? '2' : view.id === 'upcoming' ? '3' : '4'}
+              </kbd>
+            )}
+            {count > 0 && (
+              <span className={cn(
+                'text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md',
+                active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground/70'
+              )}>
+                {count}
+              </span>
+            )}
+            {active && (
+              <motion.div
+                layoutId="activeNav"
+                className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
+              />
+            )}
+          </Link>
+        );
+      })}
+    </>
+  );
+});
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -191,7 +243,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside ref={sidebarRef} className="hidden md:flex flex-col w-64 border-r bg-sidebar text-sidebar-foreground shrink-0 overflow-hidden">
+      <aside ref={sidebarRef} className="hidden md:flex flex-col w-64 border-r bg-sidebar text-sidebar-foreground shrink-0 overflow-hidden" style={{ contain: 'layout' }}>
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-lg font-bold tracking-tight">
@@ -257,59 +309,11 @@ export function Sidebar() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
+        <div className="flex-1 overflow-y-auto p-3 space-y-0.5" style={{ contentVisibility: 'auto', containIntrinsicSize: '500px' }}>
           <div className="px-2 py-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Views</span>
           </div>
-          {views.map((view) => {
-            const Icon = view.icon;
-            const active = isActive(view.href);
-            const count = view.id === 'today' ? counts.today
-              : view.id === 'next-7-days' ? counts.next7Days
-              : view.id === 'upcoming' ? counts.upcoming
-              : view.id === 'all' ? counts.total : 0;
-            return (
-              <Link
-                key={view.id}
-                href={view.href}
-                prefetch={true}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
-                  active
-                    ? 'bg-primary/10 text-primary shadow-sm'
-                    : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                )}
-                aria-current={active ? 'page' : undefined}
-              >
-                <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
-                <span className="flex-1">{view.label}</span>
-                {!active && (
-                  <kbd className="text-[9px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
-                    {view.id === 'today' ? '1' : view.id === 'next-7-days' ? '2' : view.id === 'upcoming' ? '3' : '4'}
-                  </kbd>
-                )}
-                {count > 0 && (
-                  <motion.span
-                    key={count}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className={cn(
-                      'text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md',
-                      active ? 'bg-primary/15 text-primary' : 'bg-muted/50 text-muted-foreground/70'
-                    )}
-                  >
-                    {count}
-                  </motion.span>
-                )}
-                {active && (
-                  <motion.div
-                    layoutId="activeNav"
-                    className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
-                  />
-                )}
-              </Link>
-            );
-          })}
+          <SidebarViews pathname={pathname} counts={counts} />
 
           <Separator className="my-3" />
 
