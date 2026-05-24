@@ -72,10 +72,14 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       whileTap={{ scale: 0.995 }}
       className={cn(
         'group relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
+        'focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/30',
         'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20',
         task.completed && 'opacity-70 border-primary/10 bg-gradient-to-br from-card via-primary/[0.02] to-transparent'
       )}
     >
+      {/* Shine effect on hover */}
+      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-transparent via-primary/[0.02] to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%]" />
+
       {/* Priority left bar */}
       {task.priority !== 'none' && !task.completed && (
         <div className={cn(

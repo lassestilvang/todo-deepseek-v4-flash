@@ -385,7 +385,13 @@ export function Sidebar() {
                     )}
                     aria-current={active ? 'page' : undefined}
                   >
-                    <span className="text-base shrink-0">{list.icon}</span>
+                    <span className="relative flex items-center justify-center w-5 h-5 shrink-0">
+                      <span
+                        className="absolute inset-0 rounded-md opacity-20"
+                        style={{ backgroundColor: list.color }}
+                      />
+                      <span className="text-xs relative">{list.icon}</span>
+                    </span>
                     <span className="flex-1 truncate">{list.name}</span>
                     {listCount > 0 && (
                       <motion.span

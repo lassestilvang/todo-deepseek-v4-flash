@@ -206,7 +206,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name,
+          date: window.location.pathname === '/today' ? new Date().toISOString().split('T')[0] : undefined,
+        }),
       });
       if (!res.ok) throw new Error('Failed to create task');
       const saved = await res.json();
@@ -340,12 +343,12 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 transition={{ duration: 0.4, ease: 'easeOut' }}
                 className="flex flex-col items-center justify-center py-20 text-center"
               >
-                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex items-center justify-center mb-6 ring-1 ring-primary/10">
-                  <Sparkles className="h-9 w-9 text-primary/40" />
+                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background flex items-center justify-center mb-6 ring-1 ring-primary/10 ring-inset shadow-inner">
+                  <Sparkles className="h-10 w-10 text-primary/30" />
                 </div>
                 <p className="text-foreground/80 font-semibold text-lg">{emptyMessage}</p>
-                <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs">
-                  Start by typing above or press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70 tabular-nums">Q</kbd> to quick-add, or <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70 tabular-nums">N</kbd> for details
+                <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed">
+                  Start by typing above or press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70">Q</kbd> to quick-add, or <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70">N</kbd> for details
                 </p>
                 <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={openCreate}>
                   <Plus className="h-4 w-4 mr-1.5" />

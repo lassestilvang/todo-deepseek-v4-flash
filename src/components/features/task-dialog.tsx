@@ -149,7 +149,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl sm:rounded-xl sm:shadow-2xl">
+      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl sm:rounded-xl sm:shadow-2xl" data-vaul-no-drag>
         <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
           <DialogTitle className="text-lg sm:text-xl">
             {task ? (
@@ -182,7 +182,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="What needs to be done?"
-              className="text-base sm:text-lg font-semibold h-10 sm:h-11 px-3 sm:px-4 rounded-xl border-2 focus:border-primary/50"
+              className="text-base sm:text-lg font-semibold h-10 sm:h-11 px-3 sm:px-4 rounded-xl border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -431,10 +431,10 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
             {task ? 'Editing existing task' : 'Press Enter to save quickly'}
           </span>
           <div className="flex items-center gap-2 ml-auto">
-            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="rounded-xl">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="rounded-xl text-muted-foreground hover:text-foreground border-muted-foreground/20">
               Cancel
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={!name.trim() || saving} className="rounded-xl shadow-sm">
+            <Button size="sm" onClick={handleSave} disabled={!name.trim() || saving} className={cn("rounded-xl shadow-md hover:shadow-lg transition-shadow", saving && "animate-pulse")}>
               {saving ? (
                 <span className="flex items-center gap-1.5">
                   <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
