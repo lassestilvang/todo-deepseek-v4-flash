@@ -1,17 +1,21 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, memo } from 'react';
+import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Eye, EyeOff, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
-import { TaskDialog } from './task-dialog';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
 import { cn } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
+
+const TaskDialog = dynamic(() => import('./task-dialog').then(mod => mod.TaskDialog), {
+  loading: () => null,
+});
 
 interface TaskListViewProps {
   title: string;

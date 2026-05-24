@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { Suspense } from 'react';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ToastProvider } from '@/components/toast-provider';
@@ -66,7 +67,9 @@ export default function RootLayout({
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
               <main id="main-content" className="flex-1 overflow-y-auto bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 contain-layout" tabIndex={-1}>
-                {children}
+                <Suspense fallback={null}>
+                  {children}
+                </Suspense>
               </main>
             </div>
             <MobileNav />
