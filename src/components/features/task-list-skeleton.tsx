@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 function SkeletonBar({ className }: { className?: string }) {
   return (
     <div className={cn('relative overflow-hidden rounded-lg bg-muted/60', className)}>
-      <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/10 dark:via-white/5 to-transparent bg-[length:200%_100%] rounded-lg" />
+      <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/15 dark:via-white/8 to-transparent bg-[length:250%_100%] rounded-lg" />
     </div>
   );
 }
