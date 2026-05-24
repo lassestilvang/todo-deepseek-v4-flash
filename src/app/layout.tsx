@@ -21,10 +21,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Daily Planner',
   description: 'A warm, beautiful daily task planner',
-  icons: { icon: '/favicon.ico' },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icon.svg',
+  },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Planner',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   other: {
     'theme-color': '#fbf8f4',
     'dark:theme-color': '#1a1612',
+    'mobile-web-app-capable': 'yes',
+    'apple-touch-fullscreen': 'yes',
   },
 };
 
