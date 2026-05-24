@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Eye, EyeOff, Sparkles, Zap } from 'lucide-react';
+import { Plus, Eye, EyeOff, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
+import { EmptyState } from './empty-state';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
@@ -343,26 +344,13 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         <div className="space-y-2">
           <AnimatePresence mode="popLayout">
             {displayedTasks.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="flex flex-col items-center justify-center py-20 text-center"
-              >
-                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background flex items-center justify-center mb-6 ring-1 ring-primary/10 ring-inset shadow-inner">
-                  <Sparkles className="h-10 w-10 text-primary/30" />
-                </div>
-                <p className="text-foreground/80 font-semibold text-lg">{emptyMessage}</p>
-                <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed">
-                  Start by typing above or press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70">Q</kbd> to quick-add, or <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70">N</kbd> for details
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={openCreate}>
-                    <Plus className="h-4 w-4 mr-1.5" />
-                    Create task
-                  </Button>
-                </div>
-              </motion.div>
+              <EmptyState
+                icon={title.toLowerCase() === 'today' ? 'today' : title.toLowerCase() === 'inbox' ? 'inbox' : 'default'}
+                message={emptyMessage}
+                hint={`Start by typing above or press Q to quick-add, or N for details`}
+                actionLabel="Create task"
+                onAction={openCreate}
+              />
             ) : (
               <>
                 {/* Active Tasks */}
