@@ -235,20 +235,21 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const handleClearCompleted = useCallback(async () => {
     const completed = tasks.filter(t => t.completed);
     if (completed.length === 0) return;
+    const ids = completed.map(t => t.id);
     startTransition(() => {
       setTasks(prev => prev.filter(t => !t.completed));
     });
     try {
-      for (const task of completed) {
-        await fetch('/api/tasks', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: task.id }),
-        });
-      }
+      const res = await fetch('/api/batch', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error('Failed to clear completed');
       invalidateCache('task-counts');
       toast(`Cleared ${completed.length} completed task${completed.length > 1 ? 's' : ''}`, 'success');
     } catch (e) {
+      // Revert on failure - re-fetch tasks
       toast('Failed to clear completed tasks', 'error');
       console.error('Clear completed failed', e);
     }

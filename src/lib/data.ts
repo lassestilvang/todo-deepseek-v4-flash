@@ -524,6 +524,18 @@ export function deleteTask(id: string): void {
   const db = getDb();
   db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
 }
+export function deleteTasksBatch(ids: string[]): void {
+  if (ids.length === 0) return;
+  const db = getDb();
+  const deleteMany = db.transaction(() => {
+    const stmt = db.prepare('DELETE FROM tasks WHERE id = ?');
+    for (const id of ids) {
+      stmt.run(id);
+    }
+  });
+  deleteMany();
+}
+
 
 export function toggleTaskCompletion(id: string): TaskWithRelations | undefined {
   const db = getDb();
