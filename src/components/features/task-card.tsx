@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/toast-provider';
 import type { TaskWithRelations } from '@/types';
+import { Confetti } from './confetti';
 
 const priorityConfig: Record<string, { color: string; label: string; bar: string }> = {
   high: { color: 'text-red-500', label: 'High', bar: 'bg-red-500' },
@@ -40,6 +41,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
+  const [confetti, setConfetti] = useState<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
   const overdue = task.date ? isOverdue(task.date) && !task.completed : false;
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
@@ -101,7 +103,12 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       <div className="p-3 sm:p-4">
         <div className="flex items-start gap-3">
           <motion.button
-            onClick={() => onToggle(task.id)}
+            onClick={(e) => {
+              if (!task.completed) {
+                setConfetti({ x: e.clientX, y: e.clientY });
+              }
+              onToggle(task.id);
+            }}
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.85 }}
             className={cn(
@@ -303,6 +310,14 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
           </div>
         </div>
       </div>
+
+      {confetti && (
+        <Confetti
+          originX={confetti.x}
+          originY={confetti.y}
+          onComplete={() => setConfetti(null)}
+        />
+      )}
     </motion.div>
   );
 });
