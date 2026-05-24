@@ -297,6 +297,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
       <div className="text-xs text-muted-foreground/60 mb-4 tabular-nums">
         {activeTasks.length} active{completedTasks.length > 0 && `, ${completedTasks.length} completed`}
+        <span className="ml-3 text-muted-foreground/30 hidden sm:inline">· N to add · Q to quick-add</span>
       </div>
 
       {/* Quick Add */}
@@ -350,10 +351,12 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed">
                   Start by typing above or press <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70">Q</kbd> to quick-add, or <kbd className="px-1.5 py-0.5 rounded-md bg-muted/70 text-[11px] font-mono text-muted-foreground/70">N</kbd> for details
                 </p>
-                <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={openCreate}>
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  Create your first task
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={openCreate}>
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    Create task
+                  </Button>
+                </div>
               </motion.div>
             ) : (
               <>
