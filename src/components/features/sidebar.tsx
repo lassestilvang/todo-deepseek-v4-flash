@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
@@ -90,6 +90,7 @@ const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { lists } = useListCache();
   const { labels } = useLabelCache();
@@ -130,15 +131,15 @@ export function Sidebar() {
       const activeEl = document.activeElement;
       const isInput = activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
       if (!isInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        if (e.key === '1') { window.location.href = '/today'; }
-        if (e.key === '2') { window.location.href = '/next-7-days'; }
-        if (e.key === '3') { window.location.href = '/upcoming'; }
-        if (e.key === '4') { window.location.href = '/all'; }
+        if (e.key === '1' && pathname !== '/today') { router.push('/today'); }
+        if (e.key === '2' && pathname !== '/next-7-days') { router.push('/next-7-days'); }
+        if (e.key === '3' && pathname !== '/upcoming') { router.push('/upcoming'); }
+        if (e.key === '4' && pathname !== '/all') { router.push('/all'); }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchOpen]);
+  }, [searchOpen, pathname, router]);
 
   const createList = async () => {
     if (!newListName.trim()) return;
