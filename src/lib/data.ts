@@ -5,6 +5,18 @@ import { getDb } from './db';
 import { generateId } from './utils';
 import type { List, Task, TaskWithRelations, Subtask, Attachment, Reminder, Label, ActivityLog, Recurrence, Priority } from '@/types';
 
+// Prepared statement cache for better-sqlite3 performance
+const stmtCache = new Map<string, Database.Statement>();
+
+function prepare(db: Database.Database, sql: string): Database.Statement {
+  let stmt = stmtCache.get(sql);
+  if (!stmt) {
+    stmt = db.prepare(sql);
+    stmtCache.set(sql, stmt);
+  }
+  return stmt;
+}
+
 // --- Lists ---
 export function getLists(): List[] {
   const db = getDb();
@@ -113,10 +125,12 @@ function rowToTask(row: Record<string, any>): Task {
   };
 }
 
+const BATCH_LABEL_SQL = (placeholders: string) => `SELECT task_id, label_id FROM task_labels WHERE task_id IN (${placeholders})`;
+
 function getBatchTaskLabelIds(db: Database.Database, taskIds: string[]): Record<string, string[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT task_id, label_id FROM task_labels WHERE task_id IN (${placeholders})`).all(...taskIds) as { task_id: string; label_id: string }[];
+  const rows = prepare(db, BATCH_LABEL_SQL(placeholders)).all(...taskIds) as { task_id: string; label_id: string }[];
   const result: Record<string, string[]> = {};
   for (const taskId of taskIds) result[taskId] = [];
   for (const row of rows) {
@@ -126,10 +140,12 @@ function getBatchTaskLabelIds(db: Database.Database, taskIds: string[]): Record<
   return result;
 }
 
+const BATCH_SUBTASK_SQL = (placeholders: string) => `SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`;
+
 function getBatchSubtasks(db: Database.Database, taskIds: string[]): Record<string, Subtask[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
+  const rows = prepare(db, BATCH_SUBTASK_SQL(placeholders)).all(...taskIds) as any[];
   const result: Record<string, Subtask[]> = {};
   for (const taskId of taskIds) result[taskId] = [];
   for (const row of rows) {
