@@ -73,12 +73,11 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-      whileHover={{ scale: 1.005 }}
-      whileTap={{ scale: 0.995 }}
       className={cn(
         'group relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
         'focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/30',
-        'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20',
+        'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5',
+        'active:translate-y-0 active:scale-[0.997]',
         task.completed && 'opacity-70 border-primary/10 bg-gradient-to-br from-card via-primary/[0.02] to-transparent'
       )}
     >
@@ -112,10 +111,9 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
               }
               onToggle(task.id);
             }}
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.85 }}
             className={cn(
-              'mt-0.5 shrink-0',
+              'mt-0.5 shrink-0 transition-transform duration-150',
+              'hover:scale-110 active:scale-90',
               'focus:outline-none focus:ring-2 focus:ring-ring/30 rounded-full'
             )}
             aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
