@@ -89,7 +89,7 @@ export function MobileNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/80 backdrop-blur-xl z-50 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/85 backdrop-blur-2xl z-50 safe-area-bottom shadow-[0_-2px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
         <div className="flex items-center justify-around py-1 px-2">
           {items.map((item) => {
             const Icon = item.icon;
@@ -107,7 +107,7 @@ export function MobileNav() {
                 key={item.id}
                 href={item.href}
                 className={cn(
-                  "relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[64px] active:scale-90",
+                  "relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 min-w-[64px] active:scale-90",
                   active
                     ? "text-primary"
                     : "text-muted-foreground/50 hover:text-muted-foreground",
@@ -122,14 +122,14 @@ export function MobileNav() {
                   />
                 )}
                 <div className="relative">
-                  <Icon className="h-5 w-5 relative" />
+                  <Icon className={cn("h-5 w-5 relative", active && "drop-shadow-sm")} />
                   {count > 0 && (
                     <motion.span
                       key={count}
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       className={cn(
-                        "absolute -top-1 -right-1.5 w-2 h-2 rounded-full",
+                        "absolute -top-0.5 -right-1 w-2 h-2 rounded-full",
                         active ? "bg-primary" : "bg-primary/60",
                       )}
                     />
@@ -137,7 +137,7 @@ export function MobileNav() {
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-medium relative",
+                    "text-[10px] font-medium relative transition-colors",
                     active ? "font-semibold" : "",
                   )}
                 >
@@ -148,7 +148,7 @@ export function MobileNav() {
           })}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[64px] active:scale-90 text-muted-foreground/50 hover:text-muted-foreground"
+            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 min-w-[64px] active:scale-90 text-muted-foreground/50 hover:text-muted-foreground"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
@@ -165,7 +165,7 @@ export function MobileNav() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md md:hidden"
+              className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden"
               onClick={() => setDrawerOpen(false)}
             />
             <motion.div
@@ -187,7 +187,7 @@ export function MobileNav() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-muted-foreground/20" />
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-muted-foreground/20" />
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
                 <div className="flex items-center justify-between px-2 py-1.5 mt-2">
