@@ -78,7 +78,8 @@ const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname
             {active && (
               <motion.div
                 layoutId="activeNav"
-                className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
+                className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 shadow-sm shadow-primary/30"
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
               />
             )}
           </Link>
