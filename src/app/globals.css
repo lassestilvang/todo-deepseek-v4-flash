@@ -265,6 +265,15 @@ kbd {
   animation: slideUpToast 0.25s ease-out;
 }
 
+.animate-slide-right {
+  animation: slideRight 0.2s ease-out;
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .navigation-progress-bar {
   animation: progressFadeIn 0.2s ease-out;
 }

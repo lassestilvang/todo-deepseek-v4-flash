@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
   Flag,
   Plus,
@@ -66,7 +65,9 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => nameInputRef.current?.focus(), 100);
+      // Use requestAnimationFrame for reliable focus after dialog mount
+      const raf = requestAnimationFrame(() => nameInputRef.current?.focus());
+      return () => cancelAnimationFrame(raf);
     }
   }, [open]);
 
@@ -153,21 +154,9 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
         <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
           <DialogTitle className="text-lg sm:text-xl">
             {task ? (
-              <motion.span
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                key="edit"
-              >
-                Edit Task
-              </motion.span>
+              <span className="animate-slide-right" key="edit">Edit Task</span>
             ) : (
-              <motion.span
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                key="new"
-              >
-                New Task
-              </motion.span>
+              <span className="animate-slide-right" key="new">New Task</span>
             )}
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
