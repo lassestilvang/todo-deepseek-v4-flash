@@ -635,11 +635,17 @@ export function getTaskCounts(): {
   const today = now.toISOString().split('T')[0];
   const end7 = new Date(now);
   end7.setDate(end7.getDate() + 6);
+  const end7Str = end7.toISOString().split('T')[0];
 
-  const total = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE completed = 0').get() as { c: number }).c;
-  const todayCount = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE date = ? AND completed = 0').get(today) as { c: number }).c;
-  const upcomingCount = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE date >= ? AND completed = 0').get(today) as { c: number }).c;
-  const next7Count = (db.prepare('SELECT COUNT(*) as c FROM tasks WHERE date >= ? AND date <= ? AND completed = 0').get(today, end7.toISOString().split('T')[0]) as { c: number }).c;
+  // Single combined query for counts
+  const countRow = db.prepare(`
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN date = ? THEN 1 ELSE 0 END) as today,
+      SUM(CASE WHEN date >= ? THEN 1 ELSE 0 END) as upcoming,
+      SUM(CASE WHEN date >= ? AND date <= ? THEN 1 ELSE 0 END) as next7
+    FROM tasks WHERE completed = 0
+  `).get(today, today, today, end7Str) as { total: number; today: number; upcoming: number; next7: number };
 
   const byListRows = db.prepare('SELECT list_id, COUNT(*) as c FROM tasks WHERE completed = 0 GROUP BY list_id').all() as { list_id: string; c: number }[];
   const byList: Record<string, number> = {};
@@ -655,7 +661,14 @@ export function getTaskCounts(): {
   const byLabel: Record<string, number> = {};
   for (const row of byLabelRows) byLabel[row.label_id] = row.c;
 
-  return { total, today: todayCount, upcoming: upcomingCount, next7Days: next7Count, byList, byLabel };
+  return {
+    total: countRow.total,
+    today: countRow.today,
+    upcoming: countRow.upcoming,
+    next7Days: countRow.next7,
+    byList,
+    byLabel,
+  };
 }
 
 // --- Activity Logs ---

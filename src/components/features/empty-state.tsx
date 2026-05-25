@@ -1,147 +1,141 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Sparkles, Sun, CalendarDays, Layers, ListTodo, Inbox, Tag, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const floatingAnimation = {
-  animate: {
-    y: [0, -8, 0],
-    rotate: [0, 2, -2, 0],
-  },
-  transition: {
-    duration: 4,
-    repeat: Infinity,
-    ease: 'easeInOut',
-  },
-};
-
-const todayIcon = (
-  <svg viewBox="0 0 80 80" fill="none" className="w-full h-full">
-    <motion.circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="2" className="text-primary/15" fill="currentColor" fillOpacity="0.03" />
-    <motion.circle
-      cx="40" cy="40" r="28" stroke="currentColor" strokeWidth="2" className="text-primary/25"
-      initial={{ pathLength: 0 }}
-      animate={{ pathLength: 1 }}
-      transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 3 }}
-      strokeDasharray="0 1"
-    />
-    <motion.circle
-      cx="40" cy="40" r="20" stroke="currentColor" strokeWidth="1.5" className="text-primary/20"
-      initial={{ pathLength: 0 }}
-      animate={{ pathLength: 1 }}
-      transition={{ duration: 2, ease: 'easeInOut', delay: 0.5, repeat: Infinity, repeatDelay: 3 }}
-      strokeDasharray="0 1"
-    />
-    <motion.circle cx="40" cy="40" r="3" fill="currentColor" className="text-primary/40" />
-    {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
-      const angle = (i * 45 * Math.PI) / 180;
-      return (
-        <motion.circle
-          key={i}
-          cx={40 + 12 * Math.cos(angle)}
-          cy={40 + 12 * Math.sin(angle)}
-          r="2" fill="currentColor" className="text-primary/30"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 2, delay: i * 0.15, repeat: Infinity }}
-        />
-      );
-    })}
-  </svg>
-);
-const defaultIcon = (
-  <svg viewBox="0 0 80 80" fill="none" className="w-full h-full">
-    <motion.rect x="16" y="20" width="48" height="12" rx="6" stroke="currentColor" strokeWidth="2" className="text-primary/20" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} />
-    <motion.rect x="16" y="38" width="48" height="12" rx="6" stroke="currentColor" strokeWidth="2" className="text-primary/15" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.2 }} />
-    <motion.rect x="16" y="56" width="32" height="12" rx="6" stroke="currentColor" strokeWidth="2" className="text-primary/10" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.4 }} />
-    <motion.circle cx="24" cy="26" r="2" fill="currentColor" className="text-primary/40" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.6, type: 'spring' }} />
-    <motion.circle cx="24" cy="44" r="2" fill="currentColor" className="text-primary/30" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.8, type: 'spring' }} />
-  </svg>
-);
-
-const inboxIcon = (
-  <svg viewBox="0 0 80 80" fill="none" className="w-full h-full">
-    <motion.path
-      d="M16 40 L24 28 L56 28 L64 40 L64 56 Q64 60 60 60 L20 60 Q16 60 16 56 Z"
-      stroke="currentColor" strokeWidth="2" className="text-primary/20"
-      fill="currentColor" fillOpacity="0.03"
-      initial={{ pathLength: 0 }}
-      animate={{ pathLength: 1 }}
-      transition={{ duration: 1.5 }}
-    />
-    <motion.line x1="16" y1="40" x2="34" y2="40" stroke="currentColor" strokeWidth="2" className="text-primary/30" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, delay: 0.3 }} />
-    <motion.line x1="64" y1="40" x2="46" y2="40" stroke="currentColor" strokeWidth="2" className="text-primary/30" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, delay: 0.5 }} />
-    <motion.circle cx="40" cy="34" r="3" fill="currentColor" className="text-primary/40" initial={{ scale: 0 }} animate={{ scale: [0, 1.2, 1] }} transition={{ delay: 0.8, type: 'spring' }} />
-  </svg>
-);
-
-const iconMap: Record<string, React.ReactNode> = {
-  today: todayIcon,
-  default: defaultIcon,
-  inbox: inboxIcon,
-};
+export type EmptyStateType = 'today' | 'next-7-days' | 'upcoming' | 'all' | 'list' | 'label' | 'search' | 'default';
 
 interface EmptyStateProps {
-  icon?: keyof typeof iconMap | string;
-  message: string;
-  hint?: string;
-  actionLabel?: string;
-  onAction?: () => void;
+  type?: EmptyStateType;
+  title?: string;
+  message?: string;
+  onCreate?: () => void;
+  onFocusQuickAdd?: () => void;
+  query?: string;
 }
 
-export function EmptyState({ icon = 'default', message, hint, actionLabel, onAction }: EmptyStateProps) {
-  const IconComponent = iconMap[icon] || iconMap.default;
+const config: Record<EmptyStateType, { icon: typeof Sparkles; gradient: string; title: string; subtitle: string }> = {
+  today: {
+    icon: Sun,
+    gradient: 'from-amber-500/20 via-amber-400/10 to-background',
+    title: 'Nothing planned for today',
+    subtitle: 'Enjoy your free day! Or start a new task to get things done.',
+  },
+  'next-7-days': {
+    icon: CalendarDays,
+    gradient: 'from-blue-500/20 via-blue-400/10 to-background',
+    title: 'No tasks this week',
+    subtitle: 'Plan ahead by scheduling tasks for the next few days.',
+  },
+  upcoming: {
+    icon: Layers,
+    gradient: 'from-purple-500/20 via-purple-400/10 to-background',
+    title: 'No upcoming tasks',
+    subtitle: 'All caught up! Create tasks with future dates to see them here.',
+  },
+  all: {
+    icon: ListTodo,
+    gradient: 'from-emerald-500/20 via-emerald-400/10 to-background',
+    title: 'No tasks yet',
+    subtitle: 'Your planner is empty. Start by creating your first task!',
+  },
+  list: {
+    icon: Inbox,
+    gradient: 'from-primary/20 via-primary/10 to-background',
+    title: 'This list is empty',
+    subtitle: 'Add tasks to this list to keep things organized.',
+  },
+  label: {
+    icon: Tag,
+    gradient: 'from-pink-500/20 via-pink-400/10 to-background',
+    title: 'No tasks with this label',
+    subtitle: 'Assign this label to tasks to find them quickly.',
+  },
+  search: {
+    icon: Search,
+    gradient: 'from-sky-500/20 via-sky-400/10 to-background',
+    title: 'No results found',
+    subtitle: 'Try a different search term or browse your tasks.',
+  },
+  default: {
+    icon: Sparkles,
+    gradient: 'from-primary/20 via-primary/10 to-background',
+    title: 'Nothing here yet',
+    subtitle: 'Start by creating a new task.',
+  },
+};
+
+export function EmptyState({ type = 'default', title, message, onCreate, onFocusQuickAdd, query }: EmptyStateProps) {
+  const cfg = config[type] || config.default;
+  const Icon = cfg.icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="flex flex-col items-center justify-center py-16 sm:py-24 text-center"
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="flex flex-col items-center justify-center py-20 text-center px-4"
     >
       <motion.div
-        className="h-32 w-32 sm:h-40 sm:w-40 mb-6 sm:mb-8"
-        variants={floatingAnimation}
-        animate="animate"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="relative"
       >
-        <div className="w-full h-full text-primary/30">
-          {IconComponent}
+        <div className={`
+          h-28 w-28 rounded-[2rem] bg-gradient-to-br ${cfg.gradient}
+          flex items-center justify-center mb-6
+          ring-1 ring-primary/5 ring-inset shadow-lg shadow-primary/5
+        `}>
+          <Icon className="h-12 w-12 text-primary/40" />
         </div>
+        <motion.div
+          className="absolute -top-1 -right-1 h-8 w-8 rounded-xl bg-background/80 backdrop-blur-sm border flex items-center justify-center shadow-sm"
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.3 }}
+        >
+          <Sparkles className="h-4 w-4 text-primary/60" />
+        </motion.div>
       </motion.div>
 
       <motion.p
+        className="text-foreground/80 font-semibold text-lg"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        {title || cfg.title}
+      </motion.p>
+      <motion.p
+        className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-foreground/80 font-semibold text-lg sm:text-xl"
       >
-        {message}
+        {message || cfg.subtitle}
       </motion.p>
 
-      {hint && (
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed"
-        >
-          {hint}
-        </motion.p>
-      )}
-
-      {actionLabel && onAction && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Button variant="outline" size="sm" className="rounded-xl shadow-sm hover:shadow-md transition-shadow" onClick={onAction}>
+      <motion.div
+        className="flex items-center gap-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+      >
+        {onCreate && (
+          <Button size="sm" className="rounded-xl shadow-sm active:scale-95 transition-transform" onClick={onCreate}>
             <Plus className="h-4 w-4 mr-1.5" />
-            {actionLabel}
+            New Task
           </Button>
-        </motion.div>
-      )}
+        )}
+        {onFocusQuickAdd && (
+          <Button variant="outline" size="sm" className="rounded-xl shadow-sm" onClick={onFocusQuickAdd}>
+            Quick Add
+            <kbd className="ml-1.5 text-[9px] px-1 py-0.5 rounded bg-muted-foreground/10 text-muted-foreground/60 font-mono">Q</kbd>
+          </Button>
+        )}
+      </motion.div>
     </motion.div>
   );
 }
