@@ -5,14 +5,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
-  promise?: Promise<T>;
 }
 
 const cache = new Map<string, CacheEntry<unknown>>();
 const subscribers = new Map<string, Set<() => void>>();
 const TTL = 30000; // 30 seconds for task data
 const STATIC_TTL = 300000; // 5 minutes for lists/labels (rarely change)
-const STALE_TTL = 120000; // 2 minutes stale-while-revalidate for tasks
 
 // Debounce map to prevent rapid successive invalidations
 const invalidationTimers = new Map<string, ReturnType<typeof setTimeout>>();
