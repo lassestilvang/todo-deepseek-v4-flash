@@ -84,18 +84,20 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       {/* Shine effect on hover */}
       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-r from-transparent via-primary/[0.02] to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%]" />
 
-      {/* Priority left bar */}
-      {task.priority !== 'none' && !task.completed && (
+      {/* Priority/overdue left bar - shown once, overdue takes precedence over non-high priority */}
+      {!task.completed && (
         <div className={cn(
-          'absolute left-0 top-0 bottom-0 w-1 rounded-l-xl',
-          task.priority === 'high' ? 'bg-gradient-to-b from-red-500 to-red-400' :
-          task.priority === 'medium' ? 'bg-gradient-to-b from-amber-500 to-amber-400' :
-          'bg-gradient-to-b from-blue-500 to-blue-400'
+          'absolute left-0 top-0 bottom-0 w-1 rounded-l-xl transition-opacity duration-200',
+          overdue
+            ? 'bg-gradient-to-b from-red-500 to-red-400'
+            : task.priority === 'high'
+              ? 'bg-gradient-to-b from-red-500 to-red-400'
+              : task.priority === 'medium'
+                ? 'bg-gradient-to-b from-amber-500 to-amber-400'
+                : task.priority === 'low'
+                  ? 'bg-gradient-to-b from-blue-500 to-blue-400'
+                  : 'opacity-0'
         )} />
-      )}
-
-      {overdue && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-red-400 rounded-l-xl" />
       )}
 
       {task.completed && (
