@@ -158,6 +158,40 @@ kbd {
   contain: layout;
 }
 
+.contain-strict {
+  contain: strict;
+}
+
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 100px;
+}
+
+.task-list-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
+.task-card-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 80px;
+}
+
+/* Will-change hints for animated elements */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* GPU-accelerated animations */
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 @keyframes overlayShow {
   from { opacity: 0; }
   to { opacity: 1; }
