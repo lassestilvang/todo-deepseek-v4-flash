@@ -42,16 +42,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const fetchRef = useRef(0);
   const { toast } = useToast();
 
-  // Determine empty state type from title/endpoint context
-  const emptyStateTypeRef = useRef<EmptyStateType>('default');
+  // Determine empty state type from current pathname - computed once
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-  if (pathname.startsWith('/today')) emptyStateTypeRef.current = 'today';
-  else if (pathname.startsWith('/next-7-days')) emptyStateTypeRef.current = 'next-7-days';
-  else if (pathname.startsWith('/upcoming')) emptyStateTypeRef.current = 'upcoming';
-  else if (pathname.startsWith('/all')) emptyStateTypeRef.current = 'all';
-  else if (pathname.startsWith('/list')) emptyStateTypeRef.current = 'list';
-  else if (pathname.startsWith('/label')) emptyStateTypeRef.current = 'label';
-  else emptyStateTypeRef.current = 'default';
+  const emptyStateType = useMemo<EmptyStateType>(() => {
+    if (pathname.startsWith('/today')) return 'today';
+    if (pathname.startsWith('/next-7-days')) return 'next-7-days';
+    if (pathname.startsWith('/upcoming')) return 'upcoming';
+    if (pathname.startsWith('/all')) return 'all';
+    if (pathname.startsWith('/list')) return 'list';
+    if (pathname.startsWith('/label')) return 'label';
+    return 'default';
+  }, [pathname]);
 
   // Use deferred value for rendered tasks to avoid jank during updates
   const deferredTasks = useDeferredValue(tasks);
@@ -387,7 +388,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
           <AnimatePresence mode="popLayout">
             {displayedTasks.length === 0 ? (
               <EmptyState
-                type={emptyStateTypeRef.current}
+                type={emptyStateType}
                 onCreate={openCreate}
                 onFocusQuickAdd={() => quickAddRef.current?.focus()}
               />
