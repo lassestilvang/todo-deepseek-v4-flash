@@ -231,6 +231,25 @@ kbd {
   animation: slideUpToast 0.25s ease-out;
 }
 
+.confetti-particle {
+  animation: confettiBurst 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  transform: translate(0, 0) rotate(0deg) scale(0);
+}
+
+@keyframes confettiBurst {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0);
+    opacity: 1;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(var(--tr)) scale(var(--ts));
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
