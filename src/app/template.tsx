@@ -6,9 +6,9 @@ import { usePathname } from 'next/navigation';
 import { CommandPalette } from '@/components/features/command-palette';
 
 const pageVariants = {
-  initial: { opacity: 0, y: 12, scale: 0.98 },
-  animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -12, scale: 0.98, filter: 'blur(2px)' },
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12, scale: 0.98 },
 };
 
 export default function Template({ children }: { children: React.ReactNode }) {
@@ -35,10 +35,8 @@ export default function Template({ children }: { children: React.ReactNode }) {
         animate="animate"
         exit="exit"
         transition={{
-          type: 'spring',
-          stiffness: 400,
-          damping: 35,
-          mass: 0.8,
+          duration: 0.25,
+          ease: [0.25, 0.1, 0.25, 1],
         }}
       >
         {children}
