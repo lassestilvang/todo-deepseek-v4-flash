@@ -301,9 +301,15 @@ export function Sidebar() {
                 </div>
               )}
               {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-xl shadow-xl z-50 p-3 text-center">
-                  <p className="text-xs text-muted-foreground/70">No tasks found for &ldquo;{searchQuery}&rdquo;</p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-xl shadow-xl z-50 p-4 text-center"
+                >
+                  <Search className="h-6 w-6 text-muted-foreground/20 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-muted-foreground/70">No tasks found</p>
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">Try a different search term</p>
+                </motion.div>
               )}
             </motion.div>
           )}
