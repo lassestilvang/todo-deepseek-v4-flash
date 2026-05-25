@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
     labelId: labelId || undefined,
     date: date || undefined,
     completed: completed !== null ? completed === 'true' : undefined,
+    includeAttachments: false,
+    includeReminders: false,
   }));
 }
 
