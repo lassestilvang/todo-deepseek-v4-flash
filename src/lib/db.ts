@@ -9,7 +9,10 @@ export function getDb(): Database.Database {
   if (!db) {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = NORMAL');
     db.pragma('foreign_keys = ON');
+    db.pragma('cache_size = -8000'); // 8MB cache
+    db.pragma('busy_timeout = 5000');
     initializeSchema(db);
   }
   return db;
