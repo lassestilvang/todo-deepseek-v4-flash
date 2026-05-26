@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Eye, EyeOff, Zap, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const { toast } = useToast();
 
   // Determine empty state type from current pathname - computed once
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pathname = usePathname();
   const emptyStateType = useMemo<EmptyStateType>(() => {
     if (pathname.startsWith('/today')) return 'today';
     if (pathname.startsWith('/next-7-days')) return 'next-7-days';
