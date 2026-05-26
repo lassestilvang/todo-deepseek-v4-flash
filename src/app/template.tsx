@@ -1,15 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { CommandPalette } from '@/components/features/command-palette';
-
-const pageVariants = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12, scale: 0.98 },
-};
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,19 +21,9 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <motion.div
-        key={pathname}
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        transition={{
-          duration: 0.25,
-          ease: [0.25, 0.1, 0.25, 1],
-        }}
-      >
+      <div key={pathname} className="animate-fade-in">
         {children}
-      </motion.div>
+      </div>
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
     </>
   );
