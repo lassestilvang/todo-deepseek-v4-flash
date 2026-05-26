@@ -20,19 +20,19 @@ function prepare(db: Database.Database, sql: string): Database.Statement {
 // --- Lists ---
 export function getLists(): List[] {
   const db = getDb();
-  return db.prepare('SELECT * FROM lists ORDER BY is_default DESC, name ASC').all() as List[];
+  return prepare(db, 'SELECT * FROM lists ORDER BY is_default DESC, name ASC').all() as List[];
 }
 
 export function getList(id: string): List | undefined {
   const db = getDb();
-  return db.prepare('SELECT * FROM lists WHERE id = ?').get(id) as List | undefined;
+  return prepare(db, 'SELECT * FROM lists WHERE id = ?').get(id) as List | undefined;
 }
 
 export function createList(data: { name: string; color: string; icon: string }): List {
   const db = getDb();
   const id = generateId();
   const now = new Date().toISOString();
-  db.prepare(
+  prepare(db,
     'INSERT INTO lists (id, name, color, icon, is_default, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)'
   ).run(id, data.name, data.color, data.icon, now, now);
   return getList(id)!;
@@ -49,7 +49,7 @@ export function updateList(id: string, data: Partial<{ name: string; color: stri
   updates.push('updated_at = ?');
   values.push(now);
   values.push(id);
-  db.prepare(`UPDATE lists SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+  prepare(db, `UPDATE lists SET ${updates.join(', ')} WHERE id = ?`).run(...values);
   return getList(id);
 }
 
@@ -58,12 +58,12 @@ export function deleteList(id: string): void {
   const list = getList(id);
   if (list?.isDefault) throw new Error('Cannot delete default list');
   const deleteListTx = db.transaction(() => {
-    const affectedTasks = db.prepare('SELECT id, name FROM tasks WHERE list_id = ?').all(id) as { id: string; name: string }[];
+    const affectedTasks = prepare(db, 'SELECT id, name FROM tasks WHERE list_id = ?').all(id) as { id: string; name: string }[];
     for (const task of affectedTasks) {
       logActivity(db, task.id, 'moved', 'list', list?.name || '', 'Inbox');
     }
-    db.prepare('UPDATE tasks SET list_id = ? WHERE list_id = ?').run('inbox', id);
-    db.prepare('DELETE FROM lists WHERE id = ? AND is_default = 0').run(id);
+    prepare(db, 'UPDATE tasks SET list_id = ? WHERE list_id = ?').run('inbox', id);
+    prepare(db, 'DELETE FROM lists WHERE id = ? AND is_default = 0').run(id);
   });
   deleteListTx();
 }
@@ -71,18 +71,18 @@ export function deleteList(id: string): void {
 // --- Labels ---
 export function getLabels(): Label[] {
   const db = getDb();
-  return db.prepare('SELECT * FROM labels ORDER BY name ASC').all() as Label[];
+  return prepare(db, 'SELECT * FROM labels ORDER BY name ASC').all() as Label[];
 }
 
 export function getLabel(id: string): Label | undefined {
   const db = getDb();
-  return db.prepare('SELECT * FROM labels WHERE id = ?').get(id) as Label | undefined;
+  return prepare(db, 'SELECT * FROM labels WHERE id = ?').get(id) as Label | undefined;
 }
 
 export function createLabel(data: { name: string; color: string; icon: string }): Label {
   const db = getDb();
   const id = generateId();
-  db.prepare('INSERT INTO labels (id, name, color, icon) VALUES (?, ?, ?, ?)').run(id, data.name, data.color, data.icon);
+  prepare(db, 'INSERT INTO labels (id, name, color, icon) VALUES (?, ?, ?, ?)').run(id, data.name, data.color, data.icon);
   return getLabel(id)!;
 }
 
@@ -94,14 +94,14 @@ export function updateLabel(id: string, data: Partial<{ name: string; color: str
   if (data.color !== undefined) { updates.push('color = ?'); values.push(data.color); }
   if (data.icon !== undefined) { updates.push('icon = ?'); values.push(data.icon); }
   values.push(id);
-  db.prepare(`UPDATE labels SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+  prepare(db, `UPDATE labels SET ${updates.join(', ')} WHERE id = ?`).run(...values);
   return getLabel(id);
 }
 
 export function deleteLabel(id: string): void {
   const db = getDb();
-  db.prepare('DELETE FROM task_labels WHERE label_id = ?').run(id);
-  db.prepare('DELETE FROM labels WHERE id = ?').run(id);
+  prepare(db, 'DELETE FROM task_labels WHERE label_id = ?').run(id);
+  prepare(db, 'DELETE FROM labels WHERE id = ?').run(id);
 }
 
 // --- Tasks ---
@@ -164,7 +164,7 @@ function getBatchSubtasks(db: Database.Database, taskIds: string[]): Record<stri
 function getBatchAttachments(db: Database.Database, taskIds: string[]): Record<string, Attachment[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT * FROM attachments WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
+  const rows = prepare(db, `SELECT * FROM attachments WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`).all(...taskIds) as any[];
   const result: Record<string, Attachment[]> = {};
   for (const taskId of taskIds) result[taskId] = [];
   for (const row of rows) {
@@ -185,7 +185,7 @@ function getBatchAttachments(db: Database.Database, taskIds: string[]): Record<s
 function getBatchReminders(db: Database.Database, taskIds: string[]): Record<string, Reminder[]> {
   if (taskIds.length === 0) return {};
   const placeholders = taskIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT * FROM reminders WHERE task_id IN (${placeholders}) ORDER BY time ASC`).all(...taskIds) as any[];
+  const rows = prepare(db, `SELECT * FROM reminders WHERE task_id IN (${placeholders}) ORDER BY time ASC`).all(...taskIds) as any[];
   const result: Record<string, Reminder[]> = {};
   for (const taskId of taskIds) result[taskId] = [];
   for (const row of rows) {
@@ -204,7 +204,7 @@ function getBatchReminders(db: Database.Database, taskIds: string[]): Record<str
 function getBatchLists(db: Database.Database, listIds: string[]): Record<string, List> {
   if (listIds.length === 0) return {};
   const placeholders = listIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT * FROM lists WHERE id IN (${placeholders})`).all(...listIds) as any[];
+  const rows = prepare(db, `SELECT * FROM lists WHERE id IN (${placeholders})`).all(...listIds) as any[];
   const result: Record<string, List> = {};
   for (const row of rows) {
     result[row.id] = rowToList(row);
@@ -215,7 +215,7 @@ function getBatchLists(db: Database.Database, listIds: string[]): Record<string,
 function getBatchLabels(db: Database.Database, labelIds: string[]): Record<string, Label> {
   if (labelIds.length === 0) return {};
   const placeholders = labelIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT * FROM labels WHERE id IN (${placeholders})`).all(...labelIds) as any[];
+  const rows = prepare(db, `SELECT * FROM labels WHERE id IN (${placeholders})`).all(...labelIds) as any[];
   const result: Record<string, Label> = {};
   for (const row of rows) {
     result[row.id] = {
@@ -242,12 +242,12 @@ function rowToList(row: any): List {
 }
 
 function getTaskLabelIds(db: Database.Database, taskId: string): string[] {
-  const rows = db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?').all(taskId) as { label_id: string }[];
+  const rows = prepare(db, 'SELECT label_id FROM task_labels WHERE task_id = ?').all(taskId) as { label_id: string }[];
   return rows.map(r => r.label_id);
 }
 
 function getSubtasks(db: Database.Database, taskId: string): Subtask[] {
-  return (db.prepare('SELECT * FROM subtasks WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
+  return (prepare(db, 'SELECT * FROM subtasks WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
     title: row.title,
@@ -257,7 +257,7 @@ function getSubtasks(db: Database.Database, taskId: string): Subtask[] {
 }
 
 function getAttachments(db: Database.Database, taskId: string): Attachment[] {
-  return (db.prepare('SELECT * FROM attachments WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
+  return (prepare(db, 'SELECT * FROM attachments WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
     name: row.name,
@@ -269,7 +269,7 @@ function getAttachments(db: Database.Database, taskId: string): Attachment[] {
 }
 
 function getReminders(db: Database.Database, taskId: string): Reminder[] {
-  return (db.prepare('SELECT * FROM reminders WHERE task_id = ? ORDER BY time ASC').all(taskId) as any[]).map((row: any) => ({
+  return (prepare(db, 'SELECT * FROM reminders WHERE task_id = ? ORDER BY time ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
     time: row.time,
@@ -353,7 +353,7 @@ export function getTasks(params?: {
 
   query += ' ORDER BY completed ASC, priority DESC, date ASC, created_at DESC';
 
-  const rows = db.prepare(query).all(...values) as Record<string, any>[];
+  const rows = prepare(db, query).all(...values) as Record<string, any>[];
   return hydrateTasks(db, rows, {
     includeAttachments: params?.includeAttachments,
     includeReminders: params?.includeReminders,
@@ -362,7 +362,7 @@ export function getTasks(params?: {
 
 export function getTask(id: string): TaskWithRelations | undefined {
   const db = getDb();
-  const row = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, any> | undefined;
+  const row = prepare(db, 'SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, any> | undefined;
   if (!row) return undefined;
   const task = rowToTask(row);
   task.labels = getTaskLabelIds(db, task.id);
@@ -394,7 +394,7 @@ export function createTask(data: {
   const listId = data.listId || 'inbox';
 
   const insert = db.transaction(() => {
-    db.prepare(`
+    prepare(db, `
       INSERT INTO tasks (id, name, description, date, deadline, estimate, priority, list_id, recurrence, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
@@ -413,7 +413,7 @@ export function createTask(data: {
 
     // Add labels
     if (data.labels) {
-      const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
+      const insertLabel = prepare(db, 'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
       for (const labelId of data.labels) {
         insertLabel.run(id, labelId);
       }
@@ -421,7 +421,7 @@ export function createTask(data: {
 
     // Add subtasks
     if (data.subtasks) {
-      const insertSubtask = db.prepare('INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+      const insertSubtask = prepare(db, 'INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
       for (const st of data.subtasks) {
         insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
       }
@@ -497,12 +497,12 @@ export function updateTask(id: string, data: Partial<{
     values.push(now);
     values.push(id);
 
-    db.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+    prepare(db, `UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
 
     // Sync labels if provided
     if (data.labels !== undefined) {
-      db.prepare('DELETE FROM task_labels WHERE task_id = ?').run(id);
-      const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
+      prepare(db, 'DELETE FROM task_labels WHERE task_id = ?').run(id);
+      const insertLabel = prepare(db, 'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)');
       for (const labelId of data.labels) {
         insertLabel.run(id, labelId);
       }
@@ -510,18 +510,18 @@ export function updateTask(id: string, data: Partial<{
 
     // Sync subtasks if provided — preserve created_at for existing ones
     if (data.subtasks !== undefined) {
-      const existingRows = db.prepare('SELECT id, created_at FROM subtasks WHERE task_id = ?').all(id) as { id: string; created_at: string }[];
+      const existingRows = prepare(db, 'SELECT id, created_at FROM subtasks WHERE task_id = ?').all(id) as { id: string; created_at: string }[];
       const existingMap = new Map(existingRows.map(r => [r.id, r.created_at]));
       const incomingIds = new Set(data.subtasks.map(s => s.id));
 
       // Delete subtasks removed by user
       for (const row of existingRows) {
         if (!incomingIds.has(row.id)) {
-          db.prepare('DELETE FROM subtasks WHERE id = ?').run(row.id);
+          prepare(db, 'DELETE FROM subtasks WHERE id = ?').run(row.id);
         }
       }
 
-      const upsert = db.prepare(`
+      const upsert = prepare(db, `
         INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET title = excluded.title, completed = excluded.completed
       `);
@@ -538,13 +538,13 @@ export function updateTask(id: string, data: Partial<{
 
 export function deleteTask(id: string): void {
   const db = getDb();
-  db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
+  prepare(db, 'DELETE FROM tasks WHERE id = ?').run(id);
 }
 export function deleteTasksBatch(ids: string[]): void {
   if (ids.length === 0) return;
   const db = getDb();
   const deleteMany = db.transaction(() => {
-    const stmt = db.prepare('DELETE FROM tasks WHERE id = ?');
+    const stmt = prepare(db, 'DELETE FROM tasks WHERE id = ?');
     for (const id of ids) {
       stmt.run(id);
     }
@@ -559,7 +559,7 @@ export function toggleTaskCompletion(id: string): TaskWithRelations | undefined 
   if (!existing) return undefined;
   const now = new Date().toISOString();
   const newCompleted = existing.completed ? 0 : 1;
-  db.prepare(`
+  prepare(db, `
     UPDATE tasks
     SET completed = ?,
         completed_at = CASE WHEN ? THEN ? ELSE NULL END,
@@ -575,17 +575,17 @@ export function addSubtask(taskId: string, title: string): Subtask {
   const db = getDb();
   const id = generateId();
   const now = new Date().toISOString();
-  db.prepare('INSERT INTO subtasks (id, task_id, title, created_at) VALUES (?, ?, ?, ?)').run(id, taskId, title, now);
+  prepare(db, 'INSERT INTO subtasks (id, task_id, title, created_at) VALUES (?, ?, ?, ?)').run(id, taskId, title, now);
   logActivity(db, taskId, 'add', 'subtask', '', title);
   return { id, taskId, title, completed: false, createdAt: now };
 }
 
 export function toggleSubtask(id: string): Subtask | undefined {
   const db = getDb();
-  const row = db.prepare('SELECT * FROM subtasks WHERE id = ?').get(id) as any;
+  const row = prepare(db, 'SELECT * FROM subtasks WHERE id = ?').get(id) as any;
   if (!row) return undefined;
   const newCompleted = row.completed ? 0 : 1;
-  db.prepare('UPDATE subtasks SET completed = ? WHERE id = ?').run(newCompleted, id);
+  prepare(db, 'UPDATE subtasks SET completed = ? WHERE id = ?').run(newCompleted, id);
   logActivity(db, row.task_id, 'update', 'subtask', row.title, String(!!newCompleted));
   return {
     id: row.id,
@@ -598,24 +598,24 @@ export function toggleSubtask(id: string): Subtask | undefined {
 
 export function deleteSubtask(id: string): void {
   const db = getDb();
-  const row = db.prepare('SELECT task_id, title FROM subtasks WHERE id = ?').get(id) as { task_id: string; title: string } | undefined;
+  const row = prepare(db, 'SELECT task_id, title FROM subtasks WHERE id = ?').get(id) as { task_id: string; title: string } | undefined;
   if (row) {
     logActivity(db, row.task_id, 'delete', 'subtask', row.title, '');
   }
-  db.prepare('DELETE FROM subtasks WHERE id = ?').run(id);
+  prepare(db, 'DELETE FROM subtasks WHERE id = ?').run(id);
 }
 
 // --- Reminders ---
 export function addReminder(taskId: string, time: string, type: Reminder['type'] = 'notification'): Reminder {
   const db = getDb();
   const id = generateId();
-  db.prepare('INSERT INTO reminders (id, task_id, time, type) VALUES (?, ?, ?, ?)').run(id, taskId, time, type);
+  prepare(db, 'INSERT INTO reminders (id, task_id, time, type) VALUES (?, ?, ?, ?)').run(id, taskId, time, type);
   return { id, taskId, time, type, sent: false };
 }
 
 export function deleteReminder(id: string): void {
   const db = getDb();
-  db.prepare('DELETE FROM reminders WHERE id = ?').run(id);
+  prepare(db, 'DELETE FROM reminders WHERE id = ?').run(id);
 }
 
 // --- Labels on Tasks ---
@@ -623,7 +623,7 @@ export function addLabelToTask(taskId: string, labelId: string): void {
   const db = getDb();
   const label = getLabel(labelId);
   if (label) {
-    db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)').run(taskId, labelId);
+    prepare(db, 'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)').run(taskId, labelId);
     logActivity(db, taskId, 'add_label', 'label', '', label.name);
   }
 }
@@ -632,7 +632,7 @@ export function removeLabelFromTask(taskId: string, labelId: string): void {
   const db = getDb();
   const label = getLabel(labelId);
   if (label) {
-    db.prepare('DELETE FROM task_labels WHERE task_id = ? AND label_id = ?').run(taskId, labelId);
+    prepare(db, 'DELETE FROM task_labels WHERE task_id = ? AND label_id = ?').run(taskId, labelId);
     logActivity(db, taskId, 'remove_label', 'label', label.name, '');
   }
 }
@@ -654,7 +654,7 @@ export function getTaskCounts(): {
   const end7Str = end7.toISOString().split('T')[0];
 
   // Single combined query for counts
-  const countRow = db.prepare(`
+  const countRow = prepare(db, `
     SELECT
       COUNT(*) as total,
       SUM(CASE WHEN date = ? THEN 1 ELSE 0 END) as today,
@@ -663,11 +663,11 @@ export function getTaskCounts(): {
     FROM tasks WHERE completed = 0
   `).get(today, today, today, end7Str) as { total: number; today: number; upcoming: number; next7: number };
 
-  const byListRows = db.prepare('SELECT list_id, COUNT(*) as c FROM tasks WHERE completed = 0 GROUP BY list_id').all() as { list_id: string; c: number }[];
+  const byListRows = prepare(db, 'SELECT list_id, COUNT(*) as c FROM tasks WHERE completed = 0 GROUP BY list_id').all() as { list_id: string; c: number }[];
   const byList: Record<string, number> = {};
   for (const row of byListRows) byList[row.list_id] = row.c;
 
-  const byLabelRows = db.prepare(`
+  const byLabelRows = prepare(db, `
     SELECT tl.label_id, COUNT(*) as c
     FROM task_labels tl
     JOIN tasks t ON t.id = tl.task_id
@@ -690,13 +690,13 @@ export function getTaskCounts(): {
 // --- Activity Logs ---
 function logActivity(db: Database.Database, taskId: string, action: string, field: string, oldValue: string | null, newValue: string | null): void {
   const id = generateId();
-  db.prepare('INSERT INTO activity_logs (id, task_id, action, field, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?)')
+  prepare(db, 'INSERT INTO activity_logs (id, task_id, action, field, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?)')
     .run(id, taskId, action, field, oldValue, newValue);
 }
 
 export function getActivityLogs(taskId: string): ActivityLog[] {
   const db = getDb();
-  return (db.prepare('SELECT * FROM activity_logs WHERE task_id = ? ORDER BY timestamp DESC').all(taskId) as any[]).map((row: any) => ({
+  return (prepare(db, 'SELECT * FROM activity_logs WHERE task_id = ? ORDER BY timestamp DESC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
     action: row.action,
@@ -711,7 +711,7 @@ export function getActivityLogs(taskId: string): ActivityLog[] {
 export function searchTasks(query: string): TaskWithRelations[] {
   const db = getDb();
   const searchTerm = `%${query}%`;
-  const rows = db.prepare(`
+  const rows = prepare(db, `
     SELECT * FROM tasks 
     WHERE name LIKE ? OR description LIKE ? 
     ORDER BY 
