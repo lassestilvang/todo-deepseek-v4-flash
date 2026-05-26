@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, AlertTriangle, Info, AlertCircle, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,12 +41,6 @@ const styles: Record<ToastType, string> = {
   info: 'border-blue-500/30 bg-blue-500/5',
 };
 
-const toastVariants = {
-  initial: { opacity: 0, y: 16, scale: 0.95 },
-  animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -8, scale: 0.95, transition: { duration: 0.15 } },
-};
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const idRef = useRef(0);
@@ -66,49 +59,41 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       <div className="fixed bottom-24 md:bottom-4 left-4 right-4 md:left-auto md:right-4 z-[100] flex flex-col gap-2 pointer-events-none">
-        <AnimatePresence mode="popLayout">
-          {toasts.map(t => (
-            <motion.div
-              key={t.id}
-              layout
-              variants={toastVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-              className={cn(
-                'pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg',
-                styles[t.type]
-              )}
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--background) 95%, transparent)',
-              }}
-            >
-              {icons[t.type]}
-              <p className="text-sm text-foreground/90 flex-1">{t.message}</p>
-              {t.action && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs font-semibold rounded-lg px-2 shrink-0"
-                  onClick={() => {
-                    t.action!.onClick();
-                    removeToast(t.id);
-                  }}
-                >
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  {t.action.label}
-                </Button>
-              )}
-              <button
-                onClick={() => removeToast(t.id)}
-                className="shrink-0 p-0.5 rounded-md hover:bg-muted transition-colors"
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className={cn(
+              'pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg animate-slide-up-toast',
+              styles[t.type]
+            )}
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--background) 95%, transparent)',
+            }}
+          >
+            {icons[t.type]}
+            <p className="text-sm text-foreground/90 flex-1">{t.message}</p>
+            {t.action && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs font-semibold rounded-lg px-2 shrink-0"
+                onClick={() => {
+                  t.action!.onClick();
+                  removeToast(t.id);
+                }}
               >
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+                <RotateCcw className="h-3 w-3 mr-1" />
+                {t.action.label}
+              </Button>
+            )}
+            <button
+              onClick={() => removeToast(t.id)}
+              className="shrink-0 p-0.5 rounded-md hover:bg-muted transition-colors"
+            >
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ))}
       </div>
     </ToastContext.Provider>
   );
