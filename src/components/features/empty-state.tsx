@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Sparkles, Sun, CalendarDays, Layers, ListTodo, Inbox, Tag, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -66,23 +65,13 @@ const config: Record<EmptyStateType, { icon: typeof Sparkles; gradient: string; 
   },
 };
 
-export function EmptyState({ type = 'default', title, message, onCreate, onFocusQuickAdd, query }: EmptyStateProps) {
+export function EmptyState({ type = 'default', title, message, onCreate, onFocusQuickAdd }: EmptyStateProps) {
   const cfg = config[type] || config.default;
   const Icon = cfg.icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="flex flex-col items-center justify-center py-20 text-center px-4"
-    >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        className="relative"
-      >
+    <div className="flex flex-col items-center justify-center py-20 text-center px-4 animate-fade-in">
+      <div className="relative animate-scale-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
         <div className={`
           h-28 w-28 rounded-[2rem] bg-gradient-to-br ${cfg.gradient}
           flex items-center justify-center mb-6
@@ -90,39 +79,22 @@ export function EmptyState({ type = 'default', title, message, onCreate, onFocus
         `}>
           <Icon className="h-12 w-12 text-primary/40" />
         </div>
-        <motion.div
+        <div
           className="absolute -top-1 -right-1 h-8 w-8 rounded-xl bg-background/80 backdrop-blur-sm border flex items-center justify-center shadow-sm"
-          initial={{ scale: 0, rotate: -30 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.3 }}
+          style={{ animation: 'scaleIn 0.3s ease-out 0.3s both' }}
         >
           <Sparkles className="h-4 w-4 text-primary/60" />
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
-      <motion.p
-        className="text-foreground/80 font-semibold text-lg"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-      >
+      <p className="text-foreground/80 font-semibold text-lg" style={{ animation: 'slideUp 0.3s ease-out 0.15s both' }}>
         {title || cfg.title}
-      </motion.p>
-      <motion.p
-        className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      </p>
+      <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed" style={{ animation: 'slideUp 0.3s ease-out 0.2s both' }}>
         {message || cfg.subtitle}
-      </motion.p>
+      </p>
 
-      <motion.div
-        className="flex items-center gap-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-      >
+      <div className="flex items-center gap-2" style={{ animation: 'slideUp 0.3s ease-out 0.25s both' }}>
         {onCreate && (
           <Button size="sm" className="rounded-xl shadow-sm active:scale-95 transition-transform" onClick={onCreate}>
             <Plus className="h-4 w-4 mr-1.5" />
@@ -135,7 +107,7 @@ export function EmptyState({ type = 'default', title, message, onCreate, onFocus
             <kbd className="ml-1.5 text-[9px] px-1 py-0.5 rounded bg-muted-foreground/10 text-muted-foreground/60 font-mono">Q</kbd>
           </Button>
         )}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
