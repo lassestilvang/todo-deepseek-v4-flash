@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Eye, EyeOff, Zap, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -386,8 +385,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
       {!loading && (
         <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {displayedTasks.length === 0 ? (
+          {displayedTasks.length === 0 ? (
               <EmptyState
                 type={emptyStateType}
                 onCreate={openCreate}
@@ -463,7 +461,6 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 )}
               </>
             )}
-          </AnimatePresence>
         </div>
       )}
 
