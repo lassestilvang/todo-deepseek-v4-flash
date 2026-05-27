@@ -479,8 +479,10 @@ export function updateTask(id: string, data: Partial<{
         updates.push(`${mapping.col} = ?`);
         values.push(dbVal);
         
-        if (String(oldVal) !== String(newVal)) {
-          logActivity(db, id, 'update', mapping.field, String(oldVal ?? ''), String(newVal ?? ''));
+        const oldStr = oldVal !== null && oldVal !== undefined ? String(oldVal) : '';
+        const newStr = newVal !== null && newVal !== undefined ? String(newVal) : '';
+        if (oldStr !== newStr) {
+          logActivity(db, id, 'update', mapping.field, oldStr, newStr);
         }
       }
     }
