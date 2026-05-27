@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   CalendarRange,
@@ -76,11 +75,7 @@ const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname
               </span>
             )}
             {active && (
-              <motion.div
-                layoutId="activeNav"
-                className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 shadow-sm shadow-primary/30"
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 shadow-sm shadow-primary/30 animate-scale-in" />
             )}
           </Link>
         );
@@ -122,13 +117,11 @@ export function Sidebar() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape to close search
       if (e.key === 'Escape' && searchOpen) {
         setSearchOpen(false);
         setSearchQuery('');
         setSearchResults([]);
       }
-      // Quick view switching (no modifiers unless input focused)
       const activeEl = document.activeElement;
       const isInput = activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
       if (!isInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -264,11 +257,7 @@ export function Sidebar() {
             </div>
           </div>
           {searchOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative"
-            >
+            <div className="relative animate-fade-in">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/60" />
               <Input
                 placeholder="Search tasks..."
@@ -301,17 +290,13 @@ export function Sidebar() {
                 </div>
               )}
               {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-xl shadow-xl z-50 p-4 text-center"
-                >
+                <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-xl shadow-xl z-50 p-4 text-center animate-fade-in">
                   <Search className="h-6 w-6 text-muted-foreground/20 mx-auto mb-2" />
                   <p className="text-xs font-medium text-muted-foreground/70">No tasks found</p>
                   <p className="text-[10px] text-muted-foreground/50 mt-0.5">Try a different search term</p>
-                </motion.div>
+                </div>
               )}
-            </motion.div>
+            </div>
           )}
         </div>
 
@@ -333,35 +318,28 @@ export function Sidebar() {
             </Button>
           </div>
 
-          <AnimatePresence>
+          <div className={`overflow-hidden transition-all duration-200 ease-out ${showNewList ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
             {showNewList && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+              <form
+                onSubmit={(e) => { e.preventDefault(); createList(); }}
+                className="flex items-center gap-1 px-1 py-1"
               >
-                <form
-                  onSubmit={(e) => { e.preventDefault(); createList(); }}
-                  className="flex items-center gap-1 px-1 py-1"
-                >
-                  <Input
-                    value={newListName}
-                    onChange={(e) => setNewListName(e.target.value)}
-                    placeholder="List name..."
-                    className="h-8 text-sm rounded-lg"
-                    autoFocus
-                  />
-                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
-                    <Check className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md" onClick={() => setShowNewList(false)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </form>
-              </motion.div>
+                <Input
+                  value={newListName}
+                  onChange={(e) => setNewListName(e.target.value)}
+                  placeholder="List name..."
+                  className="h-8 text-sm rounded-lg"
+                  autoFocus
+                />
+                <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md" onClick={() => setShowNewList(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </form>
             )}
-          </AnimatePresence>
+          </div>
 
           {lists.map((list) => {
             const listCount = counts.byList[list.id] || 0;
@@ -404,14 +382,9 @@ export function Sidebar() {
                     </span>
                     <span className="flex-1 truncate">{list.name}</span>
                     {listCount > 0 && (
-                      <motion.span
-                        key={listCount}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="text-[11px] tabular-nums text-muted-foreground/60 mr-1"
-                      >
+                      <span className="text-[11px] tabular-nums text-muted-foreground/60 mr-1 animate-scale-in" key={`count-${list.id}-${listCount}`}>
                         {listCount}
-                      </motion.span>
+                      </span>
                     )}
                     {!list.isDefault && (
                       <div className="hidden group-hover:flex items-center gap-0.5">
@@ -471,35 +444,28 @@ export function Sidebar() {
             </Button>
           </div>
 
-          <AnimatePresence>
+          <div className={`overflow-hidden transition-all duration-200 ease-out ${showNewLabel ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
             {showNewLabel && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+              <form
+                onSubmit={(e) => { e.preventDefault(); createLabel(); }}
+                className="flex items-center gap-1 px-1 py-1"
               >
-                <form
-                  onSubmit={(e) => { e.preventDefault(); createLabel(); }}
-                  className="flex items-center gap-1 px-1 py-1"
-                >
-                  <Input
-                    value={newLabelName}
-                    onChange={(e) => setNewLabelName(e.target.value)}
-                    placeholder="Label name..."
-                    className="h-8 text-sm rounded-lg"
-                    autoFocus
-                  />
-                  <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
-                    <Check className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md" onClick={() => setShowNewLabel(false)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </form>
-              </motion.div>
+                <Input
+                  value={newLabelName}
+                  onChange={(e) => setNewLabelName(e.target.value)}
+                  placeholder="Label name..."
+                  className="h-8 text-sm rounded-lg"
+                  autoFocus
+                />
+                <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 rounded-md">
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-md" onClick={() => setShowNewLabel(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </form>
             )}
-          </AnimatePresence>
+          </div>
 
           {labels.map((label) => {
             const labelCount = counts.byLabel[label.id] || 0;
@@ -519,14 +485,9 @@ export function Sidebar() {
                   <span className="text-base shrink-0">{label.icon}</span>
                   <span className="flex-1 truncate">{label.name}</span>
                   {labelCount > 0 && (
-                    <motion.span
-                      key={labelCount}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-[11px] tabular-nums text-muted-foreground/60 mr-1"
-                    >
+                    <span className="text-[11px] tabular-nums text-muted-foreground/60 mr-1 animate-scale-in" key={`count-${label.id}-${labelCount}`}>
                       {labelCount}
-                    </motion.span>
+                    </span>
                   )}
                   <div className="hidden group-hover:flex items-center gap-0.5">
                     {confirmingDelete === `label:${label.id}` ? (
