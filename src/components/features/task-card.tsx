@@ -1,7 +1,6 @@
 'use client';
 
 import { memo, useState, useCallback, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
   Calendar,
   Clock,
@@ -67,12 +66,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
   }, [task.id]);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12, scale: 0.97 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+    <div
       className={cn(
         'group relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
         'focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/30',
@@ -106,7 +100,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
 
       <div className="p-3 sm:p-4">
         <div className="flex items-start gap-3">
-          <motion.button
+          <button
             onClick={(e) => {
               if (!task.completed) {
                 setConfetti({ x: e.clientX, y: e.clientY });
@@ -121,17 +115,13 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
             aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
           >
             {task.completed ? (
-              <motion.div
-                initial={{ scale: 0, rotate: -45 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-              >
+              <span className="block animate-scale-in">
                 <CheckCircle2 className="h-5 w-5 text-primary drop-shadow-sm" />
-              </motion.div>
+              </span>
             ) : (
               <Circle className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary/70 transition-colors duration-200" />
             )}
-          </motion.button>
+          </button>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
@@ -256,11 +246,9 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                   className="flex items-center gap-2 mt-2.5 w-full text-left group/sub"
                 >
                   <div className="flex-1 h-1 rounded-full bg-muted/70 overflow-hidden">
-                    <motion.div
-                      className={cn('h-full rounded-full', priority.bar === 'bg-transparent' ? 'bg-primary/60' : priority.bar)}
-                      initial={false}
-                      animate={{ width: `${subtaskProgress * 100}%` }}
-                      transition={{ duration: 0.4, ease: 'easeOut' }}
+                    <div
+                      className={cn('h-full rounded-full transition-all duration-500 ease-out', priority.bar === 'bg-transparent' ? 'bg-primary/60' : priority.bar)}
+                      style={{ width: `${subtaskProgress * 100}%` }}
                     />
                   </div>
                   <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1 shrink-0">
@@ -270,13 +258,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                 </button>
 
                 {expanded && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="mt-2 space-y-0.5 pl-1 overflow-hidden"
-                  >
+                  <div className="mt-2 space-y-0.5 pl-1 overflow-hidden animate-fade-in">
                     {task.subtasks.map((st, idx) => (
                       <div
                         key={st.id}
@@ -316,7 +298,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                         </span>
                       </div>
                     ))}
-                  </motion.div>
+                  </div>
                 )}
               </>
             )}
@@ -331,6 +313,6 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
           onComplete={() => setConfetti(null)}
         />
       )}
-    </motion.div>
+    </div>
   );
 });
