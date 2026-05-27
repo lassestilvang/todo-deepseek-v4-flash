@@ -81,7 +81,7 @@ export function MobileNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/85 backdrop-blur-2xl z-50 safe-area-bottom shadow-[0_-2px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/90 z-50 safe-area-bottom shadow-[0_-2px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-2px_20px_rgba(0,0,0,0.2)]">
         <div className="flex items-center justify-around py-1 px-2">
           {items.map((item) => {
             const Icon = item.icon;
