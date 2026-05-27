@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Plus, Eye, EyeOff, Zap, CalendarDays } from 'lucide-react';
+import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
@@ -332,6 +332,18 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
               {showCompleted ? 'Hide' : 'Show'} completed
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 rounded-xl"
+            onClick={() => {
+              setLoading(true);
+              fetchTasks();
+            }}
+            title="Refresh tasks"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
           <Button size="sm" className="h-8 text-xs rounded-xl shadow-sm relative active:scale-95 transition-transform" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add Task
