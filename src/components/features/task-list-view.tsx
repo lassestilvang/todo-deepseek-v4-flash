@@ -7,6 +7,7 @@ import { Plus, Eye, EyeOff, Zap, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
+import { LazyTaskCardWrapper } from './lazy-task-card-wrapper';
 import { EmptyState } from './empty-state';
 import type { EmptyStateType } from './empty-state';
 import { useToast } from '@/components/toast-provider';
@@ -406,13 +407,14 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                       </div>
                       <div className="space-y-2">
                         {dateTasks.map((task) => (
-                          <TaskCardMemo
-                            key={task.id}
-                            task={task}
-                            onToggle={handleToggle}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                          />
+                          <LazyTaskCardWrapper key={task.id} id={task.id}>
+                            <TaskCardMemo
+                              task={task}
+                              onToggle={handleToggle}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                            />
+                          </LazyTaskCardWrapper>
                         ))}
                       </div>
                     </div>
@@ -420,13 +422,14 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 ) : (
                   // Flat view (all, list, label)
                   displayedTasks.filter(t => !t.completed).map((task) => (
-                    <TaskCardMemo
-                      key={task.id}
-                      task={task}
-                      onToggle={handleToggle}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
+                    <LazyTaskCardWrapper key={task.id} id={task.id}>
+                      <TaskCardMemo
+                        task={task}
+                        onToggle={handleToggle}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    </LazyTaskCardWrapper>
                   ))
                 )}
 
@@ -449,13 +452,14 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                       </Button>
                     </div>
                     {displayedTasks.filter(t => t.completed).map((task) => (
-                      <TaskCardMemo
-                        key={task.id}
-                        task={task}
-                        onToggle={handleToggle}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                      />
+                      <LazyTaskCardWrapper key={task.id} id={task.id}>
+                        <TaskCardMemo
+                          task={task}
+                          onToggle={handleToggle}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                        />
+                      </LazyTaskCardWrapper>
                     ))}
                   </>
                 )}
