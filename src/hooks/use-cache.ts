@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { List, Label } from '@/types';
 
 interface CacheEntry<T> {
   data: T;
@@ -142,8 +143,6 @@ export function useLabelCache() {
   const { data: labels, loading, error, refresh } = useCachedFetch<Label[]>('/api/labels', 'labels', { staticCache: true });
   return { labels: labels || [], loading, error, refresh };
 }
-
-import type { List, Label } from '@/types';
 
 export interface TaskCounts {
   total: number;

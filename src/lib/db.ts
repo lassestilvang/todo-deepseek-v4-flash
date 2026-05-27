@@ -13,6 +13,8 @@ export function getDb(): Database.Database {
     db.pragma('foreign_keys = ON');
     db.pragma('cache_size = -8000'); // 8MB cache
     db.pragma('busy_timeout = 5000');
+    db.pragma('temp_store = MEMORY'); // Store temp tables in memory for speed
+    db.pragma('mmap_size = 268435456'); // 256MB memory-mapped I/O for faster reads
     initializeSchema(db);
   }
   return db;
@@ -114,6 +116,7 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_subtasks_task_id ON subtasks(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_labels_task_id ON task_labels(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_labels_label_id ON task_labels(label_id);
+    CREATE INDEX IF NOT EXISTS idx_tasks_completed_date ON tasks(completed, date);
   `);
 
   // Seed default inbox list if not exists
