@@ -173,6 +173,23 @@ body {
 html {
   color-scheme: light dark;
   scroll-behavior: smooth;
+  overscroll-behavior: none;
+}
+
+/* Prevent pull-to-refresh on the main content area */
+main {
+  overscroll-behavior: contain;
+}
+
+/* Disable sticky hover states on touch devices */
+@media (hover: none) {
+  .task-card-hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  .task-card-hover .task-card-actions {
+    opacity: 1 !important;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -68,7 +68,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
+        'group task-card-hover relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
         'focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/30',
         'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5',
         'active:translate-y-0 active:scale-[0.997]',
@@ -143,7 +143,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                 )}
               </div>
 
-              <div className="flex items-center gap-0.5 shrink-0 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all duration-200">
+              <div className="flex items-center gap-0.5 shrink-0 task-card-actions md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all duration-200">
                 <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 rounded-lg" onClick={() => onEdit(task.id)} aria-label="Edit task">
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
