@@ -58,6 +58,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [dialogKey, setDialogKey] = useState(0);
   const [quickAddValue, setQuickAddValue] = useState('');
   const [quickAddFocused, setQuickAddFocused] = useState(false);
+  const [quickAdding, setQuickAdding] = useState(false);
   const quickAddRef = useRef<HTMLInputElement>(null);
   const fetchRef = useRef(0);
   const { toast } = useToast();
@@ -240,9 +241,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   ]);
 
   const handleQuickAdd = useCallback(async () => {
-    if (!quickAddValue.trim()) return;
+    if (!quickAddValue.trim() || quickAdding) return;
     const name = quickAddValue.trim();
     setQuickAddValue('');
+    setQuickAdding(true);
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -262,8 +264,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     } catch (e) {
       toast('Failed to create task', 'error');
       console.error('Quick add failed', e);
+    } finally {
+      setQuickAdding(false);
     }
-  }, [quickAddValue, toast]);
+  }, [quickAddValue, quickAdding, toast]);
 
   const displayedTasks = useMemo(
     () => showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed),
@@ -393,12 +397,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
           quickAddFocused ? 'border-primary/40 shadow-sm shadow-primary/5' : 'border-border hover:border-primary/20'
         )}
       >
-        <Zap className={cn('h-4 w-4 sm:h-4 sm:w-4 shrink-0 transition-colors', quickAddFocused ? 'text-primary' : 'text-muted-foreground/40')} />
+        {quickAdding ? (
+          <span className="h-4 w-4 shrink-0 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
+        ) : (
+          <Zap className={cn('h-4 w-4 sm:h-4 sm:w-4 shrink-0 transition-colors', quickAddFocused ? 'text-primary' : 'text-muted-foreground/40')} />
+        )}
         <Input
           ref={quickAddRef}
           value={quickAddValue}
           onChange={(e) => setQuickAddValue(e.target.value)}
-          placeholder="Quick add a task..."
+          placeholder={quickAdding ? 'Adding...' : 'Quick add a task...'}
+          disabled={quickAdding}
           className="h-8 sm:h-8 border-0 bg-transparent px-0 text-base sm:text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
           onFocus={() => setQuickAddFocused(true)}
           onBlur={() => setQuickAddFocused(false)}

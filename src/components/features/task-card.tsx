@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useCallback, useEffect, useRef } from 'react';
+import { memo, useState, useCallback } from 'react';
 import {
   Calendar,
   Clock,
@@ -15,7 +15,6 @@ import {
   Repeat,
   Check,
   GripVertical,
-  AlertTriangle,
 } from 'lucide-react';
 import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';

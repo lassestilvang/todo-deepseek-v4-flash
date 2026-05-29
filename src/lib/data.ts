@@ -575,10 +575,10 @@ export function deleteTasksBatch(ids: string[]): void {
 
 export function toggleTaskCompletion(id: string): TaskWithRelations | undefined {
   const db = getDb();
-  const existing = getTaskLight(id);
-  if (!existing) return undefined;
+  const row = prepare(db, 'SELECT completed FROM tasks WHERE id = ?').get(id) as { completed: number } | undefined;
+  if (!row) return undefined;
   const now = new Date().toISOString();
-  const newCompleted = existing.completed ? 0 : 1;
+  const newCompleted = row.completed ? 0 : 1;
   prepare(db, `
     UPDATE tasks
     SET completed = ?,
@@ -587,7 +587,7 @@ export function toggleTaskCompletion(id: string): TaskWithRelations | undefined 
     WHERE id = ?
   `).run(newCompleted, newCompleted, now, now, id);
   logActivity(db, id, newCompleted ? 'completed' : 'uncompleted', 'completed', '', '');
-  return getTask(id);
+  return getTask(id); // Only this single query needed after update
 }
 
 // --- Subtasks ---

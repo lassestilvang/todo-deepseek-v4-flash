@@ -150,7 +150,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl sm:rounded-xl sm:shadow-2xl" data-vaul-no-drag>
+      <DialogContent className="sm:max-w-[600px] max-h-dvh sm:max-h-[85vh] overflow-y-auto gap-0 p-0 rounded-xl sm:rounded-xl sm:shadow-2xl">
         <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
           <DialogTitle className="text-lg sm:text-xl">
             {task ? (
@@ -251,12 +251,24 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                 <Clock className="h-3.5 w-3.5" />
                 Estimate (HH:mm)
               </ULabel>
-              <Input
-                type="time"
-                value={estimate}
-                onChange={(e) => setEstimate(e.target.value)}
-                className="h-9 rounded-xl"
-              />
+              <div className="relative">
+                <Input
+                  type="time"
+                  value={estimate}
+                  onChange={(e) => setEstimate(e.target.value)}
+                  className="h-9 rounded-xl"
+                />
+                {estimate && (
+                  <button
+                    type="button"
+                    onClick={() => setEstimate('')}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-muted transition-colors"
+                    aria-label="Clear estimate"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground/60" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
