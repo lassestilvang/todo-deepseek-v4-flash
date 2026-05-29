@@ -85,7 +85,7 @@ export default function RootLayout({
             </a>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
-              <main id="main-content" className="flex-1 overflow-y-auto bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 contain-layout" tabIndex={-1}>
+              <main id="main-content" className="flex-1 overflow-y-auto bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 contain-layout" tabIndex={-1} style={{ contentVisibility: 'auto', containIntrinsicSize: '1000px' }}>
                 <Suspense fallback={null}>
                   <AnimatePresenceWrapper>
                     {children}

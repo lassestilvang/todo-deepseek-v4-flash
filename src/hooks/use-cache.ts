@@ -10,6 +10,8 @@ interface CacheEntry<T> {
 
 const cache = new Map<string, CacheEntry<unknown>>();
 const subscribers = new Map<string, Set<() => void>>();
+// Request deduplication map — prevents duplicate in-flight requests for the same key
+const inflightRequests = new Map<string, Promise<unknown>>();
 const TTL = 30000; // 30 seconds for task data
 const STATIC_TTL = 300000; // 5 minutes for lists/labels (rarely change)
 
@@ -67,6 +69,8 @@ function getCached<T>(key: string, isStatic: boolean = false): T | null {
 function setCached<T>(key: string, data: T) {
   cache.set(key, { data, timestamp: Date.now() });
   notify(key);
+  // Clean up any inflight request for this key
+  inflightRequests.delete(key);
 }
 
 function subscribe(key: string, fn: () => void) {
@@ -102,10 +106,26 @@ export function useCachedFetch<T>(url: string | null, key: string, options?: { s
     setLoading(true);
     setError(null);
     const version = ++fetchVersionRef.current;
+
+    // Request deduplication — reuse in-flight promise if available
+    let requestPromise = inflightRequests.get(key) as Promise<T> | undefined;
+    if (!requestPromise) {
+      requestPromise = (async () => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<T>;
+      })();
+      inflightRequests.set(key, requestPromise);
+      // Clean up on completion regardless of success/failure
+      requestPromise.finally(() => {
+        if (inflightRequests.get(key) === requestPromise) {
+          inflightRequests.delete(key);
+        }
+      });
+    }
+
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      const json = await requestPromise;
       if (!mountedRef.current || version !== fetchVersionRef.current) return;
       setCached(key, json);
       setData(json);

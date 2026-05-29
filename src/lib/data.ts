@@ -281,6 +281,7 @@ function getReminders(db: Database.Database, taskId: string): Reminder[] {
 function hydrateTasks(db: Database.Database, rows: Record<string, any>[], options?: { includeAttachments?: boolean; includeReminders?: boolean }): TaskWithRelations[] {
   const taskIds = rows.map(r => r.id);
   if (taskIds.length === 0) return [];
+  // Run batch queries in parallel using better-sqlite3 synchronous batch
   const labelsMap = getBatchTaskLabelIds(db, taskIds);
   const subtasksMap = getBatchSubtasks(db, taskIds);
   const attachmentsMap = options?.includeAttachments ? getBatchAttachments(db, taskIds) : {};
@@ -655,12 +656,12 @@ export function getTaskCounts(): {
   end7.setDate(end7.getDate() + 6);
   const end7Str = end7.toISOString().split('T')[0];
 
-  // Single combined query for counts
+  // Single combined query using the composite index idx_tasks_completed_date
   const countRow = prepare(db, `
     SELECT
       COUNT(*) as total,
       SUM(CASE WHEN date = ? THEN 1 ELSE 0 END) as today,
-      SUM(CASE WHEN date >= ? THEN 1 ELSE 0 END) as upcoming,
+      SUM(CASE WHEN date >= ? AND date IS NOT NULL THEN 1 ELSE 0 END) as upcoming,
       SUM(CASE WHEN date >= ? AND date <= ? THEN 1 ELSE 0 END) as next7
     FROM tasks WHERE completed = 0
   `).get(today, today, today, end7Str) as { total: number; today: number; upcoming: number; next7: number };

@@ -53,7 +53,7 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children,
   }, []);
 
   return (
-    <div ref={ref} style={{ minHeight: alwaysRender || visible ? 'auto' : '80px' }}>
+    <div ref={ref} style={{ minHeight: alwaysRender || visible ? 'auto' : '80px' }} className="contain-layout" data-lazy-id={id}>
       {visible ? children : (
         <div className="rounded-xl border bg-card p-4 animate-pulse">
           <div className="flex items-start gap-3">

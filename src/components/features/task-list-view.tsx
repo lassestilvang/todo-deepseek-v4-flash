@@ -262,10 +262,16 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     }
   }, [quickAddValue, toast]);
 
-  const displayedTasks = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
+  const displayedTasks = useMemo(
+    () => showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed),
+    [showCompleted, deferredTasks]
+  );
 
   // Group tasks by date for upcoming/7-days views
-  const shouldGroupByDate = pathname.startsWith('/today') || pathname.startsWith('/next-7-days') || pathname.startsWith('/upcoming');
+  const shouldGroupByDate = useMemo(
+    () => pathname.startsWith('/today') || pathname.startsWith('/next-7-days') || pathname.startsWith('/upcoming'),
+    [pathname]
+  );
   const groupedTasks = useMemo(() => {
     if (!shouldGroupByDate) return null;
     const groups: Record<string, TaskWithRelations[]> = {};
@@ -288,8 +294,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     if (isTomorrow(dateStr)) return 'Tomorrow';
     return formatRelativeDate(dateStr);
   };
-  const activeTasks = tasks.filter(t => !t.completed);
-  const completedTasks = tasks.filter(t => t.completed);
+  const activeTasks = useMemo(() => tasks.filter(t => !t.completed), [tasks]);
+  const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
 
   const handleClearCompleted = useCallback(async () => {
     const completed = tasks.filter(t => t.completed);
