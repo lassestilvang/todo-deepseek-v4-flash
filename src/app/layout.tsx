@@ -7,7 +7,7 @@ import { ToastProvider } from '@/components/toast-provider';
 import { NavigationProgress } from '@/components/navigation-progress';
 import { Sidebar } from '@/components/features/sidebar';
 import { MobileNav } from '@/components/features/mobile-nav';
-import { AnimatePresenceWrapper } from '@/components/animate-presence-wrapper';
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -87,9 +87,7 @@ export default function RootLayout({
               <Sidebar />
               <main id="main-content" className="flex-1 overflow-y-auto bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 contain-layout" tabIndex={-1} style={{ contentVisibility: 'auto', containIntrinsicSize: '1000px' }}>
                 <Suspense fallback={null}>
-                  <AnimatePresenceWrapper>
-                    {children}
-                  </AnimatePresenceWrapper>
+                  {children}
                 </Suspense>
               </main>
             </div>
