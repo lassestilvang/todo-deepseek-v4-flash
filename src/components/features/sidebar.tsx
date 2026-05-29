@@ -300,7 +300,7 @@ export function Sidebar() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-0.5" style={{ contentVisibility: 'auto', containIntrinsicSize: '500px' }}>
+        <div className="flex-1 overflow-y-auto p-3 space-y-0.5 sidebar-scroll-fade" style={{ contentVisibility: 'auto', containIntrinsicSize: '500px' }}>
           <div className="px-2 py-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Views</span>
           </div>

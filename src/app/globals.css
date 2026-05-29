@@ -301,6 +301,17 @@ kbd {
   animation: progressFadeIn 0.2s ease-out;
 }
 
+/* Sidebar scroll fade indicator */
+.sidebar-scroll-fade {
+  mask-image: linear-gradient(to bottom, black 94%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 94%, transparent 100%);
+}
+
+/* Focus trap outline for accessibility */
+.main-content-focus:focus {
+  outline: none;
+}
+
 @keyframes progressFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
