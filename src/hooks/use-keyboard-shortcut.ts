@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 type Shortcut = {
   key: string;
@@ -12,9 +12,15 @@ type Shortcut = {
 };
 
 export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
+  // Store shortcuts in a ref to avoid re-attaching the listener on every render
+  // when inline array literals are passed as props
+  const shortcutsRef = useRef(shortcuts);
+  shortcutsRef.current = shortcuts;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      for (const shortcut of shortcuts) {
+      const currentShortcuts = shortcutsRef.current;
+      for (const shortcut of currentShortcuts) {
         if (shortcut.enabled === false) continue;
         const metaDown = e.metaKey || e.ctrlKey;
         const needsMeta = shortcut.meta || shortcut.ctrl;
@@ -32,5 +38,5 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [shortcuts]);
+  }, []); // Empty deps — never re-attach, always read from ref
 }

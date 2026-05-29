@@ -61,6 +61,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const quickAddRef = useRef<HTMLInputElement>(null);
   const fetchRef = useRef(0);
   const { toast } = useToast();
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
 
   // Determine empty state type from current pathname - computed once
   const pathname = usePathname();
@@ -137,7 +139,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const toggleRef = useRef<((id: string) => void) | null>(null);
 
   const handleToggle = useCallback(async (id: string) => {
-    const task = tasks.find(t => t.id === id);
+    const currentTasks = tasksRef.current;
+    const task = currentTasks.find(t => t.id === id);
     if (!task) return;
 
     const toggled = {
@@ -173,12 +176,12 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       toast('Failed to update task', 'error');
       console.error('Toggle failed, reverted', e);
     }
-  }, [tasks, toast]);
+  }, [toast]); // tasks via tasksRef ref — no re-creation needed
 
   useEffect(() => { toggleRef.current = handleToggle; }, [handleToggle]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const previousTasks = tasks;
+    const previousTasks = tasksRef.current;
     startTransition(() => {
       setTasks(prev => prev.filter(t => t.id !== id));
     });
@@ -213,16 +216,16 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       toast('Failed to delete task', 'error');
       console.error('Delete failed, reverted', e);
     }
-  }, [tasks, toast]);
+  }, [toast]); // tasks via tasksRef ref
 
   const handleEdit = useCallback((id: string) => {
-    const task = tasks.find(t => t.id === id);
+    const task = tasksRef.current.find(t => t.id === id);
     if (task) {
       setEditingTask(task);
       setDialogKey(k => k + 1);
       setDialogOpen(true);
     }
-  }, [tasks]);
+  }, []); // tasks via tasksRef ref
 
   const openCreate = useCallback(() => {
     setEditingTask(undefined);
@@ -298,7 +301,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
 
   const handleClearCompleted = useCallback(async () => {
-    const completed = tasks.filter(t => t.completed);
+    const completed = tasksRef.current.filter(t => t.completed);
     if (completed.length === 0) return;
     const ids = completed.map(t => t.id);
     startTransition(() => {
@@ -318,7 +321,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       toast('Failed to clear completed tasks', 'error');
       console.error('Clear completed failed', e);
     }
-  }, [tasks, toast]);
+  }, [toast]); // tasks via tasksRef ref
 
   const handleSave = useCallback((saved: TaskWithRelations) => {
     startTransition(() => {
@@ -493,7 +496,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         Clear all
                       </Button>
                     </div>
-                    {displayedTasks.filter(t => t.completed).map((task, idx) => (
+                    {completedTasks.map((task, idx) => (
                       <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
                         <TaskCardMemo
                           task={task}
