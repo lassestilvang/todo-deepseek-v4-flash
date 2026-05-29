@@ -448,8 +448,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         <div className="flex-1 h-px bg-border/50" />
                       </div>
                       <div className="space-y-2">
-                        {dateTasks.map((task) => (
-                          <LazyTaskCardWrapper key={task.id} id={task.id}>
+                        {dateTasks.map((task, idx) => (
+                          <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
                             <TaskCardMemo
                               task={task}
                               onToggle={handleToggle}
@@ -463,8 +463,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                   ))
                 ) : (
                   // Flat view (all, list, label)
-                  displayedTasks.filter(t => !t.completed).map((task) => (
-                    <LazyTaskCardWrapper key={task.id} id={task.id}>
+                  displayedTasks.filter(t => !t.completed).map((task, idx) => (
+                    <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
                       <TaskCardMemo
                         task={task}
                         onToggle={handleToggle}
@@ -493,8 +493,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         Clear all
                       </Button>
                     </div>
-                    {displayedTasks.filter(t => t.completed).map((task) => (
-                      <LazyTaskCardWrapper key={task.id} id={task.id}>
+                    {displayedTasks.filter(t => t.completed).map((task, idx) => (
+                      <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
                         <TaskCardMemo
                           task={task}
                           onToggle={handleToggle}

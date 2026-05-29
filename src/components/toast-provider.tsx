@@ -59,7 +59,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       <div className="fixed bottom-24 md:bottom-4 left-4 right-4 md:left-auto md:right-4 z-[100] flex flex-col gap-2 pointer-events-none">
-        {toasts.map(t => (
+        {toasts.map((t, idx) => (
           <div
             key={t.id}
             className={cn(
@@ -68,6 +68,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             )}
             style={{
               backgroundColor: 'color-mix(in srgb, var(--background) 95%, transparent)',
+              animationDelay: `${idx * 0.05}s`,
             }}
           >
             {icons[t.type]}

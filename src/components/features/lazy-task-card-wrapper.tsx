@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 interface LazyTaskCardWrapperProps {
   children: ReactNode;
   id: string;
+  style?: React.CSSProperties;
 }
 
 /**
@@ -13,7 +14,7 @@ interface LazyTaskCardWrapperProps {
  * Uses IntersectionObserver with rootMargin to render content before user scrolls to it.
  * Falls back to always rendering when IntersectionObserver is not available.
  */
-export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children, id }: LazyTaskCardWrapperProps) {
+export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children, id, style }: LazyTaskCardWrapperProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [alwaysRender, setAlwaysRender] = useState(false);
@@ -54,7 +55,11 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children,
 
   return (
     <div ref={ref} style={{ minHeight: alwaysRender || visible ? 'auto' : '80px' }} className="contain-layout" data-lazy-id={id}>
-      {visible ? children : (
+      {visible ? (
+        <div style={style} className="animate-fade-in">
+          {children}
+        </div>
+      ) : (
         <div className="rounded-xl border bg-card p-4 animate-pulse">
           <div className="flex items-start gap-3">
             <div className="h-5 w-5 rounded-full shrink-0 mt-0.5 bg-muted/60" />

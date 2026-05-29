@@ -163,6 +163,11 @@
 body {
   @apply bg-background text-foreground font-sans;
   transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, oklch(from var(--primary) l c h / 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(from var(--accent) l c h / 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, oklch(from var(--primary) l c h / 0.02) 0%, transparent 50%);
+  background-attachment: fixed;
 }
 
 html {
