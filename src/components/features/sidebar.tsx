@@ -58,6 +58,7 @@ const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname
                 : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
             )}
             aria-current={active ? 'page' : undefined}
+            aria-label={`${view.label} view${count > 0 ? ` (${count} tasks)` : ''}`}
           >
             <Icon className={cn('h-4 w-4 shrink-0', active && 'drop-shadow-sm')} />
             <span className="flex-1">{view.label}</span>
