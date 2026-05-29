@@ -17,7 +17,26 @@ import { cn, formatRelativeDate, isToday, isTomorrow } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 
 const TaskDialog = dynamic(() => import('./task-dialog').then(mod => mod.TaskDialog), {
-  loading: () => null,
+  loading: () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="bg-background border rounded-2xl shadow-2xl w-full max-w-[600px] max-h-[85vh] p-6 animate-fade-in">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded-xl w-1/3" />
+          <div className="h-4 bg-muted rounded-xl w-1/2" />
+          <div className="h-12 bg-muted rounded-xl w-full" />
+          <div className="h-24 bg-muted rounded-xl w-full" />
+          <div className="flex gap-4">
+            <div className="h-10 bg-muted rounded-xl flex-1" />
+            <div className="h-10 bg-muted rounded-xl flex-1" />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <div className="h-9 bg-muted rounded-xl w-20" />
+            <div className="h-9 bg-muted rounded-xl w-28" />
+          </div>
+        </div>
+      </div>
+    </div>
+  ),
 });
 
 interface TaskListViewProps {
@@ -388,9 +407,14 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border bg-card p-4 animate-pulse">
-              <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-              <div className="h-3 bg-muted rounded w-1/2" />
+            <div key={i} className="rounded-xl border bg-card p-4 animate-pulse" style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'both' }}>
+              <div className="flex items-start gap-3">
+                <div className="h-5 w-5 rounded-full bg-muted/60 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                </div>
+              </div>
             </div>
           ))}
         </div>

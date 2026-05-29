@@ -76,27 +76,28 @@ export function EmptyState({ type = 'default', title, message, onCreate, onFocus
           h-28 w-28 rounded-[2rem] bg-gradient-to-br ${cfg.gradient}
           flex items-center justify-center mb-6
           ring-1 ring-primary/5 ring-inset shadow-lg shadow-primary/5
+          animate-float
         `}>
           <Icon className="h-12 w-12 text-primary/40" />
         </div>
         <div
-          className="absolute -top-1 -right-1 h-8 w-8 rounded-xl bg-background/80 backdrop-blur-sm border flex items-center justify-center shadow-sm"
-          style={{ animation: 'scaleIn 0.3s ease-out 0.3s both' }}
+          className="absolute -top-1 -right-1 h-8 w-8 rounded-xl bg-background/80 border flex items-center justify-center shadow-sm animate-scale-check"
+          style={{ animationDelay: '0.4s', animationFillMode: 'both' }}
         >
           <Sparkles className="h-4 w-4 text-primary/60" />
         </div>
       </div>
 
-      <p className="text-foreground/80 font-semibold text-lg" style={{ animation: 'slideUp 0.3s ease-out 0.15s both' }}>
+      <p className="text-foreground/80 font-semibold text-lg animate-fade-in-up" style={{ animationDelay: '0.15s', animationFillMode: 'both' }}>
         {title || cfg.title}
       </p>
-      <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed" style={{ animation: 'slideUp 0.3s ease-out 0.2s both' }}>
+      <p className="text-sm text-muted-foreground/50 mt-1.5 mb-6 max-w-xs leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
         {message || cfg.subtitle}
       </p>
 
-      <div className="flex items-center gap-2" style={{ animation: 'slideUp 0.3s ease-out 0.25s both' }}>
+      <div className="flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: '0.25s', animationFillMode: 'both' }}>
         {onCreate && (
-          <Button size="sm" className="rounded-xl shadow-sm active:scale-95 transition-transform" onClick={onCreate}>
+          <Button size="sm" className="rounded-xl shadow-sm active:scale-95 transition-transform hover:shadow-md" onClick={onCreate}>
             <Plus className="h-4 w-4 mr-1.5" />
             New Task
           </Button>

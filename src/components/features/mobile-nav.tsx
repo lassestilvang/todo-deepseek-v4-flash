@@ -150,7 +150,8 @@ export function MobileNav() {
             onClick={() => setDrawerOpen(false)}
           />
           <div
-            className="fixed right-0 top-0 bottom-0 z-[70] w-[300px] max-w-[85vw] bg-background border-l shadow-2xl md:hidden flex flex-col animate-slide-right"
+            className="fixed right-0 top-0 bottom-0 z-[70] w-[300px] max-w-[85vw] bg-background border-l shadow-2xl md:hidden flex flex-col"
+            style={{ animation: 'drawerSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both' }}
           >
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-lg font-bold">

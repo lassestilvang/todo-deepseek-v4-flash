@@ -115,11 +115,11 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
             aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
           >
             {task.completed ? (
-              <span className="block animate-scale-in">
+              <span className="block animate-scale-check">
                 <CheckCircle2 className="h-5 w-5 text-primary drop-shadow-sm" />
               </span>
             ) : (
-              <Circle className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary/70 transition-colors duration-200" />
+              <Circle className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary/70 transition-colors duration-200 hover:drop-shadow-sm" />
             )}
           </button>
 
