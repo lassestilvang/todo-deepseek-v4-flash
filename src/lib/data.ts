@@ -377,6 +377,23 @@ export function getTask(id: string): TaskWithRelations | undefined {
   };
 }
 
+/** Lightweight version that skips attachments and reminders — used internally for updates */
+function getTaskLight(id: string): TaskWithRelations | undefined {
+  const db = getDb();
+  const row = prepare(db, 'SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, any> | undefined;
+  if (!row) return undefined;
+  const task = rowToTask(row);
+  task.labels = getTaskLabelIds(db, task.id);
+  const list = getList(task.listId);
+  return {
+    ...task,
+    subtasks: getSubtasks(db, task.id),
+    attachments: [],
+    reminders: [],
+    list,
+  };
+}
+
 export function createTask(data: {
   name: string;
   description?: string;
@@ -451,7 +468,7 @@ export function updateTask(id: string, data: Partial<{
   subtasks?: { id: string; title: string; completed: boolean }[];
 }>): TaskWithRelations | undefined {
   const db = getDb();
-  const existing = getTask(id);
+  const existing = getTaskLight(id);
   if (!existing) return undefined;
 
   const now = new Date().toISOString();
@@ -558,7 +575,7 @@ export function deleteTasksBatch(ids: string[]): void {
 
 export function toggleTaskCompletion(id: string): TaskWithRelations | undefined {
   const db = getDb();
-  const existing = getTask(id);
+  const existing = getTaskLight(id);
   if (!existing) return undefined;
   const now = new Date().toISOString();
   const newCompleted = existing.completed ? 0 : 1;

@@ -117,6 +117,7 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_task_labels_task_id ON task_labels(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_labels_label_id ON task_labels(label_id);
     CREATE INDEX IF NOT EXISTS idx_tasks_completed_date ON tasks(completed, date);
+    CREATE INDEX IF NOT EXISTS idx_tasks_completed_priority_date ON tasks(completed, priority, date, created_at);
   `);
 
   // Seed default inbox list if not exists
