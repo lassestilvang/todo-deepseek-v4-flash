@@ -232,6 +232,14 @@ kbd {
   backface-visibility: hidden;
 }
 
+/* GPU-accelerated task cards for smoother scrolling */
+.task-card-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
 @keyframes overlayShow {
   from { opacity: 0; }
   to { opacity: 1; }

@@ -67,7 +67,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
   return (
     <div
       className={cn(
-        'group task-card-hover relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
+        'group task-card-hover task-card-gpu relative overflow-hidden rounded-xl border bg-card transition-all duration-300',
         'focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/30',
         'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5',
         'active:translate-y-0 active:scale-[0.997]',

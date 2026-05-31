@@ -54,7 +54,7 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children,
   }, []);
 
   return (
-    <div ref={ref} style={{ minHeight: alwaysRender || visible ? 'auto' : '80px' }} className="contain-layout" data-lazy-id={id}>
+    <div ref={ref} style={{ minHeight: alwaysRender || visible ? 'auto' : '80px' }} className="contain-layout task-card-gpu" data-lazy-id={id}>
       {visible ? (
         <div style={style} className="animate-fade-in">
           {children}
