@@ -1,14 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { CommandPalette } from '@/components/features/command-palette';
+import dynamic from 'next/dynamic';
 import { Command } from 'lucide-react';
+
+const CommandPalette = dynamic(() => import('@/components/features/command-palette').then(m => m.CommandPalette), {
+  loading: () => null,
+});
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [commandOpen, setCommandOpen] = useState(false);
   const [showHints, setShowHints] = useState(false);
+  const showHintsRef = useRef(showHints);
+  showHintsRef.current = showHints;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -20,13 +26,13 @@ export default function Template({ children }: { children: React.ReactNode }) {
         e.preventDefault();
         setShowHints(prev => !prev);
       }
-      if (e.key === 'Escape' && showHints) {
+      if (e.key === 'Escape' && showHintsRef.current) {
         setShowHints(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showHints]);
+  }, []); // Empty deps — never re-attach, read from ref
 
   return (
     <>
