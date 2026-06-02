@@ -14,7 +14,7 @@ import { StatsDashboard } from './stats-dashboard';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache, useTaskCounts } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
-import { cn, formatRelativeDate, isToday, isTomorrow } from '@/lib/utils';
+import { cn, formatRelativeDate, isToday, isTomorrow, isOverdue } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 
 const TaskDialog = dynamic(() => import('./task-dialog').then(mod => mod.TaskDialog), {
@@ -285,17 +285,23 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const groupedTasks = useMemo(() => {
     if (!shouldGroupByDate) return null;
     const groups: Record<string, TaskWithRelations[]> = {};
+    const overdue: TaskWithRelations[] = [];
     const activeTasks = displayedTasks.filter(t => !t.completed);
     for (const task of activeTasks) {
+      if (task.date && isOverdue(task.date)) {
+        overdue.push(task);
+        continue;
+      }
       const key = task.date || 'unscheduled';
       if (!groups[key]) groups[key] = [];
       groups[key].push(task);
     }
-    return Object.entries(groups).sort(([a], [b]) => {
+    const sorted = Object.entries(groups).sort(([a], [b]) => {
       if (a === 'unscheduled') return 1;
       if (b === 'unscheduled') return -1;
       return a.localeCompare(b);
     });
+    return { grouped: sorted, overdue };
   }, [displayedTasks, shouldGroupByDate]);
 
   const getDateLabel = (dateStr: string) => {
@@ -456,29 +462,52 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
               <>
                 {/* Active Tasks */}
                 {groupedTasks ? (
-                  // Date-grouped view (today, next-7-days, upcoming)
-                  groupedTasks.map(([dateStr, dateTasks]) => (
-                    <div key={dateStr}>
-                      <div className="flex items-center gap-2 px-1 py-2 mt-2 first:mt-0">
-                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-                        <span className="text-xs font-semibold text-muted-foreground/60">{getDateLabel(dateStr)}</span>
-                        <span className="text-[10px] text-muted-foreground/30 tabular-nums">{dateTasks.length}</span>
-                        <div className="flex-1 h-px bg-border/50" />
+                  <>
+                    {groupedTasks.overdue.length > 0 && (
+                      <div key="overdue">
+                        <div className="flex items-center gap-2 px-1 py-2 mt-2 first:mt-0">
+                          <span className="h-3.5 w-3.5 rounded-full bg-destructive shrink-0 animate-pulse-soft" />
+                          <span className="text-xs font-semibold text-destructive">Overdue</span>
+                          <span className="text-[10px] text-destructive/50 tabular-nums">{groupedTasks.overdue.length}</span>
+                          <div className="flex-1 h-px bg-destructive/20" />
+                        </div>
+                        <div className="space-y-2">
+                          {groupedTasks.overdue.map((task, idx) => (
+                            <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
+                              <TaskCardMemo
+                                task={task}
+                                onToggle={handleToggle}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                              />
+                            </LazyTaskCardWrapper>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {dateTasks.map((task, idx) => (
-                          <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
-                            <TaskCardMemo
-                              task={task}
-                              onToggle={handleToggle}
-                              onEdit={handleEdit}
-                              onDelete={handleDelete}
-                            />
-                          </LazyTaskCardWrapper>
-                        ))}
+                    )}
+                    {groupedTasks.grouped.map(([dateStr, dateTasks]) => (
+                      <div key={dateStr}>
+                        <div className="flex items-center gap-2 px-1 py-2 mt-2 first:mt-0">
+                          <CalendarDays className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                          <span className="text-xs font-semibold text-muted-foreground/60">{getDateLabel(dateStr)}</span>
+                          <span className="text-[10px] text-muted-foreground/30 tabular-nums">{dateTasks.length}</span>
+                          <div className="flex-1 h-px bg-border/50" />
+                        </div>
+                        <div className="space-y-2">
+                          {dateTasks.map((task, idx) => (
+                            <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }}>
+                              <TaskCardMemo
+                                task={task}
+                                onToggle={handleToggle}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                              />
+                            </LazyTaskCardWrapper>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </>
                 ) : (
                   // Flat view (all, list, label)
                   displayedTasks.filter(t => !t.completed).map((task, idx) => (
