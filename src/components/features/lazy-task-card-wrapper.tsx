@@ -2,11 +2,19 @@
 
 import { useRef, useEffect, useState, memo } from 'react';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 interface LazyTaskCardWrapperProps {
   children: ReactNode;
   id: string;
   style?: React.CSSProperties;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  isDragOver?: boolean;
 }
 
 /**
@@ -14,7 +22,18 @@ interface LazyTaskCardWrapperProps {
  * Uses IntersectionObserver with rootMargin to render content before user scrolls to it.
  * Falls back to always rendering when IntersectionObserver is not available.
  */
-export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children, id, style }: LazyTaskCardWrapperProps) {
+export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({
+  children,
+  id,
+  style,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  isDragOver,
+}: LazyTaskCardWrapperProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [alwaysRender, setAlwaysRender] = useState(false);
@@ -56,7 +75,20 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({ children,
   return (
     <div ref={ref} style={{ minHeight: alwaysRender || visible ? 'auto' : '80px' }} className="contain-layout task-card-gpu" data-lazy-id={id}>
       {visible ? (
-        <div style={style} className="animate-fade-in">
+        <div
+          style={style}
+          className={cn('animate-fade-in transition-all duration-150', isDragOver && 'relative')}
+          draggable={draggable}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
+          {/* Drop indicator */}
+          {isDragOver && (
+            <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded-full z-10 animate-fade-in" />
+          )}
           {children}
         </div>
       ) : (

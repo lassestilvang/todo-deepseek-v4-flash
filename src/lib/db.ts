@@ -106,6 +106,15 @@ function initializeSchema(db: Database.Database) {
       FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
     );
   `);
+    // Add position column for drag-and-drop ordering (migration-safe)
+    const hasPositionCol = db.prepare("SELECT name FROM pragma_table_info('tasks') WHERE name = 'position'").get();
+    if (!hasPositionCol) {
+      db.exec(`ALTER TABLE tasks ADD COLUMN position INTEGER NOT NULL DEFAULT 0`);
+      // Set initial positions based on created_at order
+      db.exec(`UPDATE tasks SET position = (SELECT COUNT(*) FROM tasks t2 WHERE t2.created_at < tasks.created_at)`);
+    }
+
+
 
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_tasks_date ON tasks(date);

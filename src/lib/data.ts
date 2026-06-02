@@ -352,7 +352,7 @@ export function getTasks(params?: {
     values.push(`%${params.search}%`, `%${params.search}%`);
   }
 
-  query += ' ORDER BY completed ASC, priority DESC, date ASC, created_at DESC';
+  query += ' ORDER BY completed ASC, position ASC, priority DESC, date ASC, created_at DESC';
 
   const rows = prepare(db, query).all(...values) as Record<string, any>[];
   return hydrateTasks(db, rows, {
@@ -790,6 +790,7 @@ export function searchTasks(query: string): TaskWithRelations[] {
         ELSE 2 
       END,
       completed ASC,
+      position ASC,
       created_at DESC
     LIMIT 50
   `).all(searchTerm, searchTerm, searchTerm, searchTerm) as Record<string, any>[];
@@ -819,4 +820,16 @@ export function getTasksForView(view: string): TaskWithRelations[] {
     default:
       return getTasks({ listId: view });
   }
+}
+
+// --- Reordering ---
+export function reorderTasks(ids: string[]): void {
+  const db = getDb();
+  const updatePosition = db.transaction(() => {
+    const stmt = prepare(db, 'UPDATE tasks SET position = ?, updated_at = datetime(\'now\') WHERE id = ?');
+    for (let i = 0; i < ids.length; i++) {
+      stmt.run(i, ids[i]);
+    }
+  });
+  updatePosition();
 }
