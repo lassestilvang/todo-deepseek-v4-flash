@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import {
   Calendar,
   Clock,
@@ -19,8 +19,10 @@ import {
 import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/toast-provider';
 import type { TaskWithRelations } from '@/types';
+import { invalidateCache } from '@/hooks/use-cache';
 import { Confetti } from './confetti';
 
 const priorityConfig: Record<string, { color: string; label: string; bar: string }> = {
@@ -63,6 +65,51 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
       setTogglingSubtask(null);
     }
   }, [task.id]);
+
+  // Inline editing
+  const [editingName, setEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState(task.name);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingName) {
+      setEditNameValue(task.name);
+      requestAnimationFrame(() => editInputRef.current?.focus());
+      requestAnimationFrame(() => editInputRef.current?.select());
+    }
+  }, [editingName, task.name]);
+
+  const handleSaveInline = useCallback(async () => {
+    const newName = editNameValue.trim();
+    if (!newName || newName === task.name) {
+      setEditingName(false);
+      return;
+    }
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: task.id, name: newName }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      invalidateCache('task-counts');
+      toast('Task renamed', 'success');
+    } catch (e) {
+      toast('Failed to rename task', 'error');
+      console.error('Inline rename failed', e);
+    }
+    setEditingName(false);
+  }, [editNameValue, task.id, task.name, toast]);
+
+  const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveInline();
+    }
+    if (e.key === 'Escape') {
+      setEditingName(false);
+    }
+  }, [handleSaveInline]);
 
   return (
     <div
@@ -125,16 +172,32 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h3
-                  className={cn(
-                    'font-semibold text-sm leading-tight cursor-pointer transition-colors duration-150',
-                    'hover:text-primary',
-                    task.completed && 'line-through text-muted-foreground/60'
-                  )}
-                  onClick={() => onEdit(task.id)}
-                >
-                  {task.name}
-                </h3>
+                {editingName ? (
+                  <Input
+                    ref={editInputRef}
+                    value={editNameValue}
+                    onChange={(e) => setEditNameValue(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    onBlur={handleSaveInline}
+                    className="h-8 text-sm font-semibold px-2 rounded-lg border-primary/40"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <h3
+                    className={cn(
+                      'font-semibold text-sm leading-tight cursor-pointer transition-colors duration-150 rounded-md px-1 -ml-1',
+                      'hover:text-primary hover:bg-muted/40',
+                      task.completed && 'line-through text-muted-foreground/60'
+                    )}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      if (!task.completed) setEditingName(true);
+                    }}
+                    title="Double-click to rename"
+                  >
+                    {task.name}
+                  </h3>
+                )}
                 {task.description && (
                   <p className="text-xs text-muted-foreground/60 mt-0.5 line-clamp-1 group-hover:text-muted-foreground/80 transition-colors duration-150">
                     {task.description}
