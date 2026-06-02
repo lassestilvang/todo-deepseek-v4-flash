@@ -575,19 +575,114 @@ export function deleteTasksBatch(ids: string[]): void {
 
 export function toggleTaskCompletion(id: string): TaskWithRelations | undefined {
   const db = getDb();
-  const row = prepare(db, 'SELECT completed FROM tasks WHERE id = ?').get(id) as { completed: number } | undefined;
+  const row = prepare(db, 'SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, any> | undefined;
   if (!row) return undefined;
   const now = new Date().toISOString();
   const newCompleted = row.completed ? 0 : 1;
+
+  const update = db.transaction(() => {
+    prepare(db, `
+      UPDATE tasks
+      SET completed = ?,
+          completed_at = CASE WHEN ? THEN ? ELSE NULL END,
+          updated_at = ?
+      WHERE id = ?
+    `).run(newCompleted, newCompleted, now, now, id);
+    logActivity(db, id, newCompleted ? 'completed' : 'uncompleted', 'completed', '', '');
+
+    // Auto-generate next recurring task instance when completing
+    if (newCompleted && row.recurrence) {
+      const recurrence = JSON.parse(row.recurrence) as Recurrence;
+      if (recurrence.type !== 'none') {
+        const nextTask = createNextRecurrence(db, row, recurrence);
+        if (nextTask) {
+          logActivity(db, nextTask.id, 'created', 'recurrence', '', 'Auto-created from "' + row.name + '"');
+        }
+      }
+    }
+  });
+
+  update();
+  return getTask(id);
+}
+
+function createNextRecurrence(db: Database.Database, row: Record<string, any>, recurrence: Recurrence): TaskWithRelations | undefined {
+  const currentDate = new Date(row.date || new Date());
+  let nextDate: Date | null = null;
+
+  switch (recurrence.type) {
+    case 'daily': {
+      nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + (recurrence.interval || 1));
+      break;
+    }
+    case 'weekdays': {
+      nextDate = new Date(currentDate);
+      do {
+        nextDate.setDate(nextDate.getDate() + 1);
+      } while (nextDate.getDay() === 0 || nextDate.getDay() === 6);
+      break;
+    }
+    case 'weekly': {
+      nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 7 * (recurrence.interval || 1));
+      break;
+    }
+    case 'monthly': {
+      nextDate = new Date(currentDate);
+      nextDate.setMonth(nextDate.getMonth() + (recurrence.interval || 1));
+      break;
+    }
+    case 'yearly': {
+      nextDate = new Date(currentDate);
+      nextDate.setFullYear(nextDate.getFullYear() + (recurrence.interval || 1));
+      break;
+    }
+  }
+
+  if (!nextDate) return undefined;
+
+  // Check end date
+  if (recurrence.endDate) {
+    const end = new Date(recurrence.endDate);
+    if (nextDate > end) return undefined;
+  }
+
+  const now = new Date().toISOString();
+  const nextId = generateId();
+  const nextDateStr = nextDate.toISOString().split('T')[0];
+
   prepare(db, `
-    UPDATE tasks
-    SET completed = ?,
-        completed_at = CASE WHEN ? THEN ? ELSE NULL END,
-        updated_at = ?
-    WHERE id = ?
-  `).run(newCompleted, newCompleted, now, now, id);
-  logActivity(db, id, newCompleted ? 'completed' : 'uncompleted', 'completed', '', '');
-  return getTask(id); // Only this single query needed after update
+    INSERT INTO tasks (id, name, description, date, deadline, estimate, priority, list_id, recurrence, completed, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+  `).run(
+    nextId,
+    row.name,
+    row.description,
+    nextDateStr,
+    null,
+    row.estimate,
+    row.priority,
+    row.list_id,
+    row.recurrence,
+    now,
+    now
+  );
+
+  // Copy labels
+  const labelRows = prepare(db, 'SELECT label_id FROM task_labels WHERE task_id = ?').all(row.id) as { label_id: string }[];
+  for (const lr of labelRows) {
+    prepare(db, 'INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)').run(nextId, lr.label_id);
+  }
+
+  // Copy subtasks
+  const subtaskRows = prepare(db, 'SELECT * FROM subtasks WHERE task_id = ?').all(row.id) as any[];
+  for (const st of subtaskRows) {
+    const stId = generateId();
+    prepare(db, 'INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, 0, ?)').run(stId, nextId, st.title, now);
+  }
+
+  return getTask(nextId);
 }
 
 // --- Subtasks ---
