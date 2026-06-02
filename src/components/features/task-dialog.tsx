@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import type { TaskWithRelations, Subtask, Priority, Recurrence, RecurrenceType } from '@/types';
 import { useToast } from '@/components/toast-provider';
 import { useListCache, useLabelCache } from '@/hooks/use-cache';
-import { cn, getContrastColor } from '@/lib/utils';
+import { cn, getContrastColor, parseNaturalDate, formatRelativeDate } from '@/lib/utils';
 
 const priorities = [
   { value: 'none', label: 'None', color: 'text-muted-foreground' },
@@ -217,6 +217,41 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   >
                     <X className="h-3.5 w-3.5 text-muted-foreground/60" />
                   </button>
+                )}
+              </div>
+              {/* Natural language date hint */}
+              <div className="mt-1">
+                <input
+                  type="text"
+                  placeholder="Or type 'tomorrow', 'next mon'..."
+                  className="w-full h-7 rounded-lg border border-input/50 bg-transparent px-2.5 text-[11px] text-muted-foreground/70 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-ring/20 transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const val = (e.target as HTMLInputElement).value;
+                      if (val.trim()) {
+                        const parsed = parseNaturalDate(val.trim());
+                        if (parsed.date) {
+                          setDate(parsed.date);
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value.trim()) {
+                      const parsed = parseNaturalDate(e.target.value.trim());
+                      if (parsed.date) {
+                        setDate(parsed.date);
+                        e.target.value = '';
+                      }
+                    }
+                  }}
+                />
+                {date && (
+                  <span className="text-[10px] text-muted-foreground/40 mt-0.5 block">
+                    {formatRelativeDate(date)}
+                  </span>
                 )}
               </div>
             </div>
