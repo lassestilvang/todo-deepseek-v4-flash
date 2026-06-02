@@ -171,9 +171,13 @@ export interface TaskCounts {
   next7Days: number;
   byList: Record<string, number>;
   byLabel: Record<string, number>;
+  completedToday: number;
+  completedThisWeek: number;
+  streak: number;
+  weeklyCompletions: { day: string; count: number }[];
 }
 
 export function useTaskCounts() {
   const { data: counts, refresh } = useCachedFetch<TaskCounts>('/api/counts', 'task-counts');
-  return { counts: counts || { total: 0, today: 0, upcoming: 0, next7Days: 0, byList: {}, byLabel: {} }, refresh };
+  return { counts: counts || { total: 0, today: 0, upcoming: 0, next7Days: 0, byList: {}, byLabel: {}, completedToday: 0, completedThisWeek: 0, streak: 0, weeklyCompletions: [] }, refresh };
 }

@@ -10,8 +10,9 @@ import { TaskCard } from './task-card';
 import { LazyTaskCardWrapper } from './lazy-task-card-wrapper';
 import { EmptyState } from './empty-state';
 import type { EmptyStateType } from './empty-state';
+import { StatsDashboard } from './stats-dashboard';
 import { useToast } from '@/components/toast-provider';
-import { invalidateCache } from '@/hooks/use-cache';
+import { invalidateCache, useTaskCounts } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
 import { cn, formatRelativeDate, isToday, isTomorrow } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
@@ -45,11 +46,13 @@ interface TaskListViewProps {
   endpoint: string;
   showViewToggle?: boolean;
   emptyMessage?: string;
+  showStats?: boolean;
 }
 
 const TaskCardMemo = memo(TaskCard);
 
-export function TaskListView({ title, description, endpoint, showViewToggle = true, emptyMessage = 'No tasks yet' }: TaskListViewProps) {
+export function TaskListView({ title, description, endpoint, showViewToggle = true, emptyMessage = 'No tasks yet', showStats }: TaskListViewProps) {
+  const { counts } = useTaskCounts();
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
@@ -388,6 +391,9 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         {activeTasks.length} active{completedTasks.length > 0 && `, ${completedTasks.length} completed`}
         <span className="ml-3 text-muted-foreground/30 hidden sm:inline">· N to add · Q to quick-add</span>
       </div>
+
+      {/* Stats Dashboard */}
+      {showStats && <StatsDashboard counts={counts} />}
 
       {/* Quick Add */}
       <form

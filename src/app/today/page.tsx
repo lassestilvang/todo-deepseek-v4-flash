@@ -14,6 +14,7 @@ export default function TodayPage() {
       description={today}
       endpoint="/api/tasks?view=today"
       emptyMessage="Nothing planned for today"
+      showStats={true}
     />
   );
 }

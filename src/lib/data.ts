@@ -665,6 +665,10 @@ export function getTaskCounts(): {
   next7Days: number;
   byList: Record<string, number>;
   byLabel: Record<string, number>;
+  completedToday: number;
+  completedThisWeek: number;
+  streak: number;
+  weeklyCompletions: { day: string; count: number }[];
 } {
   const db = getDb();
   const now = new Date();
@@ -672,6 +676,13 @@ export function getTaskCounts(): {
   const end7 = new Date(now);
   end7.setDate(end7.getDate() + 6);
   const end7Str = end7.toISOString().split('T')[0];
+
+  // Get start of week (Monday)
+  const dayOfWeek = now.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() + mondayOffset);
+  const weekStartStr = weekStart.toISOString().split('T')[0];
 
   // Single combined query using the composite index idx_tasks_completed_date
   const countRow = prepare(db, `
@@ -682,6 +693,40 @@ export function getTaskCounts(): {
       SUM(CASE WHEN date >= ? AND date <= ? THEN 1 ELSE 0 END) as next7
     FROM tasks WHERE completed = 0
   `).get(today, today, today, end7Str) as { total: number; today: number; upcoming: number; next7: number };
+
+  // Completed today & this week
+  const completedRow = prepare(db, `
+    SELECT
+      SUM(CASE WHEN DATE(completed_at) = ? THEN 1 ELSE 0 END) as completed_today,
+      SUM(CASE WHEN DATE(completed_at) >= ? THEN 1 ELSE 0 END) as completed_week
+    FROM tasks WHERE completed = 1
+  `).get(today, weekStartStr) as { completed_today: number; completed_week: number };
+
+  // Streak: count consecutive days with at least one completion going backwards from today
+  let streak = 0;
+  const checkDate = new Date(now);
+  for (let i = 0; i < 365; i++) {
+    const dateStr = checkDate.toISOString().split('T')[0];
+    const dayCount = prepare(db, `SELECT COUNT(*) as c FROM tasks WHERE completed = 1 AND DATE(completed_at) = ?`).get(dateStr) as { c: number };
+    if (dayCount.c > 0) {
+      streak++;
+    } else if (i > 0) {
+      // Allow today to be incomplete and still count streak from yesterday
+      break;
+    }
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  // Weekly completions for chart (last 7 days)
+  const weeklyCompletions: { day: string; count: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dayStr = d.toISOString().split('T')[0];
+    const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayCount = prepare(db, `SELECT COUNT(*) as c FROM tasks WHERE completed = 1 AND DATE(completed_at) = ?`).get(dayStr) as { c: number };
+    weeklyCompletions.push({ day: dayLabel, count: dayCount.c });
+  }
 
   const byListRows = prepare(db, 'SELECT list_id, COUNT(*) as c FROM tasks WHERE completed = 0 GROUP BY list_id').all() as { list_id: string; c: number }[];
   const byList: Record<string, number> = {};
@@ -704,6 +749,10 @@ export function getTaskCounts(): {
     next7Days: countRow.next7,
     byList,
     byLabel,
+    completedToday: completedRow.completed_today,
+    completedThisWeek: completedRow.completed_week,
+    streak,
+    weeklyCompletions,
   };
 }
 
