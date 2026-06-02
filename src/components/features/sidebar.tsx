@@ -19,6 +19,7 @@ import {
   Search,
   LayoutList,
   Tag,
+  Timer as TimerIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
+import { FocusTimer } from './focus-timer';
 import type { TaskWithRelations } from '@/types';
 import type { TaskCounts } from '@/hooks/use-cache';
 
@@ -103,6 +105,7 @@ export function Sidebar() {
   const [newLabelName, setNewLabelName] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
+  const [showFocusTimer, setShowFocusTimer] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -523,7 +526,23 @@ export function Sidebar() {
             );
           })}
         </div>
+
+        {/* Bottom toolbar */}
+        <div className="border-t border-sidebar-border p-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowFocusTimer(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-150 w-full"
+            >
+              <TimerIcon className="h-3.5 w-3.5" />
+              <span>Focus Timer</span>
+              <kbd className="ml-auto text-[8px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono">⌥T</kbd>
+            </button>
+          </div>
+        </div>
       </aside>
+
+      {showFocusTimer && <FocusTimer onClose={() => setShowFocusTimer(false)} />}
     </>
   );
 }
