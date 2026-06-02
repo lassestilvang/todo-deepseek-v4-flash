@@ -94,3 +94,69 @@ export function formatEstimate(estimate: string): string {
   if (h > 0) return `${h}h`;
   return `${m}m`;
 }
+
+
+/**
+ * Parses natural language date references from the end of a task name.
+ * Returns { cleanName, date } where cleanName has the date part removed.
+ * Examples: "Buy groceries tomorrow" -> { cleanName: "Buy groceries", date: "2026-06-03" }
+ *           "Meeting next monday" -> { cleanName: "Meeting", date: "2026-06-08" }
+ *           "No date task" -> { cleanName: "No date task", date: null }
+ */
+export function parseNaturalDate(input: string): { cleanName: string; date: string | null } {
+  const trimmed = input.trim();
+  if (!trimmed) return { cleanName: trimmed, date: null };
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const dayMap: Record<string, number> = {
+    sunday: 0, sun: 0,
+    monday: 1, mon: 1,
+    tuesday: 2, tue: 2, tues: 2,
+    wednesday: 3, wed: 3,
+    thursday: 4, thu: 4, thurs: 4,
+    friday: 5, fri: 5,
+    saturday: 6, sat: 6,
+  };
+
+  const lower = trimmed.toLowerCase();
+
+  // Pattern: "task name tomorrow" or "task name today"
+  const relativeDayMatch = lower.match(
+    /\s+(today|tomorrow|next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun))\s*$/i
+  );
+  if (relativeDayMatch) {
+    const matched = relativeDayMatch[1].toLowerCase();
+    const name = trimmed.slice(0, relativeDayMatch.index).trim();
+    let date: Date;
+
+    if (matched === 'today') {
+      date = today;
+    } else if (matched === 'tomorrow') {
+      date = new Date(today);
+      date.setDate(date.getDate() + 1);
+    } else if (matched.startsWith('next ')) {
+      const dayName = matched.slice(5);
+      const targetDay = dayMap[dayName];
+      if (targetDay !== undefined) {
+        date = new Date(today);
+        const currentDay = date.getDay();
+        let daysUntil = targetDay - currentDay;
+        if (daysUntil <= 0) daysUntil += 7;
+        date.setDate(date.getDate() + daysUntil);
+      } else {
+        return { cleanName: trimmed, date: null };
+      }
+    } else {
+      return { cleanName: trimmed, date: null };
+    }
+
+    return {
+      cleanName: name,
+      date: date.toISOString().split('T')[0],
+    };
+  }
+
+  return { cleanName: trimmed, date: null };
+}

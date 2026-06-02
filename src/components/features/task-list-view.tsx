@@ -14,7 +14,7 @@ import { StatsDashboard } from './stats-dashboard';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache, useTaskCounts } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
-import { cn, formatRelativeDate, isToday, isTomorrow, isOverdue } from '@/lib/utils';
+import { cn, formatRelativeDate, isToday, isTomorrow, isOverdue, parseNaturalDate } from '@/lib/utils';
 import type { TaskWithRelations } from '@/types';
 
 const TaskDialog = dynamic(() => import('./task-dialog').then(mod => mod.TaskDialog), {
@@ -245,7 +245,9 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
   const handleQuickAdd = useCallback(async () => {
     if (!quickAddValue.trim() || quickAdding) return;
-    const name = quickAddValue.trim();
+    const parsed = parseNaturalDate(quickAddValue);
+    const name = parsed.cleanName;
+    if (!name) return;
     setQuickAddValue('');
     setQuickAdding(true);
     try {
@@ -254,7 +256,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          date: window.location.pathname === '/today' ? new Date().toISOString().split('T')[0] : undefined,
+          date: parsed.date || (window.location.pathname === '/today' ? new Date().toISOString().split('T')[0] : undefined),
         }),
       });
       if (!res.ok) throw new Error('Failed to create task');
@@ -263,7 +265,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         setTasks(prev => [saved, ...prev]);
       });
       invalidateCache('task-counts');
-      toast('Task created', 'success');
+      const dateHint = parsed.date ? ` for ${formatRelativeDate(parsed.date)}` : '';
+      toast(`Task created${dateHint}`, 'success');
     } catch (e) {
       toast('Failed to create task', 'error');
       console.error('Quick add failed', e);
