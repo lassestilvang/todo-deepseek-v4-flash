@@ -54,20 +54,68 @@ export default function Template({ children }: { children: React.ReactNode }) {
               <Command className="h-4 w-4 text-primary" />
               Keyboard Shortcuts
             </h3>
-            <div className="space-y-2.5">
-              {[
-                { keys: 'N', desc: 'Create new task' },
-                { keys: 'Q', desc: 'Focus quick add' },
-                { keys: '⌘K', desc: 'Toggle command palette' },
-                { keys: '1-4', desc: 'Switch views (Today, 7d, Upcoming, All)' },
-                { keys: '?', desc: 'Toggle this help' },
-                { keys: 'ESC', desc: 'Close dialogs / search' },
-              ].map(({ keys, desc }) => (
-                <div key={keys} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground/70">{desc}</span>
-                  <kbd className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums border border-border/50">{keys}</kbd>
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">General</p>
+                <div className="space-y-2">
+                  {[
+                    { keys: '⌘K', desc: 'Command Palette' },
+                    { keys: '?', desc: 'Keyboard Shortcuts' },
+                    { keys: 'ESC', desc: 'Close / Cancel' },
+                  ].map(({ keys, desc }) => (
+                    <div key={keys} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground/70">{desc}</span>
+                      <kbd className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums border border-border/50">{keys}</kbd>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">Tasks</p>
+                <div className="space-y-2">
+                  {[
+                    { keys: 'N', desc: 'New Task' },
+                    { keys: 'Q / A', desc: 'Quick Add' },
+                  ].map(({ keys, desc }) => (
+                    <div key={keys} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground/70">{desc}</span>
+                      <kbd className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums border border-border/50">{keys}</kbd>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">Navigation</p>
+                <div className="space-y-2">
+                  {[
+                    { keys: '1', desc: 'Today' },
+                    { keys: '2', desc: 'Next 7 Days' },
+                    { keys: '3', desc: 'Upcoming' },
+                    { keys: '4', desc: 'All Tasks' },
+                  ].map(({ keys, desc }) => (
+                    <div key={keys} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground/70">{desc}</span>
+                      <kbd className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums border border-border/50">{keys}</kbd>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">Features</p>
+                <div className="space-y-2">
+                  {[
+                    { keys: '⌥T', desc: 'Focus Timer' },
+                  ].map(({ keys, desc }) => (
+                    <div key={keys} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground/70">{desc}</span>
+                      <kbd className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted/70 text-muted-foreground/60 font-mono tabular-nums border border-border/50">{keys}</kbd>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
