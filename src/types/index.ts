@@ -61,6 +61,7 @@ export interface Task {
   recurrence: Recurrence | null;
   completed: boolean;
   completedAt: string | null;
+  pinned: boolean;
   createdAt: string;
   updatedAt: string;
 }

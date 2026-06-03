@@ -114,6 +114,14 @@ function initializeSchema(db: Database.Database) {
       db.exec(`UPDATE tasks SET position = (SELECT COUNT(*) FROM tasks t2 WHERE t2.created_at < tasks.created_at)`);
     }
 
+    // Add pinned column for starred tasks (migration-safe)
+    const hasPinnedCol = db.prepare("SELECT name FROM pragma_table_info('tasks') WHERE name = 'pinned'").get();
+    if (!hasPinnedCol) {
+      db.exec(`ALTER TABLE tasks ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`);
+    }
+
+
+
 
 
   db.exec(`

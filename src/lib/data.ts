@@ -120,6 +120,7 @@ function rowToTask(row: Record<string, any>): Task {
     recurrence: row.recurrence ? JSON.parse(row.recurrence) : null,
     completed: !!row.completed,
     completedAt: row.completed_at,
+    pinned: !!row.pinned,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -352,7 +353,7 @@ export function getTasks(params?: {
     values.push(`%${params.search}%`, `%${params.search}%`);
   }
 
-  query += ' ORDER BY completed ASC, position ASC, priority DESC, date ASC, created_at DESC';
+  query += ' ORDER BY completed ASC, pinned DESC, position ASC, priority DESC, date ASC, created_at DESC';
 
   const rows = prepare(db, query).all(...values) as Record<string, any>[];
   return hydrateTasks(db, rows, {
@@ -485,6 +486,7 @@ export function updateTask(id: string, data: Partial<{
     priority: { field: 'priority', col: 'priority' },
     listId: { field: 'list', col: 'list_id' },
     recurrence: { field: 'recurrence', col: 'recurrence' },
+    pinned: { field: 'pinned', col: 'pinned' },
   };
 
   const update = db.transaction(() => {
@@ -603,6 +605,16 @@ export function toggleTaskCompletion(id: string): TaskWithRelations | undefined 
   });
 
   update();
+  return getTask(id);
+}
+
+export function togglePinTask(id: string): TaskWithRelations | undefined {
+  const db = getDb();
+  const row = prepare(db, 'SELECT pinned FROM tasks WHERE id = ?').get(id) as { pinned: number } | undefined;
+  if (!row) return undefined;
+  const newPinned = row.pinned ? 0 : 1;
+  prepare(db, 'UPDATE tasks SET pinned = ?, updated_at = datetime(\'now\') WHERE id = ?').run(newPinned, id);
+  logActivity(db, id, newPinned ? 'pinned' : 'unpinned', 'pinned', '', '');
   return getTask(id);
 }
 
@@ -885,6 +897,7 @@ export function searchTasks(query: string): TaskWithRelations[] {
         ELSE 2 
       END,
       completed ASC,
+      pinned DESC,
       position ASC,
       created_at DESC
     LIMIT 50
