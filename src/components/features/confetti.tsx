@@ -3,7 +3,8 @@
 import { memo, useState, useCallback, useRef } from 'react';
 
 const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#f97316', '#14b8a6'];
-const COUNT = 24;
+const SINGLE_COUNT = 24;
+const BURST_COUNT = 100;
 
 const shapes = ['rounded-sm', 'rounded-full', 'rotate-45', 'rounded-md'] as const;
 
@@ -11,23 +12,27 @@ export const Confetti = memo(function Confetti({
   originX,
   originY,
   onComplete,
+  variant = 'single',
 }: {
   originX: number;
   originY: number;
   onComplete: () => void;
+  variant?: 'single' | 'burst';
 }) {
   const [finished, setFinished] = useState(false);
+  const count = variant === 'burst' ? BURST_COUNT : SINGLE_COUNT;
+  
   const particlesRef = useRef(
-    Array.from({ length: COUNT }, (_, i) => ({
+    Array.from({ length: count }, (_, i) => ({
       id: i,
-      x: (Math.random() - 0.5) * 320,
-      y: -(Math.random() * 240 + 80),
+      x: (Math.random() - 0.5) * (variant === 'burst' ? 800 : 320),
+      y: -(Math.random() * (variant === 'burst' ? 500 : 240) + 80),
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       rotate: Math.random() * 720 - 360,
-      scale: Math.random() * 0.6 + 0.3,
-      delay: Math.random() * 0.1,
+      scale: Math.random() * (variant === 'burst' ? 1.2 : 0.6) + 0.3,
+      delay: Math.random() * (variant === 'burst' ? 0.4 : 0.1),
       shape: shapes[Math.floor(Math.random() * shapes.length)],
-      size: Math.random() * 4 + 3,
+      size: Math.random() * (variant === 'burst' ? 8 : 4) + 3,
     }))
   );
 
