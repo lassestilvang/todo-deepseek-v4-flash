@@ -234,7 +234,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                 </span>
               )}
 
-              {task.date && (
+              {task.date ? (
                 <span className={cn(
                   'inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md transition-colors',
                   overdue
@@ -243,6 +243,27 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                 )}>
                   <Calendar className="h-3 w-3" />
                   {formatRelativeDate(task.date)}
+                </span>
+              ) : !task.completed && (
+                <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setQuickDate(todayDate); }}
+                    className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-[10px] font-medium"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setQuickDate(tomorrowDate); }}
+                    className="px-1.5 py-0.5 rounded-md bg-muted/50 text-muted-foreground/70 hover:bg-muted transition-colors text-[10px]"
+                  >
+                    Tomorrow
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setQuickDate(nextMondayDate); }}
+                    className="px-1.5 py-0.5 rounded-md bg-muted/50 text-muted-foreground/70 hover:bg-muted transition-colors text-[10px]"
+                  >
+                    Next Mon
+                  </button>
                 </span>
               )}
 
