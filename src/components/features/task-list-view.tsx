@@ -7,6 +7,7 @@ import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
+import { Confetti } from './confetti';
 import { LazyTaskCardWrapper } from './lazy-task-card-wrapper';
 import { EmptyState } from './empty-state';
 import type { EmptyStateType } from './empty-state';
@@ -64,6 +65,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [quickAdding, setQuickAdding] = useState(false);
   const quickAddRef = useRef<HTMLInputElement>(null);
   const fetchRef = useRef(0);
+  const [allDoneConfetti, setAllDoneConfetti] = useState<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
   const tasksRef = useRef(tasks);
   tasksRef.current = tasks;
@@ -166,7 +168,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       if (!res.ok) throw new Error('Failed to toggle');
       const updated = await res.json();
       startTransition(() => {
-        setTasks(prev => prev.map(t => t.id === id ? updated : t));
+        setTasks(prev => {
+          const newTasks = prev.map(t => t.id === id ? updated : t);
+          const activeCount = newTasks.filter(t => !t.completed).length;
+          if (!wasCompleted && activeCount === 0 && newTasks.length > 0) {
+            setAllDoneConfetti({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+            setTimeout(() => {
+              toast('All tasks completed! Amazing job!', 'success');
+            }, 500);
+          }
+          return newTasks;
+        });
       });
       invalidateCache('task-counts');
       toast(wasCompleted ? 'Task reopened' : 'Task completed', 'success', {
@@ -628,6 +640,15 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         task={editingTask}
         onSave={handleSave}
       />
+
+      {allDoneConfetti && (
+        <Confetti
+          originX={allDoneConfetti.x}
+          originY={allDoneConfetti.y}
+          variant="burst"
+          onComplete={() => setAllDoneConfetti(null)}
+        />
+      )}
     </div>
   );
 }
