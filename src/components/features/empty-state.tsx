@@ -11,8 +11,13 @@ interface EmptyStateProps {
   message?: string;
   onCreate?: () => void;
   onFocusQuickAdd?: () => void;
+  onSuggest?: (text: string) => void;
   query?: string;
 }
+
+const suggestions: Record<string, string[]> = {
+  today: ['Plan my day', 'Workout', 'Read for 30 min', 'Meditation', 'Clean up desk'],
+};
 
 const config: Record<EmptyStateType, { icon: typeof Sparkles; gradient: string; title: string; subtitle: string }> = {
   today: {
@@ -109,6 +114,23 @@ export function EmptyState({ type = 'default', title, message, onCreate, onFocus
           </Button>
         )}
       </div>
+
+      {type === 'today' && onSuggest && (
+        <div className="mt-12 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-3">One-tap ideas</p>
+          <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
+            {suggestions.today.map((text) => (
+              <button
+                key={text}
+                onClick={() => onSuggest(text)}
+                className="px-3 py-1.5 rounded-full border border-primary/10 bg-primary/5 text-primary/70 text-xs font-medium hover:bg-primary/10 hover:border-primary/20 transition-all active:scale-95"
+              >
+                + {text}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -255,12 +255,13 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     { key: 'q', handler: () => quickAddRef.current?.focus(), enabled: !dialogOpen },
   ]);
 
-  const handleQuickAdd = useCallback(async () => {
-    if (!quickAddValue.trim() || quickAdding) return;
-    const parsed = parseNaturalDate(quickAddValue);
+  const handleQuickAdd = useCallback(async (overrideName?: string) => {
+    const val = overrideName || quickAddValue;
+    if (!val.trim() || quickAdding) return;
+    const parsed = parseNaturalDate(val);
     const name = parsed.cleanName;
     if (!name) return;
-    setQuickAddValue('');
+    if (!overrideName) setQuickAddValue('');
     setQuickAdding(true);
     try {
       const res = await fetch('/api/tasks', {
@@ -286,6 +287,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       setQuickAdding(false);
     }
   }, [quickAddValue, quickAdding, toast]);
+
+  const handleSuggest = useCallback((text: string) => {
+    handleQuickAdd(text);
+  }, [handleQuickAdd]);
 
   const displayedTasks = useMemo(
     () => showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed),
@@ -533,6 +538,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 type={emptyStateType}
                 onCreate={openCreate}
                 onFocusQuickAdd={() => quickAddRef.current?.focus()}
+                onSuggest={handleSuggest}
               />
             ) : (
               <>
