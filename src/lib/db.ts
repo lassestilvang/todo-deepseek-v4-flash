@@ -137,6 +137,34 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_tasks_completed_priority_date ON tasks(completed, priority, date, created_at);
   `);
 
+  // Full-Text Search — create FTS5 virtual table for fast relevance-ranked search
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS tasks_fts USING fts5(
+      name, description,
+      content='tasks',
+      content_rowid='rowid',
+      tokenize='porter unicode61'
+    );
+  `);
+  // Sync FTS index with existing data (safe to run multiple times)
+  db.exec(`
+    INSERT OR REPLACE INTO tasks_fts(rowid, name, description)
+    SELECT rowid, name, description FROM tasks;
+  `);
+  // Triggers to keep FTS in sync
+  db.exec(`
+    CREATE TRIGGER IF NOT EXISTS tasks_ai AFTER INSERT ON tasks BEGIN
+      INSERT INTO tasks_fts(rowid, name, description) VALUES (new.rowid, new.name, new.description);
+    END;
+    CREATE TRIGGER IF NOT EXISTS tasks_ad AFTER DELETE ON tasks BEGIN
+      INSERT INTO tasks_fts(tasks_fts, rowid, name, description) VALUES('delete', old.rowid, old.name, old.description);
+    END;
+    CREATE TRIGGER IF NOT EXISTS tasks_au AFTER UPDATE ON tasks BEGIN
+      INSERT INTO tasks_fts(tasks_fts, rowid, name, description) VALUES('delete', old.rowid, old.name, old.description);
+      INSERT INTO tasks_fts(rowid, name, description) VALUES (new.rowid, new.name, new.description);
+    END;
+  `);
+
   // Seed default inbox list if not exists
   const existing = db.prepare('SELECT id FROM lists WHERE is_default = 1').get();
   if (!existing) {

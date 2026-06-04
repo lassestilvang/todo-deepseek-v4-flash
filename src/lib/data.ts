@@ -886,22 +886,36 @@ export function getActivityLogs(taskId: string): ActivityLog[] {
 // --- Search ---
 export function searchTasks(query: string): TaskWithRelations[] {
   const db = getDb();
-  const searchTerm = `%${query}%`;
-  const rows = prepare(db, `
-    SELECT * FROM tasks 
-    WHERE name LIKE ? OR description LIKE ? 
-    ORDER BY 
-      CASE 
-        WHEN name LIKE ? THEN 0 
-        WHEN description LIKE ? THEN 1 
-        ELSE 2 
-      END,
-      completed ASC,
-      pinned DESC,
-      position ASC,
-      created_at DESC
-    LIMIT 50
-  `).all(searchTerm, searchTerm, searchTerm, searchTerm) as Record<string, any>[];
+  // Use FTS5 for full-text search with relevance ranking
+  const searchTerms = query.trim().split(/\s+/).filter(Boolean).map(t => `"${t.replace(/"/g, '""')}"`).join(' ');
+  let rows: Record<string, any>[];
+  try {
+    rows = prepare(db, `
+      SELECT tasks.* FROM tasks
+      JOIN tasks_fts ON tasks.rowid = tasks_fts.rowid
+      WHERE tasks_fts MATCH ?
+      ORDER BY rank
+      LIMIT 50
+    `).all(searchTerms) as Record<string, any>[];
+  } catch {
+    // Fallback to LIKE search if FTS5 query fails (e.g. special characters)
+    const searchTerm = `%${query}%`;
+    rows = prepare(db, `
+      SELECT * FROM tasks 
+      WHERE name LIKE ? OR description LIKE ? 
+      ORDER BY 
+        CASE 
+          WHEN name LIKE ? THEN 0 
+          WHEN description LIKE ? THEN 1 
+          ELSE 2 
+        END,
+        completed ASC,
+        pinned DESC,
+        position ASC,
+        created_at DESC
+      LIMIT 50
+    `).all(searchTerm, searchTerm, searchTerm, searchTerm) as Record<string, any>[];
+  }
 
   return hydrateTasks(db, rows);
 }
