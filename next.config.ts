@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeServerReact: true,
   },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
 };
 
 export default nextConfig;

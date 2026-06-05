@@ -379,7 +379,7 @@ export function getTask(id: string): TaskWithRelations | undefined {
 }
 
 /** Lightweight version that skips attachments and reminders — used internally for updates */
-function getTaskLight(id: string): TaskWithRelations | undefined {
+export function getTaskLight(id: string): TaskWithRelations | undefined {
   const db = getDb();
   const row = prepare(db, 'SELECT * FROM tasks WHERE id = ?').get(id) as Record<string, any> | undefined;
   if (!row) return undefined;

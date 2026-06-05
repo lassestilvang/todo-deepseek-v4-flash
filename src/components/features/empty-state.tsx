@@ -74,7 +74,7 @@ const config: Record<EmptyStateType, { icon: typeof Sparkles; gradient: string; 
   },
 };
 
-export function EmptyState({ type = 'default', title, message, onCreate, onFocusQuickAdd }: EmptyStateProps) {
+export function EmptyState({ type = 'default', title, message, onCreate, onFocusQuickAdd, onSuggest }: EmptyStateProps) {
   const cfg = config[type] || config.default;
   const Icon = cfg.icon;
 

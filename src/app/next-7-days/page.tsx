@@ -12,6 +12,7 @@ export default function Next7DaysPage() {
       description="Tasks scheduled for the next 7 days"
       endpoint="/api/tasks?view=next-7-days"
       emptyMessage="Nothing planned for the next 7 days"
+      showStats={true}
     />
   );
 }
