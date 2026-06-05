@@ -17,8 +17,10 @@ import {
   GripVertical,
   Pin,
   PinOff,
+  Play,
+  Square,
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
+import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue, minutesToEstimate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -273,19 +275,61 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
               ) : !task.completed && (
                 <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200">
                   <button
-                    onClick={(e) => { e.stopPropagation(); setQuickDate(todayDate); }}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const today = new Date().toISOString().split('T')[0];
+                      try {
+                        await fetch('/api/tasks', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: task.id, date: today }),
+                        });
+                        invalidateCache('task-counts');
+                        toast('Task set for today', 'success');
+                      } catch { toast('Failed to set date', 'error'); }
+                    }}
                     className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-[10px] font-medium"
                   >
                     Today
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setQuickDate(tomorrowDate); }}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      const dateStr = tomorrow.toISOString().split('T')[0];
+                      try {
+                        await fetch('/api/tasks', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: task.id, date: dateStr }),
+                        });
+                        invalidateCache('task-counts');
+                        toast('Task set for tomorrow', 'success');
+                      } catch { toast('Failed to set date', 'error'); }
+                    }}
                     className="px-1.5 py-0.5 rounded-md bg-muted/50 text-muted-foreground/70 hover:bg-muted transition-colors text-[10px]"
                   >
                     Tomorrow
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setQuickDate(nextMondayDate); }}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const d = new Date();
+                      const day = d.getDay();
+                      const diff = day <= 1 ? (1 - day + 7) % 7 : 8 - day;
+                      d.setDate(d.getDate() + diff);
+                      const dateStr = d.toISOString().split('T')[0];
+                      try {
+                        await fetch('/api/tasks', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: task.id, date: dateStr }),
+                        });
+                        invalidateCache('task-counts');
+                        toast('Task set for next Monday', 'success');
+                      } catch { toast('Failed to set date', 'error'); }
+                    }}
                     className="px-1.5 py-0.5 rounded-md bg-muted/50 text-muted-foreground/70 hover:bg-muted transition-colors text-[10px]"
                   >
                     Next Mon
