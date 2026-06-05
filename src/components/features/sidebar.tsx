@@ -20,13 +20,14 @@ import {
   LayoutList,
   Tag,
   Timer as TimerIcon,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
-import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
+import { useListCache, useLabelCache, useTaskCounts, invalidateCache, clearAllCache } from '@/hooks/use-cache';
 import { FocusTimer } from './focus-timer';
 import type { TaskWithRelations } from '@/types';
 import type { TaskCounts } from '@/hooks/use-cache';
@@ -528,7 +529,7 @@ export function Sidebar() {
         </div>
 
         {/* Bottom toolbar */}
-        <div className="border-t border-sidebar-border p-2">
+        <div className="border-t border-sidebar-border p-2 space-y-1">
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowFocusTimer(true)}
@@ -537,6 +538,29 @@ export function Sidebar() {
               <TimerIcon className="h-3.5 w-3.5" />
               <span>Focus Timer</span>
               <kbd className="ml-auto text-[8px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono">⌥T</kbd>
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/export');
+                  const data = await res.json();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `planner-backup-${new Date().toISOString().split('T')[0]}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                } catch (e) {
+                  console.error('Export failed', e);
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-150 w-full"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export Data</span>
             </button>
           </div>
         </div>
