@@ -53,6 +53,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [estimate, setEstimate] = useState(task?.estimate || '');
   const [priority, setPriority] = useState(task?.priority || 'none');
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrence?.type || 'none');
+  const [recurrenceInterval, setRecurrenceInterval] = useState(task?.recurrence?.interval || 1);
   const [listId, setListId] = useState(task?.listId || 'inbox');
   const [subtasks, setSubtasks] = useState<Subtask[]>(task?.subtasks || []);
   const [newSubtask, setNewSubtask] = useState('');
@@ -77,7 +78,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     if (!name.trim()) return;
     setSaving(true);
 
-    const recurrence: Recurrence | null = recurrenceType === 'none' ? null : { type: recurrenceType };
+    const recurrence: Recurrence | null = recurrenceType === 'none' ? null : { type: recurrenceType, interval: recurrenceInterval };
 
     const body: {
       name: string;
@@ -372,6 +373,22 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   </Button>
                 ))}
               </div>
+              {recurrenceType !== 'none' && recurrenceType !== 'weekdays' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[11px] text-muted-foreground/70">Every</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={recurrenceInterval}
+                    onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="h-7 w-16 text-xs rounded-lg text-center"
+                  />
+                  <span className="text-[11px] text-muted-foreground/70 capitalize">
+                    {recurrenceType === 'daily' ? 'days' : recurrenceType === 'weekly' ? 'weeks' : recurrenceType === 'monthly' ? 'months' : 'years'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
