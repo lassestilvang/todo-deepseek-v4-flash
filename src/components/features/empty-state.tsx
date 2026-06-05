@@ -16,7 +16,11 @@ interface EmptyStateProps {
 }
 
 const suggestions: Record<string, string[]> = {
-  today: ['Plan my day', 'Workout', 'Read for 30 min', 'Meditation', 'Clean up desk'],
+  today: ['Plan my day', 'Workout', 'Read for 30 min', 'Meditation', 'Clean up desk', 'Review goals', 'Write in journal', 'Call a friend', 'Organize workspace', 'Meal prep'],
+  'next-7-days': ['Schedule meetings', 'Plan weekend trip', 'Grocery shopping', 'Pay bills', 'Finish project', 'Prepare presentation', 'Weekly review'],
+  upcoming: ['Book appointments', 'Plan vacation', 'Learn new skill', 'Start side project', 'Renew subscriptions', 'Schedule checkups'],
+  all: ['Create first task', 'Set up lists', 'Add labels', 'Explore keyboard shortcuts', 'Customize theme'],
+  list: ['Add tasks to this list', 'Set priorities', 'Add due dates', 'Organize by label'],
 };
 
 const config: Record<EmptyStateType, { icon: typeof Sparkles; gradient: string; title: string; subtitle: string }> = {
@@ -115,11 +119,11 @@ export function EmptyState({ type = 'default', title, message, onCreate, onFocus
         )}
       </div>
 
-      {type === 'today' && onSuggest && (
+      {onSuggest && suggestions[type] && (
         <div className="mt-12 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-3">One-tap ideas</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 mb-3">✨ Quick ideas</p>
           <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
-            {suggestions.today.map((text) => (
+            {suggestions[type].map((text) => (
               <button
                 key={text}
                 onClick={() => onSuggest(text)}
@@ -131,6 +135,17 @@ export function EmptyState({ type = 'default', title, message, onCreate, onFocus
           </div>
         </div>
       )}
+
+      <div className="mt-8 text-[10px] text-muted-foreground/30 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'both' }}>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono text-[9px]">N</kbd>
+        <span>New task</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono text-[9px]">Q</kbd>
+        <span>Quick add</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono text-[9px]">⌘K</kbd>
+        <span>Search</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono text-[9px]">1-4</kbd>
+        <span>Views</span>
+      </div>
     </div>
   );
 }
