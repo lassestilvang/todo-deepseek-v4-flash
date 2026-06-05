@@ -697,7 +697,25 @@ function createNextRecurrence(db: Database.Database, row: Record<string, any>, r
   return getTask(nextId);
 }
 
-// --- Subtasks ---
+export function reorderSubtasks(taskId: string, subtaskIds: string[]): void {
+  const db = getDb();
+  const reorder = db.transaction(() => {
+    const deleteAll = prepare(db, 'DELETE FROM subtasks WHERE task_id = ?');
+    const existingRows = prepare(db, 'SELECT id, title, completed, created_at FROM subtasks WHERE task_id = ?').all(taskId) as { id: string; title: string; completed: number; created_at: string }[];
+    const existingMap = new Map(existingRows.map(r => [r.id, r]));
+    const insert = prepare(db, 'INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
+    
+    // Delete all and re-insert in new order
+    deleteAll.run(taskId);
+    for (let i = 0; i < subtaskIds.length; i++) {
+      const existing = existingMap.get(subtaskIds[i]);
+      if (existing) {
+        insert.run(existing.id, taskId, existing.title, existing.completed, existing.created_at);
+      }
+    }
+  });
+  reorder();
+}
 export function addSubtask(taskId: string, title: string): Subtask {
   const db = getDb();
   const id = generateId();

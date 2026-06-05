@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask, togglePinTask } from '@/lib/data';
+import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask, togglePinTask, reorderSubtasks, getTaskLight } from '@/lib/data';
 
 function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
@@ -63,6 +63,15 @@ export async function PUT(request: NextRequest) {
   }
   if (body._action === 'toggle-pin') {
     const task = togglePinTask(body.id);
+    if (!task) return json({ error: 'Task not found' }, { status: 404 });
+    return json(task);
+  }
+  if (body._action === 'reorder-subtasks') {
+    if (!body.subtaskIds || !Array.isArray(body.subtaskIds)) {
+      return json({ error: 'subtaskIds array is required' }, { status: 400 });
+    }
+    reorderSubtasks(body.id, body.subtaskIds);
+    const task = getTaskLight(body.id);
     if (!task) return json({ error: 'Task not found' }, { status: 404 });
     return json(task);
   }

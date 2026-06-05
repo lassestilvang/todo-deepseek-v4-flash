@@ -416,9 +416,38 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
                       <div
                         key={st.id}
                         draggable
-                        onDragStart={() => setDragIndex(idx)}
+                        onDragStart={(e) => {
+                          setDragIndex(idx);
+                          e.dataTransfer.setData('text/plain', String(idx));
+                        }}
                         onDragEnd={() => setDragIndex(null)}
-                        onDragOver={(e) => e.preventDefault()}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                        }}
+                        onDrop={async (e) => {
+                          e.preventDefault();
+                          const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                          setDragIndex(null);
+                          if (isNaN(fromIdx) || fromIdx === idx) return;
+                          const reordered = [...task.subtasks];
+                          const [moved] = reordered.splice(fromIdx, 1);
+                          reordered.splice(idx, 0, moved);
+                          try {
+                            await fetch('/api/tasks', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                id: task.id,
+                                _action: 'reorder-subtasks',
+                                subtaskIds: reordered.map(s => s.id),
+                              }),
+                            });
+                            invalidateCache('task-counts');
+                          } catch (e) {
+                            console.error('Failed to reorder subtasks', e);
+                          }
+                        }}
                         className={cn(
                           'flex items-center gap-1.5 py-1 px-1 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group/sub',
                           dragIndex === idx && 'opacity-50'
