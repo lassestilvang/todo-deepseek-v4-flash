@@ -1,31 +1,68 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, memo } from 'react';
-import { Timer, Play, Pause, RotateCcw, Coffee, X } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, Coffee, X, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 type TimerState = 'idle' | 'running' | 'paused';
 type TimerMode = 'focus' | 'break';
 
-const FOCUS_MINUTES = 25;
-const BREAK_MINUTES = 5;
+const DEFAULT_FOCUS = 25;
+const DEFAULT_BREAK = 5;
+const SESSIONS_KEY = 'planner-focus-sessions';
+const FOCUS_KEY = 'planner-focus-minutes';
+const BREAK_KEY = 'planner-break-minutes';
+
+function loadNumber(key: string, fallback: number): number {
+  if (typeof window === 'undefined') return fallback;
+  const stored = localStorage.getItem(key);
+  return stored ? parseInt(stored, 10) || fallback : fallback;
+}
+
+function loadSessions(): number {
+  if (typeof window === 'undefined') return 0;
+  const today = new Date().toISOString().split('T')[0];
+  const raw = localStorage.getItem(SESSIONS_KEY);
+  if (!raw) return 0;
+  try {
+    const data = JSON.parse(raw);
+    return data.date === today ? data.count : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveSessions(count: number) {
+  if (typeof window === 'undefined') return;
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify({ date: today, count }));
+}
 
 interface FocusTimerProps {
   onClose?: () => void;
+  initialTaskId?: string;
+  initialTaskName?: string;
 }
 
-export const FocusTimer = memo(function FocusTimer({ onClose }: FocusTimerProps) {
+export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskId, initialTaskName }: FocusTimerProps) {
   const [mode, setMode] = useState<TimerMode>('focus');
   const [state, setState] = useState<TimerState>('idle');
-  const [timeLeft, setTimeLeft] = useState(FOCUS_MINUTES * 60);
-  const [sessions, setSessions] = useState(0);
+  const [focusMinutes, setFocusMinutes] = useState(() => loadNumber(FOCUS_KEY, DEFAULT_FOCUS));
+  const [breakMinutes, setBreakMinutes] = useState(() => loadNumber(BREAK_KEY, DEFAULT_BREAK));
+  const [timeLeft, setTimeLeft] = useState(() => loadNumber(FOCUS_KEY, DEFAULT_FOCUS) * 60);
+  const [sessions, setSessions] = useState(loadSessions);
+  const [showSettings, setShowSettings] = useState(false);
+  const [activeTask, setActiveTask] = useState(initialTaskName || '');
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const settingsRef = useRef({ focusMinutes, breakMinutes });
+  settingsRef.current = { focusMinutes, breakMinutes };
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const totalSeconds = mode === 'focus' ? FOCUS_MINUTES * 60 : BREAK_MINUTES * 60;
-  const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100;
+  const totalSeconds = mode === 'focus' ? focusMinutes * 60 : breakMinutes * 60;
+  const progress = totalSeconds > 0 ? ((totalSeconds - timeLeft) / totalSeconds) * 100 : 0;
 
   const playNotification = useCallback(() => {
     try {
@@ -48,14 +85,19 @@ export const FocusTimer = memo(function FocusTimer({ onClose }: FocusTimerProps)
         clearInterval(intervalRef.current);
         intervalRef.current = undefined;
         playNotification();
+        const s = settingsRef.current;
         if (mode === 'focus') {
-          setSessions((s) => s + 1);
+          setSessions((sessionCount) => {
+            const newCount = sessionCount + 1;
+            saveSessions(newCount);
+            return newCount;
+          });
           setMode('break');
-          setTimeLeft(BREAK_MINUTES * 60);
+          setTimeLeft(s.breakMinutes * 60);
           setState('running');
         } else {
           setMode('focus');
-          setTimeLeft(FOCUS_MINUTES * 60);
+          setTimeLeft(s.focusMinutes * 60);
           setState('idle');
         }
         return 0;
@@ -80,7 +122,7 @@ export const FocusTimer = memo(function FocusTimer({ onClose }: FocusTimerProps)
   const resetTimer = useCallback(() => {
     pauseTimer();
     setMode('focus');
-    setTimeLeft(FOCUS_MINUTES * 60);
+    setTimeLeft(settingsRef.current.focusMinutes * 60);
     setState('idle');
   }, [pauseTimer]);
 
@@ -126,6 +168,16 @@ export const FocusTimer = memo(function FocusTimer({ onClose }: FocusTimerProps)
             >
               Break
             </button>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={cn(
+                'p-0.5 rounded-md hover:bg-muted transition-colors',
+                showSettings && 'bg-muted text-primary'
+              )}
+              aria-label="Timer settings"
+            >
+              <Settings2 className="h-3 w-3 text-muted-foreground/50" />
+            </button>
             {onClose && (
               <button onClick={onClose} className="p-0.5 rounded-md hover:bg-muted ml-1">
                 <X className="h-3 w-3 text-muted-foreground/50" />
@@ -133,6 +185,53 @@ export const FocusTimer = memo(function FocusTimer({ onClose }: FocusTimerProps)
             )}
           </div>
         </div>
+
+        {showSettings && (
+          <div className="mb-3 p-2 rounded-xl bg-muted/30 animate-fade-in space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-medium text-muted-foreground/70">Focus</span>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={focusMinutes}
+                  onChange={(e) => {
+                    const val = Math.max(1, parseInt(e.target.value) || 25);
+                    setFocusMinutes(val);
+                    localStorage.setItem(FOCUS_KEY, String(val));
+                  }}
+                  className="h-6 w-14 text-[11px] rounded-lg text-center px-1"
+                />
+                <span className="text-[10px] text-muted-foreground/50">min</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-medium text-muted-foreground/70">Break</span>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={breakMinutes}
+                  onChange={(e) => {
+                    const val = Math.max(1, parseInt(e.target.value) || 5);
+                    setBreakMinutes(val);
+                    localStorage.setItem(BREAK_KEY, String(val));
+                  }}
+                  className="h-6 w-14 text-[11px] rounded-lg text-center px-1"
+                />
+                <span className="text-[10px] text-muted-foreground/50">min</span>
+              </div>
+            </div>
+            {activeTask && (
+              <div className="pt-1 border-t border-border/50">
+                <span className="text-[10px] text-muted-foreground/60 block truncate">Focusing on: {activeTask}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="relative w-36 h-36 mx-auto mb-3">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="4"
