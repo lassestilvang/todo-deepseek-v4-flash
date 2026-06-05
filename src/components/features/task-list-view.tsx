@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw } from 'lucide-react';
+import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
@@ -57,6 +57,8 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [sortField, setSortField] = useState<'priority' | 'date' | 'name' | 'created'>('priority');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskWithRelations | undefined>();
   const [dialogKey, setDialogKey] = useState(0);
@@ -292,10 +294,29 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     handleQuickAdd(text);
   }, [handleQuickAdd]);
 
-  const displayedTasks = useMemo(
-    () => showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed),
-    [showCompleted, deferredTasks]
-  );
+  const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1, none: 0 };
+
+  const displayedTasks = useMemo(() => {
+    const filtered = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'priority':
+          cmp = (priorityWeight[a.priority] || 0) - (priorityWeight[b.priority] || 0);
+          break;
+        case 'date':
+          cmp = (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99');
+          break;
+        case 'name':
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case 'created':
+          cmp = a.createdAt.localeCompare(b.createdAt);
+          break;
+      }
+      return sortDirection === 'desc' ? -cmp : cmp;
+    });
+  }, [showCompleted, deferredTasks, sortField, sortDirection]);
 
   // Group tasks by date for upcoming/7-days views
   const shouldGroupByDate = useMemo(
@@ -439,6 +460,27 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Sort controls */}
+          <div className="hidden sm:flex items-center">
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value as typeof sortField)}
+              className="h-8 text-[11px] rounded-lg border border-input bg-transparent px-2 text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-ring/30 cursor-pointer"
+              aria-label="Sort by"
+            >
+              <option value="priority">Priority</option>
+              <option value="date">Date</option>
+              <option value="name">Name</option>
+              <option value="created">Created</option>
+            </select>
+            <button
+              onClick={() => setSortDirection(d => d === 'asc' ? 'desc' : 'asc')}
+              className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors ml-1"
+              aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
+            >
+              {sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-muted-foreground/60" /> : <ArrowDown className="h-3.5 w-3.5 text-muted-foreground/60" />}
+            </button>
+          </div>
           {showViewToggle && (
             <Button
               variant="outline"
