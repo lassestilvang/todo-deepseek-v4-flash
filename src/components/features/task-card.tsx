@@ -28,6 +28,7 @@ import { useToast } from '@/components/toast-provider';
 import type { TaskWithRelations } from '@/types';
 import { invalidateCache } from '@/hooks/use-cache';
 import { Confetti } from './confetti';
+import { FocusTimer } from './focus-timer';
 
 const priorityConfig: Record<string, { color: string; label: string; bar: string }> = {
   high: { color: 'text-red-500', label: 'High', bar: 'bg-red-500' },
@@ -49,6 +50,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
   const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<{ x: number; y: number } | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [showFocusForTask, setShowFocusForTask] = useState(false);
   const { toast } = useToast();
   const overdue = task.date ? isOverdue(task.date) && !task.completed : false;
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
@@ -231,6 +233,11 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
               </div>
 
               <div className="flex items-center gap-0.5 shrink-0 task-card-actions md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all duration-200">
+                {!task.completed && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 rounded-lg text-primary/60 hover:text-primary" onClick={(e) => { e.stopPropagation(); setShowFocusForTask(true); }} aria-label="Focus on this task">
+                    <Timer className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" className={cn("h-8 w-8 sm:h-7 sm:w-7 rounded-lg transition-all", task.pinned && "text-amber-500 hover:text-amber-600")} onClick={(e) => { e.stopPropagation(); handleTogglePin(); }} aria-label={task.pinned ? 'Unpin task' : 'Pin task'}>
                   {task.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
                 </Button>
@@ -493,6 +500,13 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
           originX={confetti.x}
           originY={confetti.y}
           onComplete={() => setConfetti(null)}
+        />
+      )}
+
+      {showFocusForTask && (
+        <FocusTimer
+          onClose={() => setShowFocusForTask(false)}
+          initialTaskName={task.name}
         />
       )}
     </div>
