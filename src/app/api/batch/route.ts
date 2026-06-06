@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteTasksBatch } from '@/lib/data';
+import { deleteTasksBatch, updateTasksBatch } from '@/lib/data';
 
 function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
@@ -9,6 +9,19 @@ function json(data: unknown, init?: ResponseInit) {
       ...init?.headers,
     },
   });
+}
+
+export async function PUT(request: NextRequest) {
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ error: 'Invalid JSON body' }, { status: 400 }); }
+  
+  if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
+    return json({ error: 'Task IDs array is required' }, { status: 400 });
+  }
+  
+  updateTasksBatch(body.ids, body.data);
+  return json({ success: true, count: body.ids.length });
 }
 
 export async function DELETE(request: NextRequest) {

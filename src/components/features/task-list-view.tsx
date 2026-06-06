@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw, ArrowUp, ArrowDown, CheckCircle2, Trash2, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
@@ -13,10 +13,10 @@ import { EmptyState } from './empty-state';
 import type { EmptyStateType } from './empty-state';
 import { StatsDashboard } from './stats-dashboard';
 import { useToast } from '@/components/toast-provider';
-import { invalidateCache, useTaskCounts } from '@/hooks/use-cache';
+import { invalidateCache, useTaskCounts, useListCache } from '@/hooks/use-cache';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcut';
 import { cn, formatRelativeDate, isToday, isTomorrow, isOverdue, parseNaturalDate } from '@/lib/utils';
-import type { TaskWithRelations } from '@/types';
+import type { TaskWithRelations, Priority } from '@/types';
 
 const TaskDialog = dynamic(() => import('./task-dialog').then(mod => mod.TaskDialog), {
   loading: () => (
@@ -54,6 +54,7 @@ const TaskCardMemo = memo(TaskCard);
 
 export function TaskListView({ title, description, endpoint, showViewToggle = true, showStats }: TaskListViewProps) {
   const { counts } = useTaskCounts();
+  const { lists: allLists } = useListCache();
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
@@ -69,6 +70,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const fetchRef = useRef(0);
   const [allDoneConfetti, setAllDoneConfetti] = useState<{ x: number; y: number } | null>(null);
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const tasksRef = useRef(tasks);
 
@@ -372,6 +374,66 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     handleQuickAdd(text);
   }, [handleQuickAdd]);
 
+  const handleSelect = useCallback((id: string, selected: boolean) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const handleBulkAction = useCallback(async (action: 'complete' | 'delete' | 'move' | 'priority', value?: string) => {
+    const ids = Array.from(selectedTaskIds);
+    if (ids.length === 0) return;
+
+    try {
+      if (action === 'delete') {
+        const res = await fetch('/api/batch', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        });
+        if (!res.ok) throw new Error('Failed to delete');
+        setTasks(prev => prev.filter(t => !selectedTaskIds.has(t.id)));
+        toast(`${ids.length} tasks deleted`, 'success');
+      } else {
+        const data: Partial<{ completed: boolean; listId: string; priority: Priority }> = {};
+        if (action === 'complete') data.completed = true;
+        if (action === 'move') data.listId = value;
+        if (action === 'priority') data.priority = value as Priority;
+
+        const res = await fetch('/api/batch', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids, data }),
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        
+        setTasks(prev => prev.map(t => {
+          if (selectedTaskIds.has(t.id)) {
+            return { ...t, ...data, updatedAt: new Date().toISOString() };
+          }
+          return t;
+        }));
+        toast(`${ids.length} tasks updated`, 'success');
+      }
+      setSelectedTaskIds(new Set());
+      invalidateCache('task-counts');
+    } catch (e) {
+      toast('Bulk action failed', 'error');
+      console.error(e);
+    }
+  }, [selectedTaskIds, toast]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedTaskIds.size === displayedTasks.length && displayedTasks.length > 0) {
+      setSelectedTaskIds(new Set());
+    } else {
+      setSelectedTaskIds(new Set(displayedTasks.map(t => t.id)));
+    }
+  }, [displayedTasks, selectedTaskIds.size]);
+
   // Group tasks by date for upcoming/7-days views
   const shouldGroupByDate = useMemo(
     () => pathname.startsWith('/today') || pathname.startsWith('/next-7-days') || pathname.startsWith('/upcoming'),
@@ -655,9 +717,11 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                               <TaskCardMemo
                                 task={task}
                                 isFocused={focusedTaskId === task.id}
+                                isSelected={selectedTaskIds.has(task.id)}
                                 onToggle={handleToggle}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
+                                onSelect={handleSelect}
                               />
                             </LazyTaskCardWrapper>
                           ))}
@@ -678,9 +742,11 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                               <TaskCardMemo
                                 task={task}
                                 isFocused={focusedTaskId === task.id}
+                                isSelected={selectedTaskIds.has(task.id)}
                                 onToggle={handleToggle}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
+                                onSelect={handleSelect}
                               />
                             </LazyTaskCardWrapper>
                           ))}
@@ -692,13 +758,15 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                   // Flat view (all, list, label)
                   displayedTasks.filter(t => !t.completed).map((task, idx) => (
                     <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
-                      <TaskCardMemo
-                        task={task}
-                        isFocused={focusedTaskId === task.id}
-                        onToggle={handleToggle}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                      />
+                    <TaskCardMemo
+                      task={task}
+                      isFocused={focusedTaskId === task.id}
+                      isSelected={selectedTaskIds.has(task.id)}
+                      onToggle={handleToggle}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onSelect={handleSelect}
+                    />
                     </LazyTaskCardWrapper>
                   ))
                 )}
@@ -726,9 +794,11 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         <TaskCardMemo
                           task={task}
                           isFocused={focusedTaskId === task.id}
+                          isSelected={selectedTaskIds.has(task.id)}
                           onToggle={handleToggle}
                           onEdit={handleEdit}
                           onDelete={handleDelete}
+                          onSelect={handleSelect}
                         />
                       </LazyTaskCardWrapper>
                     ))}
@@ -754,6 +824,87 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
           variant="burst"
           onComplete={() => setAllDoneConfetti(null)}
         />
+      )}
+
+      {/* Batch Action Toolbar */}
+      {selectedTaskIds.size > 0 && (
+        <div className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-foreground text-background px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-4 sm:gap-6 border border-background/10">
+            <div className="flex items-center gap-3 pr-4 border-r border-background/20">
+              <button
+                onClick={toggleSelectAll}
+                className={cn(
+                  "p-1.5 rounded-xl transition-all border",
+                  selectedTaskIds.size === displayedTasks.length 
+                    ? "bg-primary border-primary text-primary-foreground" 
+                    : "border-background/20 text-background hover:bg-background/10"
+                )}
+                title={selectedTaskIds.size === displayedTasks.length ? "Deselect all" : "Select all"}
+              >
+                <RefreshCw className={cn("h-4 w-4", selectedTaskIds.size === displayedTasks.length && "animate-spin-once")} />
+              </button>
+              <div className="flex flex-col min-w-[70px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 leading-none mb-1">Selected</span>
+                <span className="text-xs font-black tabular-nums leading-none">{selectedTaskIds.size} tasks</span>
+              </div>
+              <button 
+                onClick={() => setSelectedTaskIds(new Set())} 
+                className="p-1.5 hover:bg-background/10 rounded-xl transition-colors"
+                title="Clear selection"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-10 px-3 gap-2 hover:bg-background/10 text-background rounded-xl active:scale-95 transition-all" 
+                onClick={() => handleBulkAction('complete')}
+              >
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs font-bold hidden sm:inline">Complete</span>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-10 px-3 gap-2 hover:bg-background/10 text-background rounded-xl active:scale-95 transition-all" 
+                onClick={() => handleBulkAction('delete')}
+              >
+                <Trash2 className="h-4 w-4 text-red-400" />
+                <span className="text-xs font-bold hidden sm:inline">Delete</span>
+              </Button>
+              
+              <div className="relative group">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-10 px-3 gap-2 hover:bg-background/10 text-background rounded-xl active:scale-95 transition-all"
+                >
+                  <ArrowRight className="h-4 w-4 text-blue-400" />
+                  <span className="text-xs font-bold hidden sm:inline">Move</span>
+                </Button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block animate-in fade-in zoom-in-95 duration-200">
+                  <div className="bg-popover text-popover-foreground border rounded-2xl shadow-2xl p-1.5 min-w-[180px] max-h-64 overflow-y-auto">
+                    <p className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Move to list</p>
+                    {allLists.map((l) => (
+                      <button 
+                        key={l.id}
+                        onClick={() => handleBulkAction('move', l.id)} 
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-accent rounded-xl transition-colors flex items-center gap-3 font-medium"
+                      >
+                        <span className="text-sm opacity-70">{l.icon}</span> 
+                        <span className="truncate">{l.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

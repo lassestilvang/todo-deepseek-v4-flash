@@ -19,6 +19,7 @@ import {
   PinOff,
 } from 'lucide-react';
 import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -38,12 +39,14 @@ const priorityConfig: Record<string, { color: string; label: string; bar: string
 interface TaskCardProps {
   task: TaskWithRelations;
   isFocused?: boolean;
+  isSelected?: boolean;
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onSelect?: (id: string, selected: boolean) => void;
 }
 
-export const TaskCard = memo(function TaskCard({ task, isFocused, onToggle, onEdit, onDelete }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, onToggle, onEdit, onDelete, onSelect }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
@@ -142,6 +145,7 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, onToggle, onEd
         'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5',
         'active:translate-y-0 active:scale-[0.997]',
         isFocused && 'ring-2 ring-primary border-primary/50 shadow-md -translate-y-0.5',
+        isSelected && 'ring-2 ring-primary border-primary/50 bg-primary/[0.03] shadow-sm',
         task.completed && 'opacity-70 border-primary/10 bg-gradient-to-br from-card via-primary/[0.02] to-transparent'
       )}
     >
@@ -169,29 +173,44 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, onToggle, onEd
       )}
 
       <div className="p-3 sm:p-4">
-        <div className="flex items-start gap-3">
-          <button
-            onClick={(e) => {
-              if (!task.completed) {
-                setConfetti({ x: e.clientX, y: e.clientY });
-              }
-              onToggle(task.id);
-            }}
-            className={cn(
-              'mt-0.5 shrink-0 transition-transform duration-150',
-              'hover:scale-110 active:scale-90',
-              'focus:outline-none focus:ring-2 focus:ring-ring/30 rounded-full'
+        <div className="flex items-start gap-3 relative">
+          <div className="flex flex-col items-center gap-2.5 mt-0.5 shrink-0">
+            <button
+              onClick={(e) => {
+                if (!task.completed) {
+                  setConfetti({ x: e.clientX, y: e.clientY });
+                }
+                onToggle(task.id);
+              }}
+              className={cn(
+                'transition-transform duration-150',
+                'hover:scale-110 active:scale-90',
+                'focus:outline-none focus:ring-2 focus:ring-ring/30 rounded-full'
+              )}
+              aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+            >
+              {task.completed ? (
+                <span className="block animate-scale-check">
+                  <CheckCircle2 className="h-5 w-5 text-primary drop-shadow-sm" />
+                </span>
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary/70 transition-colors duration-200 hover:drop-shadow-sm" />
+              )}
+            </button>
+            
+            {onSelect && (
+              <div className={cn(
+                "transition-all duration-300",
+                isSelected ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
+              )}>
+                <Checkbox 
+                  checked={isSelected} 
+                  onCheckedChange={(checked) => onSelect(task.id, !!checked)}
+                  className="rounded-lg h-4 w-4 border-muted-foreground/20"
+                />
+              </div>
             )}
-            aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
-          >
-            {task.completed ? (
-              <span className="block animate-scale-check">
-                <CheckCircle2 className="h-5 w-5 text-primary drop-shadow-sm" />
-              </span>
-            ) : (
-              <Circle className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary/70 transition-colors duration-200 hover:drop-shadow-sm" />
-            )}
-          </button>
+          </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">

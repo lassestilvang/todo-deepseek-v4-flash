@@ -592,6 +592,58 @@ export function deleteTask(id: string): void {
   const db = getDb();
   prepare(db, 'DELETE FROM tasks WHERE id = ?').run(id);
 }
+export function updateTasksBatch(ids: string[], data: Partial<{
+  completed: boolean;
+  listId: string;
+  priority: Priority;
+  date: string | null;
+}>): void {
+  if (ids.length === 0) return;
+  const db = getDb();
+  const now = new Date().toISOString();
+  
+  const updateMany = db.transaction(() => {
+    for (const id of ids) {
+      const updates: string[] = [];
+      const values: any[] = [];
+      
+      if (data.completed !== undefined) {
+        updates.push('completed = ?');
+        values.push(data.completed ? 1 : 0);
+        updates.push('completed_at = ?');
+        values.push(data.completed ? now : null);
+        logActivity(db, id, data.completed ? 'completed' : 'uncompleted', 'completed', '', '');
+      }
+      
+      if (data.listId !== undefined) {
+        updates.push('list_id = ?');
+        values.push(data.listId);
+        logActivity(db, id, 'update', 'list', '', data.listId);
+      }
+      
+      if (data.priority !== undefined) {
+        updates.push('priority = ?');
+        values.push(data.priority);
+        logActivity(db, id, 'update', 'priority', '', data.priority);
+      }
+
+      if (data.date !== undefined) {
+        updates.push('date = ?');
+        values.push(data.date);
+        logActivity(db, id, 'update', 'date', '', data.date || 'null');
+      }
+
+      if (updates.length > 0) {
+        updates.push('updated_at = ?');
+        values.push(now);
+        values.push(id);
+        prepare(db, `UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+      }
+    }
+  });
+  updateMany();
+}
+
 export function deleteTasksBatch(ids: string[]): void {
   if (ids.length === 0) return;
   const db = getDb();
