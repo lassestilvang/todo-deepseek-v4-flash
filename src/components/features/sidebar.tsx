@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
-import { useListCache, useLabelCache, useTaskCounts, invalidateCache, clearAllCache } from '@/hooks/use-cache';
+import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
 import { FocusTimer } from './focus-timer';
 import type { TaskWithRelations } from '@/types';
 import type { TaskCounts } from '@/hooks/use-cache';
