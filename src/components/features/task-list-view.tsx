@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
@@ -52,7 +52,7 @@ interface TaskListViewProps {
 
 const TaskCardMemo = memo(TaskCard);
 
-export function TaskListView({ title, description, endpoint, showViewToggle = true, emptyMessage = 'No tasks yet', showStats }: TaskListViewProps) {
+export function TaskListView({ title, description, endpoint, showViewToggle = true, showStats }: TaskListViewProps) {
   const { counts } = useTaskCounts();
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,6 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
   // Use deferred value for rendered tasks to avoid jank during updates
   const deferredTasks = useDeferredValue(tasks);
-  const isStale = tasks !== deferredTasks;
 
   const fetchTasks = useCallback(async (signal?: AbortSignal) => {
     const id = ++fetchRef.current;

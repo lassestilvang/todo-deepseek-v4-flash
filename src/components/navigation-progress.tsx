@@ -16,12 +16,16 @@ export function NavigationProgress() {
     timersRef.current = [];
 
     if (pending) {
-      setVisible(true);
-      setProgress(0);
-      startTimeRef.current = Date.now();
+      // Defer state updates to next tick to avoid cascading renders warning
+      const t1 = setTimeout(() => {
+        setVisible(true);
+        setProgress(0);
+        startTimeRef.current = Date.now();
+      }, 0);
 
       // Adaptive progress simulation — early gains are fast, later gains slow down
       timersRef.current = [
+        t1,
         setTimeout(() => setProgress(20), 30),
         setTimeout(() => setProgress(40), 150),
         setTimeout(() => setProgress(55), 350),

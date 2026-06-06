@@ -46,7 +46,7 @@ interface FocusTimerProps {
   initialTaskName?: string;
 }
 
-export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskId, initialTaskName }: FocusTimerProps) {
+export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskName }: FocusTimerProps) {
   const [mode, setMode] = useState<TimerMode>('focus');
   const [state, setState] = useState<TimerState>('idle');
   const [focusMinutes, setFocusMinutes] = useState(() => loadNumber(FOCUS_KEY, DEFAULT_FOCUS));
@@ -54,10 +54,13 @@ export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskId, ini
   const [timeLeft, setTimeLeft] = useState(() => loadNumber(FOCUS_KEY, DEFAULT_FOCUS) * 60);
   const [sessions, setSessions] = useState(loadSessions);
   const [showSettings, setShowSettings] = useState(false);
-  const [activeTask, setActiveTask] = useState(initialTaskName || '');
+  const activeTask = initialTaskName || '';
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const settingsRef = useRef({ focusMinutes, breakMinutes });
-  settingsRef.current = { focusMinutes, breakMinutes };
+
+  useEffect(() => {
+    settingsRef.current = { focusMinutes, breakMinutes };
+  }, [focusMinutes, breakMinutes]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -66,7 +69,8 @@ export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskId, ini
 
   const playNotification = useCallback(() => {
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const audioCtx = new AudioContextClass();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
