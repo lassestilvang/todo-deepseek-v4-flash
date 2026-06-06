@@ -41,8 +41,8 @@ export function MobileNav() {
   const [newListName, setNewListName] = useState("");
 
   useEffect(() => {
-    // Only close if it's actually open to avoid unnecessary updates
-    setDrawerOpen(open => open ? false : false);
+    const t = setTimeout(() => setDrawerOpen(prev => prev ? false : prev), 0);
+    return () => clearTimeout(t);
   }, [pathname]);
 
   useEffect(() => {

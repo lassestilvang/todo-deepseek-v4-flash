@@ -17,10 +17,8 @@ import {
   GripVertical,
   Pin,
   PinOff,
-  Play,
-  Square,
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue, minutesToEstimate } from '@/lib/utils';
+import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';

@@ -129,9 +129,12 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       const task = tasks.find(t => t.id === editId);
       if (task && !dialogOpen) {
         handledEditRef.current = true;
-        setEditingTask(task);
-        setDialogKey(k => k + 1);
-        setDialogOpen(true);
+        // Defer to avoid cascading render warning
+        setTimeout(() => {
+          setEditingTask(task);
+          setDialogKey(k => k + 1);
+          setDialogOpen(true);
+        }, 0);
       }
     }
   }, [tasks, dialogOpen]);
@@ -262,7 +265,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       toast('Failed to delete task', 'error');
       console.error('Delete failed, reverted', e);
     }
-  }, [toast]); // tasks via tasksRef ref
+  }, [toast, focusedTaskId, setTasks]); // tasks via tasksRef ref
 
   const handleEdit = useCallback((id: string) => {
     const task = tasksRef.current.find(t => t.id === id);

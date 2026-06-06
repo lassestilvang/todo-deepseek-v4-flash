@@ -2,7 +2,7 @@
 
 import Database from 'better-sqlite3';
 import { getDb } from './db';
-import { generateId } from './utils';
+import { generateId, parseEstimateToMinutes, minutesToEstimate } from './utils';
 import type { List, Task, TaskWithRelations, Subtask, Attachment, Reminder, Label, ActivityLog, Recurrence, Priority } from '@/types';
 
 // Prepared statement cache for better-sqlite3 performance
@@ -374,6 +374,7 @@ export function getTask(id: string): TaskWithRelations | undefined {
     subtasks: getSubtasks(db, task.id),
     attachments: getAttachments(db, task.id),
     reminders: getReminders(db, task.id),
+    activityLogs: getActivityLogs(task.id),
     list,
   };
 }
@@ -406,6 +407,7 @@ export function createTask(data: {
   labels?: string[];
   recurrence?: Recurrence | null;
   subtasks?: { id: string; title: string; completed: boolean }[];
+  reminders?: { id: string; time: string; type: Reminder['type'] }[];
 }): TaskWithRelations {
   const db = getDb();
   const id = generateId();
@@ -446,6 +448,14 @@ export function createTask(data: {
       }
     }
 
+    // Add reminders
+    if (data.reminders) {
+      const insertReminder = prepare(db, 'INSERT INTO reminders (id, task_id, time, type, sent) VALUES (?, ?, ?, ?, 0)');
+      for (const r of data.reminders) {
+        insertReminder.run(r.id || generateId(), id, r.time, r.type || 'notification');
+      }
+    }
+
     // Log activity
     logActivity(db, id, 'created', '', null, data.name);
   });
@@ -467,6 +477,7 @@ export function updateTask(id: string, data: Partial<{
   recurrence: Recurrence | null;
   labels?: string[];
   subtasks?: { id: string; title: string; completed: boolean }[];
+  reminders?: { id: string; time: string; type: Reminder['type'] }[];
 }>): TaskWithRelations | undefined {
   const db = getDb();
   const existing = getTaskLight(id);
@@ -552,6 +563,15 @@ export function updateTask(id: string, data: Partial<{
         upsert.run(st.id, id, st.title, st.completed ? 1 : 0, origCreatedAt || now);
       }
     }
+
+    // Sync reminders if provided
+    if (data.reminders !== undefined) {
+      prepare(db, 'DELETE FROM reminders WHERE task_id = ?').run(id);
+      const insertReminder = prepare(db, 'INSERT INTO reminders (id, task_id, time, type, sent) VALUES (?, ?, ?, ?, 0)');
+      for (const r of data.reminders) {
+        insertReminder.run(r.id || generateId(), id, r.time, r.type || 'notification');
+      }
+    }
   });
 
   update();
@@ -559,11 +579,9 @@ export function updateTask(id: string, data: Partial<{
 }
 
 export function incrementTaskActualTime(id: string, minutes: number): TaskWithRelations | undefined {
-  const db = getDb();
   const task = getTaskLight(id);
   if (!task) return undefined;
 
-  const { parseEstimateToMinutes, minutesToEstimate } = require('./utils');
   const currentMinutes = parseEstimateToMinutes(task.actualTime);
   const newActualTime = minutesToEstimate(currentMinutes + minutes);
   

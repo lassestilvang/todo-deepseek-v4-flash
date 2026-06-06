@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask, togglePinTask, reorderSubtasks, getTaskLight, incrementTaskActualTime } from '@/lib/data';
+import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask, togglePinTask, reorderSubtasks, getTaskLight, incrementTaskActualTime, getTask } from '@/lib/data';
 
 function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
@@ -13,11 +13,18 @@ function json(data: unknown, init?: ResponseInit) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
   const view = searchParams.get('view');
   const listId = searchParams.get('listId');
   const labelId = searchParams.get('labelId');
   const date = searchParams.get('date');
   const completed = searchParams.get('completed');
+
+  if (id) {
+    const task = getTask(id);
+    if (!task) return json({ error: 'Task not found' }, { status: 404 });
+    return json(task);
+  }
 
   if (view) {
     return json(getTasksForView(view));

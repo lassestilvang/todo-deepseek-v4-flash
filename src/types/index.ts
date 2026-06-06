@@ -72,6 +72,7 @@ export interface TaskWithRelations extends Task {
   reminders: Reminder[];
   list?: List;
   labelObjects?: Label[];
+  activityLogs?: ActivityLog[];
 }
 
 export interface Label {

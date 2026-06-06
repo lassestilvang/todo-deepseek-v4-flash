@@ -38,8 +38,9 @@ export function NavigationProgress() {
       // Snap to 100% with a delay proportional to how long the navigation took
       // Creates a more natural feel: fast navs snap instantly, slow ones complete smoothly
       const snapDelay = Math.min(elapsed * 0.15, 300);
-      setProgress(100);
+      const t = setTimeout(() => setProgress(100), 0);
       timersRef.current = [
+        t,
         setTimeout(() => { setVisible(false); setProgress(0); }, snapDelay + 150),
       ];
     }
