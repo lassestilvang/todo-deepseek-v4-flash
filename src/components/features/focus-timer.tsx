@@ -46,7 +46,7 @@ interface FocusTimerProps {
   initialTaskName?: string;
 }
 
-export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskName }: FocusTimerProps) {
+export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskId, initialTaskName }: FocusTimerProps) {
   const [mode, setMode] = useState<TimerMode>('focus');
   const [state, setState] = useState<TimerState>('idle');
   const [focusMinutes, setFocusMinutes] = useState(() => loadNumber(FOCUS_KEY, DEFAULT_FOCUS));
@@ -56,11 +56,11 @@ export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskName }:
   const [showSettings, setShowSettings] = useState(false);
   const activeTask = initialTaskName || '';
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const settingsRef = useRef({ focusMinutes, breakMinutes });
+  const settingsRef = useRef({ focusMinutes, breakMinutes, initialTaskId });
 
   useEffect(() => {
-    settingsRef.current = { focusMinutes, breakMinutes };
-  }, [focusMinutes, breakMinutes]);
+    settingsRef.current = { focusMinutes, breakMinutes, initialTaskId };
+  }, [focusMinutes, breakMinutes, initialTaskId]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -96,6 +96,19 @@ export const FocusTimer = memo(function FocusTimer({ onClose, initialTaskName }:
             saveSessions(newCount);
             return newCount;
           });
+          
+          if (s.initialTaskId) {
+            fetch('/api/tasks', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: s.initialTaskId,
+                _action: 'increment-actual-time',
+                minutes: s.focusMinutes
+              }),
+            }).catch(console.error);
+          }
+
           setMode('break');
           setTimeLeft(s.breakMinutes * 60);
           setState('running');

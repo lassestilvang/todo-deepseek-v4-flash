@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask, togglePinTask, reorderSubtasks, getTaskLight } from '@/lib/data';
+import { getTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, getTasksForView, toggleSubtask, togglePinTask, reorderSubtasks, getTaskLight, incrementTaskActualTime } from '@/lib/data';
 
 function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
@@ -72,6 +72,12 @@ export async function PUT(request: NextRequest) {
     }
     reorderSubtasks(body.id, body.subtaskIds);
     const task = getTaskLight(body.id);
+    if (!task) return json({ error: 'Task not found' }, { status: 404 });
+    return json(task);
+  }
+  if (body._action === 'increment-actual-time') {
+    if (typeof body.minutes !== 'number') return json({ error: 'minutes is required' }, { status: 400 });
+    const task = incrementTaskActualTime(body.id, body.minutes);
     if (!task) return json({ error: 'Task not found' }, { status: 404 });
     return json(task);
   }

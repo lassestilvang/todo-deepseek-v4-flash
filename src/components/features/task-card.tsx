@@ -508,6 +508,7 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, onToggle, onEd
       {showFocusForTask && (
         <FocusTimer
           onClose={() => setShowFocusForTask(false)}
+          initialTaskId={task.id}
           initialTaskName={task.name}
         />
       )}

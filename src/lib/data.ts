@@ -558,6 +558,18 @@ export function updateTask(id: string, data: Partial<{
   return getTask(id);
 }
 
+export function incrementTaskActualTime(id: string, minutes: number): TaskWithRelations | undefined {
+  const db = getDb();
+  const task = getTaskLight(id);
+  if (!task) return undefined;
+
+  const { parseEstimateToMinutes, minutesToEstimate } = require('./utils');
+  const currentMinutes = parseEstimateToMinutes(task.actualTime);
+  const newActualTime = minutesToEstimate(currentMinutes + minutes);
+  
+  return updateTask(id, { actualTime: newActualTime });
+}
+
 export function deleteTask(id: string): void {
   const db = getDb();
   prepare(db, 'DELETE FROM tasks WHERE id = ?').run(id);
