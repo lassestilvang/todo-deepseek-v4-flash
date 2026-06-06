@@ -14,7 +14,10 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [showHints, setShowHints] = useState(false);
   const showHintsRef = useRef(showHints);
-  showHintsRef.current = showHints;
+
+  useEffect(() => {
+    showHintsRef.current = showHints;
+  }, [showHints]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

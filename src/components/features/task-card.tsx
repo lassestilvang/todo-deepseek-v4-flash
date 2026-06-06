@@ -39,12 +39,13 @@ const priorityConfig: Record<string, { color: string; label: string; bar: string
 
 interface TaskCardProps {
   task: TaskWithRelations;
+  isFocused?: boolean;
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelete }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, isFocused, onToggle, onEdit, onDelete }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
@@ -142,6 +143,7 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onEdit, onDelet
         'focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/30',
         'hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5',
         'active:translate-y-0 active:scale-[0.997]',
+        isFocused && 'ring-2 ring-primary border-primary/50 shadow-md -translate-y-0.5',
         task.completed && 'opacity-70 border-primary/10 bg-gradient-to-br from-card via-primary/[0.02] to-transparent'
       )}
     >

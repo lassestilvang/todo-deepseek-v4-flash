@@ -68,9 +68,13 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const quickAddRef = useRef<HTMLInputElement>(null);
   const fetchRef = useRef(0);
   const [allDoneConfetti, setAllDoneConfetti] = useState<{ x: number; y: number } | null>(null);
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const { toast } = useToast();
   const tasksRef = useRef(tasks);
-  tasksRef.current = tasks;
+
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
 
   // Determine empty state type from current pathname - computed once
   const pathname = usePathname();
@@ -198,6 +202,30 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
   useEffect(() => { toggleRef.current = handleToggle; }, [handleToggle]);
 
+  const priorityWeight: Record<string, number> = useMemo(() => ({ high: 3, medium: 2, low: 1, none: 0 }), []);
+
+  const displayedTasks = useMemo(() => {
+    const filtered = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'priority':
+          cmp = (priorityWeight[a.priority] || 0) - (priorityWeight[b.priority] || 0);
+          break;
+        case 'date':
+          cmp = (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99');
+          break;
+        case 'name':
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case 'created':
+          cmp = a.createdAt.localeCompare(b.createdAt);
+          break;
+      }
+      return sortDirection === 'desc' ? -cmp : cmp;
+    });
+  }, [showCompleted, deferredTasks, sortField, sortDirection, priorityWeight]);
+
   const handleDelete = useCallback(async (id: string) => {
     const previousTasks = tasksRef.current;
     startTransition(() => {
@@ -211,6 +239,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error('Failed to delete');
+      if (focusedTaskId === id) setFocusedTaskId(null);
       invalidateCache('task-counts');
       toast('Task deleted', 'success', {
         label: 'Undo',
@@ -251,10 +280,57 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     setDialogOpen(true);
   }, []);
 
+  const moveFocus = useCallback((direction: 'up' | 'down') => {
+    if (displayedTasks.length === 0) return;
+    setFocusedTaskId(prev => {
+      if (!prev) return displayedTasks[0].id;
+      const idx = displayedTasks.findIndex(t => t.id === prev);
+      if (idx === -1) return displayedTasks[0].id;
+      const nextIdx = direction === 'down' ? Math.min(idx + 1, displayedTasks.length - 1) : Math.max(idx - 1, 0);
+      const nextId = displayedTasks[nextIdx].id;
+      // Scroll into view
+      const el = document.getElementById(`task-${nextId}`);
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return nextId;
+    });
+  }, [displayedTasks]);
+
+  const handlePriorityAction = useCallback(async (priority: 'none' | 'low' | 'medium' | 'high') => {
+    if (!focusedTaskId) return;
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: focusedTaskId, priority }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const updated = await res.json();
+      setTasks(prev => prev.map(t => t.id === focusedTaskId ? updated : t));
+      invalidateCache('task-counts');
+      toast(`Priority set to ${priority}`, 'success');
+    } catch {
+      toast('Failed to update priority', 'error');
+    }
+  }, [focusedTaskId, toast, setTasks]);
+
   useKeyboardShortcuts([
     { key: 'n', handler: openCreate, enabled: !dialogOpen },
     { key: 'a', handler: () => quickAddRef.current?.focus(), enabled: !dialogOpen },
     { key: 'q', handler: () => quickAddRef.current?.focus(), enabled: !dialogOpen },
+    { key: 'j', handler: () => moveFocus('down'), enabled: !dialogOpen },
+    { key: 'k', handler: () => moveFocus('up'), enabled: !dialogOpen },
+    { key: 'ArrowDown', handler: () => moveFocus('down'), enabled: !dialogOpen },
+    { key: 'ArrowUp', handler: () => moveFocus('up'), enabled: !dialogOpen },
+    { key: ' ', handler: () => focusedTaskId && handleToggle(focusedTaskId), enabled: !dialogOpen && !!focusedTaskId },
+    { key: 'x', handler: () => focusedTaskId && handleToggle(focusedTaskId), enabled: !dialogOpen && !!focusedTaskId },
+    { key: 'Enter', handler: () => focusedTaskId && handleEdit(focusedTaskId), enabled: !dialogOpen && !!focusedTaskId },
+    { key: 'e', handler: () => focusedTaskId && handleEdit(focusedTaskId), enabled: !dialogOpen && !!focusedTaskId },
+    { key: 'Delete', handler: () => focusedTaskId && handleDelete(focusedTaskId), enabled: !dialogOpen && !!focusedTaskId },
+    { key: 'Backspace', handler: () => focusedTaskId && handleDelete(focusedTaskId), enabled: !dialogOpen && !!focusedTaskId },
+    { key: '1', handler: () => handlePriorityAction('high'), enabled: !dialogOpen && !!focusedTaskId },
+    { key: '2', handler: () => handlePriorityAction('medium'), enabled: !dialogOpen && !!focusedTaskId },
+    { key: '3', handler: () => handlePriorityAction('low'), enabled: !dialogOpen && !!focusedTaskId },
+    { key: '4', handler: () => handlePriorityAction('none'), enabled: !dialogOpen && !!focusedTaskId },
   ]);
 
   const handleQuickAdd = useCallback(async (overrideName?: string) => {
@@ -293,30 +369,6 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const handleSuggest = useCallback((text: string) => {
     handleQuickAdd(text);
   }, [handleQuickAdd]);
-
-  const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1, none: 0 };
-
-  const displayedTasks = useMemo(() => {
-    const filtered = showCompleted ? deferredTasks : deferredTasks.filter(t => !t.completed);
-    return [...filtered].sort((a, b) => {
-      let cmp = 0;
-      switch (sortField) {
-        case 'priority':
-          cmp = (priorityWeight[a.priority] || 0) - (priorityWeight[b.priority] || 0);
-          break;
-        case 'date':
-          cmp = (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99');
-          break;
-        case 'name':
-          cmp = a.name.localeCompare(b.name);
-          break;
-        case 'created':
-          cmp = a.createdAt.localeCompare(b.createdAt);
-          break;
-      }
-      return sortDirection === 'desc' ? -cmp : cmp;
-    });
-  }, [showCompleted, deferredTasks, sortField, sortDirection]);
 
   // Group tasks by date for upcoming/7-days views
   const shouldGroupByDate = useMemo(
@@ -597,9 +649,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         </div>
                         <div className="space-y-2">
                           {groupedTasks.overdue.map((task, idx) => (
-                            <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
                               <TaskCardMemo
                                 task={task}
+                                isFocused={focusedTaskId === task.id}
                                 onToggle={handleToggle}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
@@ -619,9 +672,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         </div>
                         <div className="space-y-2">
                           {dateTasks.map((task, idx) => (
-                            <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
                               <TaskCardMemo
                                 task={task}
+                                isFocused={focusedTaskId === task.id}
                                 onToggle={handleToggle}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
@@ -635,9 +689,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 ) : (
                   // Flat view (all, list, label)
                   displayedTasks.filter(t => !t.completed).map((task, idx) => (
-                    <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                    <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
                       <TaskCardMemo
                         task={task}
+                        isFocused={focusedTaskId === task.id}
                         onToggle={handleToggle}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
@@ -665,9 +720,10 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                       </Button>
                     </div>
                     {completedTasks.map((task, idx) => (
-                      <LazyTaskCardWrapper key={task.id} id={task.id} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                      <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
                         <TaskCardMemo
                           task={task}
+                          isFocused={focusedTaskId === task.id}
                           onToggle={handleToggle}
                           onEdit={handleEdit}
                           onDelete={handleDelete}

@@ -15,7 +15,10 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
   // Store shortcuts in a ref to avoid re-attaching the listener on every render
   // when inline array literals are passed as props
   const shortcutsRef = useRef(shortcuts);
-  shortcutsRef.current = shortcuts;
+
+  useEffect(() => {
+    shortcutsRef.current = shortcuts;
+  }, [shortcuts]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
