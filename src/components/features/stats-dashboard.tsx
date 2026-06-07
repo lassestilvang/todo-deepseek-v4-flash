@@ -121,7 +121,7 @@ export const StatsDashboard = memo(function StatsDashboard({ counts }: StatsDash
         <div className="flex-1 h-px bg-border/50" />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
         <StatCard
           icon={CheckCircle2}
           label="Completed today"
@@ -159,6 +159,14 @@ export const StatsDashboard = memo(function StatsDashboard({ counts }: StatsDash
                 ? '1 day — keep going!'
                 : 'Complete a task to start'
           }
+        />
+        <StatCard
+          icon={Calendar}
+          label="Overdue"
+          value={counts.overdue}
+          gradient="bg-gradient-to-br from-red-500/20 to-red-500/5"
+          iconColor="text-red-500"
+          sublabel={counts.overdue > 0 ? 'Urgent attention needed' : 'All caught up!'}
         />
         <StatCard
           icon={Calendar}
