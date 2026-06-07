@@ -412,7 +412,11 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         
         setTasks(prev => prev.map(t => {
           if (selectedTaskIds.has(t.id)) {
-            return { ...t, ...data, updatedAt: new Date().toISOString() };
+            return { 
+              ...t, 
+              ...data, 
+              updatedAt: new Date().toISOString() 
+            } as TaskWithRelations;
           }
           return t;
         }));
