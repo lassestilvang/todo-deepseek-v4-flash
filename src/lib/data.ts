@@ -870,6 +870,7 @@ export function getTaskCounts(): {
   today: number;
   upcoming: number;
   next7Days: number;
+  overdue: number;
   byList: Record<string, number>;
   byLabel: Record<string, number>;
   completedToday: number;

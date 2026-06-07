@@ -164,8 +164,15 @@ export const CommandPalette = memo(function CommandPalette({ open, onClose }: Co
                       <div className={cn('h-2 w-2 rounded-full shrink-0',
                         task.completed ? 'bg-primary/40' : task.priority === 'high' ? 'bg-red-500' : task.priority === 'medium' ? 'bg-amber-500' : 'bg-muted-foreground/30')} />
                       <span className="flex-1 truncate">{task.name}</span>
-                      {task.list && <span className="text-[10px] text-muted-foreground/50 shrink-0">{task.list.icon}</span>}
-                      {task.date && <span className="text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">{task.date}</span>}
+                      <div className="flex gap-1.5 items-center">
+                        {task.labelObjects && task.labelObjects.map(l => (
+                          <span key={l.id} className="text-[9px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium flex items-center gap-0.5" title={l.name}>
+                            {l.icon}
+                          </span>
+                        ))}
+                        {task.list && <span className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded-md text-muted-foreground/60 shrink-0" title={task.list.name}>{task.list.icon}</span>}
+                        {task.date && <span className="text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">{task.date}</span>}
+                      </div>
                     </button>
                   );
                 })}
