@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Command } from 'lucide-react';
 
@@ -11,6 +11,7 @@ const CommandPalette = dynamic(() => import('@/components/features/command-palet
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [commandOpen, setCommandOpen] = useState(false);
   const [showHints, setShowHints] = useState(false);
   const showHintsRef = useRef(showHints);
@@ -21,21 +22,34 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if user is typing
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setCommandOpen(prev => !prev);
       }
-      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !(document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA')) {
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setShowHints(prev => !prev);
       }
       if (e.key === 'Escape' && showHintsRef.current) {
         setShowHints(false);
       }
+      
+      // Navigation
+      if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+        switch (e.key) {
+          case '1': router.push('/today'); break;
+          case '2': router.push('/next-7-days'); break;
+          case '3': router.push('/upcoming'); break;
+          case '4': router.push('/all'); break;
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []); // Empty deps — never re-attach, read from ref
+  }, [router]);
 
   return (
     <>
