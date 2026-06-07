@@ -897,9 +897,10 @@ export function getTaskCounts(): {
       COUNT(*) as total,
       SUM(CASE WHEN date = ? THEN 1 ELSE 0 END) as today,
       SUM(CASE WHEN date >= ? AND date IS NOT NULL THEN 1 ELSE 0 END) as upcoming,
-      SUM(CASE WHEN date >= ? AND date <= ? THEN 1 ELSE 0 END) as next7
+      SUM(CASE WHEN date >= ? AND date <= ? THEN 1 ELSE 0 END) as next7,
+      SUM(CASE WHEN date < ? AND completed = 0 THEN 1 ELSE 0 END) as overdue
     FROM tasks WHERE completed = 0
-  `).get(today, today, today, end7Str) as { total: number; today: number; upcoming: number; next7: number };
+  `).get(today, today, today, end7Str, today) as { total: number; today: number; upcoming: number; next7: number; overdue: number };
 
   // Completed today & this week
   const completedRow = prepare(db, `
@@ -954,6 +955,7 @@ export function getTaskCounts(): {
     today: countRow.today,
     upcoming: countRow.upcoming,
     next7Days: countRow.next7,
+    overdue: countRow.overdue,
     byList,
     byLabel,
     completedToday: completedRow.completed_today,
