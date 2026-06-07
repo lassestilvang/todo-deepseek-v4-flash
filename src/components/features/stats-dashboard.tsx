@@ -8,6 +8,7 @@ import {
   Calendar,
   BarChart3,
   Sparkles,
+  Timer,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TaskCounts } from '@/hooks/use-cache';
@@ -102,6 +103,41 @@ const WeeklyChart = memo(function WeeklyChart({
   );
 });
 
+const TimeTrackedChart = memo(function TimeTrackedChart({
+  data,
+}: {
+  data: Record<string, number>;
+}) {
+  const maxMinutes = Math.max(...Object.values(data), 1);
+  return (
+    <div className="rounded-xl border bg-card p-4 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 flex items-center justify-center">
+          <Timer className="h-4 w-4 text-purple-500" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold">Time Tracked per List</div>
+          <div className="text-[10px] text-muted-foreground/50">Total focus time (minutes)</div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {Object.entries(data).map(([listId, minutes]) => (
+          <div key={listId} className="flex items-center gap-3">
+            <span className="text-xs font-medium w-20 truncate">{listId.slice(0, 8)}</span>
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-purple-500/60 rounded-full" 
+                style={{ width: `${(minutes / maxMinutes) * 100}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-mono tabular-nums text-muted-foreground">{minutes}m</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 export const StatsDashboard = memo(function StatsDashboard({ counts }: StatsDashboardProps) {
   const completionRate =
     counts.completedThisWeek > 0 || counts.today > 0
@@ -179,6 +215,9 @@ export const StatsDashboard = memo(function StatsDashboard({ counts }: StatsDash
       </div>
 
       <WeeklyChart data={counts.weeklyCompletions} />
+      <div className="mt-3">
+        <TimeTrackedChart data={counts.timeByList} />
+      </div>
     </div>
   );
 });

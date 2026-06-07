@@ -877,6 +877,7 @@ export function getTaskCounts(): {
   completedThisWeek: number;
   streak: number;
   weeklyCompletions: { day: string; count: number }[];
+  timeByList: Record<string, number>;
 } {
   const db = getDb();
   const now = new Date();
@@ -951,6 +952,13 @@ export function getTaskCounts(): {
   const byLabel: Record<string, number> = {};
   for (const row of byLabelRows) byLabel[row.label_id] = row.c;
 
+  const timeByListRows = prepare(db, 'SELECT list_id, actual_time FROM tasks').all() as { list_id: string; actual_time: string | null }[];
+  const timeByList: Record<string, number> = {};
+  for (const row of timeByListRows) {
+    if (!timeByList[row.list_id]) timeByList[row.list_id] = 0;
+    timeByList[row.list_id] += parseEstimateToMinutes(row.actual_time);
+  }
+
   return {
     total: countRow.total,
     today: countRow.today,
@@ -959,6 +967,7 @@ export function getTaskCounts(): {
     overdue: countRow.overdue,
     byList,
     byLabel,
+    timeByList,
     completedToday: completedRow.completed_today,
     completedThisWeek: completedRow.completed_week,
     streak,
