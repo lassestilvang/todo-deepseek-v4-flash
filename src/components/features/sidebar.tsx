@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
+import { useToast } from '@/components/toast-provider';
 import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
 import { FocusTimer } from './focus-timer';
 import type { TaskWithRelations } from '@/types';
@@ -98,6 +99,8 @@ export function Sidebar() {
   const { lists } = useListCache();
   const { labels } = useLabelCache();
   const { counts } = useTaskCounts();
+  const { toast } = useToast();
+  const importRef = useRef<HTMLInputElement>(null);
   const [showNewList, setShowNewList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [editingList, setEditingList] = useState<string | null>(null);
@@ -566,6 +569,49 @@ export function Sidebar() {
               <Download className="h-3.5 w-3.5" />
               <span>Export Data</span>
             </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => importRef.current?.click()}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-150 w-full"
+            >
+              <Download className="h-3.5 w-3.5 rotate-180" />
+              <span>Import Data</span>
+            </button>
+            <input
+              ref={importRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const text = await file.text();
+                  const data = JSON.parse(text);
+                  const res = await fetch('/api/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json();
+                    toast(err.error || 'Import failed', 'error');
+                    return;
+                  }
+                  const result = await res.json();
+                  toast(`Imported ${result.imported.tasks} tasks, ${result.imported.lists} lists, ${result.imported.labels} labels`, 'success');
+                  invalidateCache('lists');
+                  invalidateCache('labels');
+                  invalidateCache('task-counts');
+                  window.location.reload();
+                } catch (e) {
+                  toast('Invalid file format', 'error');
+                  console.error('Import failed', e);
+                }
+                e.target.value = '';
+              }}
+            />
           </div>
         </div>
       </aside>
