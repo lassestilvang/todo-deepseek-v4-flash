@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { TaskCard } from './task-card';
 import { Confetti } from './confetti';
 import { LazyTaskCardWrapper } from './lazy-task-card-wrapper';
+import { SwipeableTaskCard } from './swipeable-task-card';
 import { EmptyState } from './empty-state';
 import type { EmptyStateType } from './empty-state';
 import { StatsDashboard } from './stats-dashboard';
@@ -718,15 +719,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         <div className="space-y-2">
                           {groupedTasks.overdue.map((task, idx) => (
                             <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
-                              <TaskCardMemo
-                                task={task}
-                                isFocused={focusedTaskId === task.id}
-                                isSelected={selectedTaskIds.has(task.id)}
-                                onToggle={handleToggle}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onSelect={handleSelect}
-                              />
+                              <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
+                                <TaskCardMemo
+                                  task={task}
+                                  isFocused={focusedTaskId === task.id}
+                                  isSelected={selectedTaskIds.has(task.id)}
+                                  onToggle={handleToggle}
+                                  onEdit={handleEdit}
+                                  onDelete={handleDelete}
+                                  onSelect={handleSelect}
+                                />
+                              </SwipeableTaskCard>
                             </LazyTaskCardWrapper>
                           ))}
                         </div>
@@ -743,15 +746,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         <div className="space-y-2">
                           {dateTasks.map((task, idx) => (
                             <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
-                              <TaskCardMemo
-                                task={task}
-                                isFocused={focusedTaskId === task.id}
-                                isSelected={selectedTaskIds.has(task.id)}
-                                onToggle={handleToggle}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onSelect={handleSelect}
-                              />
+                              <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
+                                <TaskCardMemo
+                                  task={task}
+                                  isFocused={focusedTaskId === task.id}
+                                  isSelected={selectedTaskIds.has(task.id)}
+                                  onToggle={handleToggle}
+                                  onEdit={handleEdit}
+                                  onDelete={handleDelete}
+                                  onSelect={handleSelect}
+                                />
+                              </SwipeableTaskCard>
                             </LazyTaskCardWrapper>
                           ))}
                         </div>
@@ -762,15 +767,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                   // Flat view (all, list, label)
                   displayedTasks.filter(t => !t.completed).map((task, idx) => (
                     <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
-                    <TaskCardMemo
-                      task={task}
-                      isFocused={focusedTaskId === task.id}
-                      isSelected={selectedTaskIds.has(task.id)}
-                      onToggle={handleToggle}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onSelect={handleSelect}
-                    />
+                    <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
+                      <TaskCardMemo
+                        task={task}
+                        isFocused={focusedTaskId === task.id}
+                        isSelected={selectedTaskIds.has(task.id)}
+                        onToggle={handleToggle}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onSelect={handleSelect}
+                      />
+                    </SwipeableTaskCard>
                     </LazyTaskCardWrapper>
                   ))
                 )}
@@ -795,15 +802,17 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                     </div>
                     {completedTasks.map((task, idx) => (
                       <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
-                        <TaskCardMemo
-                          task={task}
-                          isFocused={focusedTaskId === task.id}
-                          isSelected={selectedTaskIds.has(task.id)}
-                          onToggle={handleToggle}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          onSelect={handleSelect}
-                        />
+                        <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
+                          <TaskCardMemo
+                            task={task}
+                            isFocused={focusedTaskId === task.id}
+                            isSelected={selectedTaskIds.has(task.id)}
+                            onToggle={handleToggle}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onSelect={handleSelect}
+                          />
+                        </SwipeableTaskCard>
                       </LazyTaskCardWrapper>
                     ))}
                   </>
