@@ -10,7 +10,6 @@ function json(data: unknown, init?: ResponseInit) {
 
 export async function GET() {
   const db = getDb();
-  const now = new Date().toISOString();
   const fiveMinLater = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
   const reminders = db.prepare(`

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn, isToday, formatRelativeDate } from '@/lib/utils';
 import { useToast } from '@/components/toast-provider';
@@ -33,7 +33,6 @@ export function CalendarView() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
-  const [loading, setLoading] = useState(true);
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -43,20 +42,14 @@ export function CalendarView() {
     return dateString(year, month, lastDay);
   }, [year, month]);
 
-  const fetchTasks = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/tasks/calendar?start=${monthStart}&end=${monthEnd}`);
-      const data = await res.json();
-      setTasks(data);
-    } catch (e) {
-      console.error('Failed to fetch calendar tasks', e);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/tasks/calendar?start=${monthStart}&end=${monthEnd}`)
+      .then(res => res.json())
+      .then(data => { if (!cancelled) setTasks(data); })
+      .catch(e => { if (!cancelled) console.error('Failed to fetch calendar tasks', e); });
+    return () => { cancelled = true; };
   }, [monthStart, monthEnd]);
-
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const tasksByDate = useMemo(() => {
     const map: Record<string, TaskWithRelations[]> = {};

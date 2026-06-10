@@ -1,3 +1,5 @@
+'use client';
+
 import { WifiOff, RefreshCw } from 'lucide-react';
 
 export default function OfflinePage() {
@@ -12,7 +14,7 @@ export default function OfflinePage() {
       </p>
       <button
         onClick={() => window.location.reload()}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-95 transition-all"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/20 active:scale-95 transition-all"
       >
         <RefreshCw className="h-4 w-4" />
         Try Again
