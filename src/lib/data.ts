@@ -727,9 +727,37 @@ function createNextRecurrence(db: Database.Database, row: Record<string, any>, r
       nextDate.setMonth(nextDate.getMonth() + (recurrence.interval || 1));
       break;
     }
-    case 'yearly': {
+    case 'custom': {
+      // Logic for custom recurrence will be handled in the frontend for now,
+      // creating the next instance based on interval and daysOfWeek/dayOfMonth/monthOfYear if available
+      // For simplicity here, we'll just advance by interval if set, otherwise daily
       nextDate = new Date(currentDate);
-      nextDate.setFullYear(nextDate.getFullYear() + (recurrence.interval || 1));
+      if (recurrence.interval) {
+        if (recurrence.daysOfWeek) { // Weekly custom
+          let daysToAdd = recurrence.interval * 7;
+          let currentDay = nextDate.getDay();
+          // Find the next matching day of week
+          while(!recurrence.daysOfWeek.includes(currentDay) || daysToAdd === 0) {
+            nextDate.setDate(nextDate.getDate() + 1);
+            daysToAdd--;
+            currentDay = nextDate.getDay();
+            if (daysToAdd < -7) { // Prevent infinite loops
+                break;
+            }
+          }
+        } else if (recurrence.dayOfMonth) { // Monthly custom
+          nextDate.setMonth(nextDate.getMonth() + recurrence.interval);
+          nextDate.setDate(recurrence.dayOfMonth);
+        } else if (recurrence.monthOfYear) { // Yearly custom
+          nextDate.setFullYear(nextDate.getFullYear() + recurrence.interval);
+          nextDate.setMonth(recurrence.monthOfYear - 1);
+          if (recurrence.dayOfMonth) nextDate.setDate(recurrence.dayOfMonth);
+        } else { // Default to daily interval if no specific custom type
+          nextDate.setDate(nextDate.getDate() + recurrence.interval);
+        }
+      } else {
+        nextDate.setDate(nextDate.getDate() + 1); // Fallback to daily
+      }
       break;
     }
   }
@@ -758,7 +786,7 @@ function createNextRecurrence(db: Database.Database, row: Record<string, any>, r
     row.estimate,
     row.priority,
     row.list_id,
-    row.recurrence,
+    JSON.stringify(recurrence), // Store full recurrence object
     now,
     now
   );
@@ -878,6 +906,7 @@ export function getTaskCounts(): {
   streak: number;
   weeklyCompletions: { day: string; count: number }[];
   timeByList: Record<string, number>;
+  focusScore: number;
 } {
   const db = getDb();
   const now = new Date();
@@ -959,6 +988,9 @@ export function getTaskCounts(): {
     timeByList[row.list_id] += parseEstimateToMinutes(row.actual_time);
   }
 
+  const totalFocusMinutes = Object.values(timeByList).reduce((a, b) => a + b, 0);
+  const focusScore = (completedRow.completed_today * 10) + (totalFocusMinutes * 1) + (streak * 5);
+
   return {
     total: countRow.total,
     today: countRow.today,
@@ -968,6 +1000,7 @@ export function getTaskCounts(): {
     byList,
     byLabel,
     timeByList,
+    focusScore,
     completedToday: completedRow.completed_today,
     completedThisWeek: completedRow.completed_week,
     streak,
