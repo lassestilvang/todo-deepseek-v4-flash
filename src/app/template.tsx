@@ -44,6 +44,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
           case '2': router.push('/next-7-days'); break;
           case '3': router.push('/upcoming'); break;
           case '4': router.push('/all'); break;
+          case '5': router.push('/calendar'); break;
         }
       }
     };
@@ -111,6 +112,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
                     { keys: '2', desc: 'Next 7 Days' },
                     { keys: '3', desc: 'Upcoming' },
                     { keys: '4', desc: 'All Tasks' },
+                    { keys: '5', desc: 'Calendar' },
                   ].map(({ keys, desc }) => (
                     <div key={keys} className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground/70">{desc}</span>

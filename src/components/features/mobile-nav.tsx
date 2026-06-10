@@ -12,6 +12,7 @@ import {
   LayoutList,
   Tag,
   Plus,
+  CalendarDays,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ const items = [
     icon: CalendarRange,
     href: "/next-7-days",
   },
+  { id: "calendar", label: "Calendar", icon: CalendarDays, href: "/calendar" },
   { id: "upcoming", label: "Upcoming", icon: Layers, href: "/upcoming" },
   { id: "all", label: "All", icon: ListTodo, href: "/all" },
 ];
@@ -92,9 +94,11 @@ export function MobileNav() {
                 ? counts.today
                 : item.id === "next-7-days"
                   ? counts.next7Days
-                  : item.id === "upcoming"
+                  : item.id === "calendar"
                     ? counts.upcoming
-                    : counts.total;
+                    : item.id === "upcoming"
+                      ? counts.upcoming
+                      : counts.total;
             return (
               <Link
                 key={item.id}

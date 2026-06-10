@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { id: '/today', label: 'Go to Today', icon: Calendar, keywords: 'today home' },
   { id: '/next-7-days', label: 'Go to Next 7 Days', icon: Calendar, keywords: '7 days week' },
   { id: '/upcoming', label: 'Go to Upcoming', icon: ListTodo, keywords: 'upcoming future' },
+  { id: '/calendar', label: 'Go to Calendar', icon: Calendar, keywords: 'calendar month' },
   { id: '/all', label: 'Go to All Tasks', icon: ListTodo, keywords: 'all tasks every' },
 ];
 

@@ -21,6 +21,7 @@ import {
   Tag,
   Timer as TimerIcon,
   Download,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ const views = [
   { id: 'today', label: 'Today', icon: Calendar, href: '/today' },
   { id: 'next-7-days', label: 'Next 7 Days', icon: CalendarRange, href: '/next-7-days' },
   { id: 'upcoming', label: 'Upcoming', icon: Layers, href: '/upcoming' },
+  { id: 'calendar', label: 'Calendar', icon: CalendarDays, href: '/calendar' },
   { id: 'all', label: 'All Tasks', icon: ListTodo, href: '/all' },
 ];
 
@@ -48,6 +50,7 @@ const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname
         const count = view.id === 'today' ? counts.today
           : view.id === 'next-7-days' ? counts.next7Days
           : view.id === 'upcoming' ? counts.upcoming
+          : view.id === 'calendar' ? counts.upcoming
           : view.id === 'all' ? counts.total : 0;
         return (
           <Link
@@ -67,7 +70,7 @@ const SidebarViews = memo(function SidebarViews({ pathname, counts }: { pathname
             <span className="flex-1">{view.label}</span>
             {!active && (
               <kbd className="text-[9px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground/40 font-mono tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
-                {view.id === 'today' ? '1' : view.id === 'next-7-days' ? '2' : view.id === 'upcoming' ? '3' : '4'}
+                {view.id === 'today' ? '1' : view.id === 'next-7-days' ? '2' : view.id === 'upcoming' ? '3' : view.id === 'calendar' ? '5' : '4'}
               </kbd>
             )}
             {count > 0 && (
@@ -134,6 +137,7 @@ export function Sidebar() {
         if (e.key === '2' && pathname !== '/next-7-days') { router.push('/next-7-days'); }
         if (e.key === '3' && pathname !== '/upcoming') { router.push('/upcoming'); }
         if (e.key === '4' && pathname !== '/all') { router.push('/all'); }
+        if (e.key === '5' && pathname !== '/calendar') { router.push('/calendar'); }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
