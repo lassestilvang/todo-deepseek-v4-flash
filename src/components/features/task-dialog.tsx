@@ -56,6 +56,10 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const [priority, setPriority] = useState(task?.priority || 'none');
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrence?.type || 'none');
   const [recurrenceInterval, setRecurrenceInterval] = useState(task?.recurrence?.interval || 1);
+  const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>(task?.recurrence?.daysOfWeek || []);
+  const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number | undefined>(task?.recurrence?.dayOfMonth);
+  const [recurrenceMonthOfYear, setRecurrenceMonthOfYear] = useState<number | undefined>(task?.recurrence?.monthOfYear);
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<string | undefined>(task?.recurrence?.endDate);
   const [listId, setListId] = useState(task?.listId || 'inbox');
   const [subtasks, setSubtasks] = useState<Subtask[]>(task?.subtasks || []);
   const [reminders, setReminders] = useState<Omit<Reminder, 'taskId' | 'sent'>[]>(task?.reminders || []);
@@ -95,7 +99,14 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
     if (!name.trim()) return;
     setSaving(true);
 
-    const recurrence: Recurrence | null = recurrenceType === 'none' ? null : { type: recurrenceType, interval: recurrenceInterval };
+    const recurrence: Recurrence | null = recurrenceType === 'none' ? null : { 
+      type: recurrenceType, 
+      interval: recurrenceInterval,
+      daysOfWeek: recurrenceDaysOfWeek.length > 0 ? recurrenceDaysOfWeek : undefined,
+      dayOfMonth: recurrenceDayOfMonth,
+      monthOfYear: recurrenceMonthOfYear,
+      endDate: recurrenceEndDate,
+    };
 
     const body: {
       name: string;
@@ -520,26 +531,108 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                   <div className="space-y-3">
                     <select
                       value={recurrenceType}
-                      onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+                      onChange={(e) => {
+                        setRecurrenceType(e.target.value as RecurrenceType);
+                        // Reset custom fields when type changes
+                        setRecurrenceDaysOfWeek([]);
+                        setRecurrenceDayOfMonth(undefined);
+                        setRecurrenceMonthOfYear(undefined);
+                      }}
                       className="w-full h-8 rounded-xl border border-input bg-muted/20 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all capitalize"
                     >
-                      {(['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly'] as const).map(t => (
+                      {(['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly', 'custom'] as const).map(t => (
                         <option key={t} value={t}>{t === 'none' ? 'No repeat' : t}</option>
                       ))}
                     </select>
-                    {recurrenceType !== 'none' && recurrenceType !== 'weekdays' && (
-                      <div className="flex items-center gap-2 px-1 animate-fade-in">
-                        <span className="text-[10px] text-muted-foreground/60">Every</span>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={recurrenceInterval}
-                          onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                          className="h-7 w-12 text-xs rounded-lg text-center bg-muted/20 border-none"
-                        />
-                        <span className="text-[10px] text-muted-foreground/60 capitalize">
-                          {recurrenceType === 'daily' ? 'days' : recurrenceType === 'weekly' ? 'weeks' : recurrenceType === 'monthly' ? 'months' : 'years'}
-                        </span>
+                    {recurrenceType !== 'none' && (
+                      <div className="space-y-3 animate-fade-in">
+                        {recurrenceType !== 'weekdays' && (
+                          <div className="flex items-center gap-2 px-1">
+                            <span className="text-[10px] text-muted-foreground/60">Every</span>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={recurrenceInterval}
+                              onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                              className="h-7 w-12 text-xs rounded-lg text-center bg-muted/20 border-none"
+                            />
+                            <span className="text-[10px] text-muted-foreground/60 capitalize">
+                              {recurrenceType === 'daily' ? 'days' : recurrenceType === 'weekly' ? 'weeks' : recurrenceType === 'monthly' ? 'months' : recurrenceType === 'yearly' ? 'years' : 'intervals'}
+                            </span>
+                          </div>
+                        )}
+
+                        {recurrenceType === 'weekly' || recurrenceType === 'custom' ? (
+                          <div className="space-y-1">
+                            <ULabel className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Days of week</ULabel>
+                            <div className="flex flex-wrap gap-1 px-1">
+                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                                <Button
+                                  key={day}
+                                  variant={recurrenceDaysOfWeek.includes(idx) ? 'secondary' : 'outline'}
+                                  size="xs"
+                                  className={cn("h-7 w-9 rounded-lg text-xs", recurrenceDaysOfWeek.includes(idx) && "shadow-sm")}
+                                  onClick={() => {
+                                    setRecurrenceDaysOfWeek(prev => 
+                                      prev.includes(idx) ? prev.filter(d => d !== idx) : [...prev, idx].sort()
+                                    );
+                                    setRecurrenceType('custom'); // Switch to custom if days selected
+                                  }}
+                                >
+                                  {day}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {recurrenceType === 'monthly' || recurrenceType === 'custom' ? (
+                          <div className="space-y-1">
+                            <ULabel className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Day of month</ULabel>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={31}
+                              value={recurrenceDayOfMonth || ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setRecurrenceDayOfMonth(val > 0 && val <= 31 ? val : undefined);
+                                setRecurrenceType('custom'); // Switch to custom
+                              }}
+                              placeholder="e.g. 15"
+                              className="h-7 w-24 text-xs rounded-lg bg-muted/20 border-none px-2"
+                            />
+                          </div>
+                        ) : null}
+
+                        {recurrenceType === 'yearly' || recurrenceType === 'custom' ? (
+                          <div className="space-y-1">
+                            <ULabel className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Month of year</ULabel>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={12}
+                              value={recurrenceMonthOfYear || ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setRecurrenceMonthOfYear(val > 0 && val <= 12 ? val : undefined);
+                                setRecurrenceType('custom'); // Switch to custom
+                              }}
+                              placeholder="e.g. 6 (June)"
+                              className="h-7 w-24 text-xs rounded-lg bg-muted/20 border-none px-2"
+                            />
+                          </div>
+                        ) : null}
+
+                        <div className="space-y-1">
+                          <ULabel className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Ends on</ULabel>
+                          <input
+                            type="date"
+                            value={recurrenceEndDate || ''}
+                            onChange={(e) => setRecurrenceEndDate(e.target.value || undefined)}
+                            className="w-full h-8 rounded-xl border border-input bg-muted/20 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
