@@ -14,11 +14,11 @@ export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'weekdays' | 'monthly
 
 export interface Recurrence {
   type: RecurrenceType;
-  interval?: number;
-  daysOfWeek?: number[];
-  dayOfMonth?: number;
-  monthOfYear?: number;
-  endDate?: string;
+  interval?: number; // e.g., every 2 days, every 3 weeks
+  daysOfWeek?: number[]; // [0, 1, 2] for Sun, Mon, Tue
+  dayOfMonth?: number; // 1-31
+  monthOfYear?: number; // 1-12
+  endDate?: string; // ISO date string
 }
 
 export interface Subtask {
