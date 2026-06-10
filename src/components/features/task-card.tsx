@@ -15,6 +15,7 @@ import {
   Repeat,
   Check,
   GripVertical,
+  GripHorizontal,
   Pin,
   PinOff,
 } from 'lucide-react';
@@ -175,6 +176,13 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
       <div className="p-3 sm:p-4">
         <div className="flex items-start gap-3 relative">
           <div className="flex flex-col items-center gap-2.5 mt-0.5 shrink-0">
+            {/* Drag handle */}
+            <div
+              className="h-5 w-5 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-grab active:cursor-grabbing text-muted-foreground/20 hover:text-muted-foreground/50 group/drag"
+              title="Drag to reorder"
+            >
+              <GripHorizontal className="h-4 w-4" />
+            </div>
             <button
               onClick={(e) => {
                 if (!task.completed) {
