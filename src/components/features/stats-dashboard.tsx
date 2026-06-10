@@ -138,6 +138,73 @@ const TimeTrackedChart = memo(function TimeTrackedChart({
   );
 });
 
+const FocusScoreGauge = memo(function FocusScoreGauge({ score }: { score: number }) {
+  // Goal could be dynamic, let's say 100 for now
+  const goal = 100;
+  const percentage = Math.min((score / goal) * 100, 100);
+  const circumference = 2 * Math.PI * 36;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="rounded-xl border bg-card p-4 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 flex items-center gap-6">
+      <div className="relative h-24 w-24 shrink-0">
+        {/* SVG Gauge */}
+        <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 96 96">
+          <circle
+            cx="48"
+            cy="48"
+            r="36"
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="transparent"
+            className="text-muted/20"
+          />
+          <circle
+            cx="48"
+            cy="48"
+            r="36"
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            className="text-primary transition-all duration-1000 ease-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center rotate-90">
+          <span className="text-2xl font-black text-foreground tabular-nums">{score}</span>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 leading-none">Pts</span>
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          <h4 className="text-sm font-bold">Daily Focus Score</h4>
+        </div>
+        <p className="text-xs text-muted-foreground/70 leading-relaxed mb-3">
+          {percentage >= 100 
+            ? "Elite performance! You've crushed your daily goal." 
+            : percentage >= 50 
+              ? "Great momentum. Keep pushing to reach your target!" 
+              : "Every point counts. Complete a task to level up."}
+        </p>
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40">
+          <span>{percentage.toFixed(0)}% of goal</span>
+          <span>Target: {goal}</span>
+        </div>
+        <div className="w-full h-1 bg-muted rounded-full mt-1.5 overflow-hidden">
+          <div 
+            className="h-full bg-primary transition-all duration-1000 ease-out" 
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export const StatsDashboard = memo(function StatsDashboard({ counts }: StatsDashboardProps) {
   const completionRate =
     counts.completedThisWeek > 0 || counts.today > 0
