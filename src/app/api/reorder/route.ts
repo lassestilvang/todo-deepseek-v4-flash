@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest) {
   try { body = await request.json(); }
   catch { return json({ error: 'Invalid JSON body' }, { status: 400 }); }
 
-  if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
+  if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0 || !body.ids.every((id: unknown) => typeof id === 'string' && id.length > 0)) {
     return json({ error: 'Task IDs array is required' }, { status: 400 });
   }
 
