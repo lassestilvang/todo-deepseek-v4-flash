@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ToastProvider } from '@/components/toast-provider';
 import { NavigationProgress } from '@/components/navigation-progress';
 import { NotificationProvider } from '@/components/notification-provider';
+import { OnlineStatus } from '@/components/online-status';
 import { Sidebar } from '@/components/features/sidebar';
 import { MobileNav } from '@/components/features/mobile-nav';
 
@@ -58,6 +59,8 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#fbf8f4" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#1a1612" media="(prefers-color-scheme: dark)" />
+        <meta name="application-name" content="Planner" />
+        <meta name="apple-mobile-web-app-title" content="Planner" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -86,6 +89,7 @@ export default function RootLayout({
           <ToastProvider>
             <NotificationProvider>
             <NavigationProgress />
+            <OnlineStatus />
             <a
               href="#main-content"
               className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[300] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-sm focus:font-medium focus:shadow-lg"
