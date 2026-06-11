@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, startTransition, useDeferredValue, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Eye, EyeOff, Zap, CalendarDays, RefreshCw, ArrowUp, ArrowDown, CheckCircle2, Trash2, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,7 +58,9 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const { lists: allLists } = useListCache();
   const [tasks, setTasks] = useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCompleted, setShowCompleted] = useState(true);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [showCompleted, setShowCompleted] = useState(() => searchParams?.get('completed') !== 'hidden');
   const [sortField, setSortField] = useState<'priority' | 'date' | 'name' | 'created'>('priority');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -728,7 +730,14 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
               variant="outline"
               size="sm"
               className="h-8 text-xs rounded-xl"
-              onClick={() => setShowCompleted(!showCompleted)}
+              onClick={() => {
+                const newVal = !showCompleted;
+                setShowCompleted(newVal);
+                const url = new URL(window.location.href);
+                if (newVal) url.searchParams.delete('completed');
+                else url.searchParams.set('completed', 'hidden');
+                router.replace(url.pathname + url.search, { scroll: false });
+              }}
             >
               {showCompleted ? (
                 <EyeOff className="h-3.5 w-3.5 mr-1" />
