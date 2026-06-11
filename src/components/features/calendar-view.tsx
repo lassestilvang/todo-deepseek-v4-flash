@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn, isToday, formatRelativeDate, formatEstimate, parseEstimateToMinutes } from '@/lib/utils';
+import { cn, isToday, formatRelativeDate } from '@/lib/utils';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
 import type { TaskWithRelations } from '@/types';

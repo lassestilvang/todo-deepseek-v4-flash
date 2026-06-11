@@ -423,6 +423,13 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
     try {
       if (action === 'delete') {
+        // Store deleted tasks for undo
+        const currentTasks = tasksRef.current;
+        for (const id of ids) {
+          const task = currentTasks.find(t => t.id === id);
+          if (task) deletedTasksRef.current.set(id, task);
+        }
+
         const res = await fetch('/api/batch', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
@@ -430,7 +437,45 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         });
         if (!res.ok) throw new Error('Failed to delete');
         setTasks(prev => prev.filter(t => !selectedTaskIds.has(t.id)));
-        toast(`${ids.length} tasks deleted`, 'success');
+        toast(`${ids.length} tasks deleted`, 'success', {
+          label: 'Undo',
+          onClick: async () => {
+            const restored: TaskWithRelations[] = [];
+            for (const id of ids) {
+              const prev = deletedTasksRef.current.get(id);
+              if (prev) {
+                deletedTasksRef.current.delete(id);
+                try {
+                  const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: prev.name,
+                      description: prev.description,
+                      date: prev.date,
+                      deadline: prev.deadline,
+                      estimate: prev.estimate,
+                      priority: prev.priority,
+                      listId: prev.listId,
+                      labels: prev.labels,
+                      subtasks: prev.subtasks.map(s => ({ id: s.id, title: s.title, completed: s.completed })),
+                      reminders: prev.reminders.map(r => ({ id: r.id, time: r.time, type: r.type })),
+                      recurrence: prev.recurrence,
+                    }),
+                  });
+                  if (res.ok) {
+                    restored.push(await res.json());
+                  }
+                } catch { /* skip failed restores */ }
+              }
+            }
+            if (restored.length > 0) {
+              startTransition(() => setTasks(p => [...restored, ...p]));
+              invalidateCache('task-counts');
+              toast(`${restored.length} task${restored.length > 1 ? 's' : ''} restored`, 'success');
+            }
+          },
+        });
       } else {
         const data: Partial<{ completed: boolean; listId: string; priority: Priority }> = {};
         if (action === 'complete') data.completed = true;
