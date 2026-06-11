@@ -141,7 +141,7 @@ function getBatchTaskLabelIds(db: Database.Database, taskIds: string[]): Record<
   return result;
 }
 
-const BATCH_SUBTASK_SQL = (placeholders: string) => `SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY created_at ASC`;
+const BATCH_SUBTASK_SQL = (placeholders: string) => `SELECT * FROM subtasks WHERE task_id IN (${placeholders}) ORDER BY position ASC, created_at ASC`;
 
 function getBatchSubtasks(db: Database.Database, taskIds: string[]): Record<string, Subtask[]> {
   if (taskIds.length === 0) return {};
@@ -156,6 +156,7 @@ function getBatchSubtasks(db: Database.Database, taskIds: string[]): Record<stri
       taskId: row.task_id,
       title: row.title,
       completed: !!row.completed,
+      position: row.position ?? 0,
       createdAt: row.created_at,
     });
   }
@@ -248,11 +249,12 @@ function getTaskLabelIds(db: Database.Database, taskId: string): string[] {
 }
 
 function getSubtasks(db: Database.Database, taskId: string): Subtask[] {
-  return (prepare(db, 'SELECT * FROM subtasks WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as any[]).map((row: any) => ({
+  return (prepare(db, 'SELECT * FROM subtasks WHERE task_id = ? ORDER BY position ASC, created_at ASC').all(taskId) as any[]).map((row: any) => ({
     id: row.id,
     taskId: row.task_id,
     title: row.title,
     completed: !!row.completed,
+    position: row.position ?? 0,
     createdAt: row.created_at,
   }));
 }
@@ -442,9 +444,10 @@ export function createTask(data: {
 
     // Add subtasks
     if (data.subtasks) {
-      const insertSubtask = prepare(db, 'INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
-      for (const st of data.subtasks) {
-        insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, now);
+      const insertSubtask = prepare(db, 'INSERT INTO subtasks (id, task_id, title, completed, position, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+      for (let i = 0; i < data.subtasks.length; i++) {
+        const st = data.subtasks[i];
+        insertSubtask.run(st.id, id, st.title, st.completed ? 1 : 0, i, now);
       }
     }
 
@@ -555,12 +558,13 @@ export function updateTask(id: string, data: Partial<{
       }
 
       const upsert = prepare(db, `
-        INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET title = excluded.title, completed = excluded.completed
+        INSERT INTO subtasks (id, task_id, title, completed, position, created_at) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET title = excluded.title, completed = excluded.completed, position = excluded.position
       `);
-      for (const st of data.subtasks) {
+      for (let i = 0; i < data.subtasks.length; i++) {
+        const st = data.subtasks[i];
         const origCreatedAt = existingMap.get(st.id);
-        upsert.run(st.id, id, st.title, st.completed ? 1 : 0, origCreatedAt || now);
+        upsert.run(st.id, id, st.title, st.completed ? 1 : 0, i, origCreatedAt || now);
       }
     }
 
@@ -810,18 +814,9 @@ function createNextRecurrence(db: Database.Database, row: Record<string, any>, r
 export function reorderSubtasks(taskId: string, subtaskIds: string[]): void {
   const db = getDb();
   const reorder = db.transaction(() => {
-    const deleteAll = prepare(db, 'DELETE FROM subtasks WHERE task_id = ?');
-    const existingRows = prepare(db, 'SELECT id, title, completed, created_at FROM subtasks WHERE task_id = ?').all(taskId) as { id: string; title: string; completed: number; created_at: string }[];
-    const existingMap = new Map(existingRows.map(r => [r.id, r]));
-    const insert = prepare(db, 'INSERT INTO subtasks (id, task_id, title, completed, created_at) VALUES (?, ?, ?, ?, ?)');
-    
-    // Delete all and re-insert in new order
-    deleteAll.run(taskId);
+    const updatePosition = prepare(db, 'UPDATE subtasks SET position = ? WHERE id = ? AND task_id = ?');
     for (let i = 0; i < subtaskIds.length; i++) {
-      const existing = existingMap.get(subtaskIds[i]);
-      if (existing) {
-        insert.run(existing.id, taskId, existing.title, existing.completed, existing.created_at);
-      }
+      updatePosition.run(i, subtaskIds[i], taskId);
     }
   });
   reorder();
@@ -830,9 +825,10 @@ export function addSubtask(taskId: string, title: string): Subtask {
   const db = getDb();
   const id = generateId();
   const now = new Date().toISOString();
-  prepare(db, 'INSERT INTO subtasks (id, task_id, title, created_at) VALUES (?, ?, ?, ?)').run(id, taskId, title, now);
+  const maxPosition = (prepare(db, 'SELECT COALESCE(MAX(position), -1) as max_pos FROM subtasks WHERE task_id = ?').get(taskId) as { max_pos: number }).max_pos;
+  prepare(db, 'INSERT INTO subtasks (id, task_id, title, position, created_at) VALUES (?, ?, ?, ?, ?)').run(id, taskId, title, maxPosition + 1, now);
   logActivity(db, taskId, 'add', 'subtask', '', title);
-  return { id, taskId, title, completed: false, createdAt: now };
+  return { id, taskId, title, completed: false, position: maxPosition + 1, createdAt: now };
 }
 
 export function toggleSubtask(id: string): Subtask | undefined {
@@ -847,6 +843,7 @@ export function toggleSubtask(id: string): Subtask | undefined {
     taskId: row.task_id,
     title: row.title,
     completed: !!newCompleted,
+    position: row.position ?? 0,
     createdAt: row.created_at,
   };
 }

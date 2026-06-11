@@ -26,6 +26,7 @@ export interface Subtask {
   taskId: string;
   title: string;
   completed: boolean;
+  position: number;
   createdAt: string;
 }
 

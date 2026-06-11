@@ -120,9 +120,11 @@ function initializeSchema(db: Database.Database) {
       db.exec(`ALTER TABLE tasks ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`);
     }
 
-
-
-
+    // Add position column to subtasks for drag-and-drop ordering (migration-safe)
+    const hasSubtaskPosition = db.prepare("SELECT name FROM pragma_table_info('subtasks') WHERE name = 'position'").get();
+    if (!hasSubtaskPosition) {
+      db.exec(`ALTER TABLE subtasks ADD COLUMN position INTEGER NOT NULL DEFAULT 0`);
+    }
 
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_tasks_date ON tasks(date);
@@ -131,9 +133,14 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
     CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at);
     CREATE INDEX IF NOT EXISTS idx_subtasks_task_id ON subtasks(task_id);
+    CREATE INDEX IF NOT EXISTS idx_subtasks_completed ON subtasks(completed);
     CREATE INDEX IF NOT EXISTS idx_task_labels_task_id ON task_labels(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_labels_label_id ON task_labels(label_id);
+    CREATE INDEX IF NOT EXISTS idx_activity_logs_task_id ON activity_logs(task_id);
+    CREATE INDEX IF NOT EXISTS idx_reminders_task_id ON reminders(task_id);
+    CREATE INDEX IF NOT EXISTS idx_reminders_time_sent ON reminders(time, sent);
     CREATE INDEX IF NOT EXISTS idx_tasks_completed_date ON tasks(completed, date);
+    CREATE INDEX IF NOT EXISTS idx_tasks_list_completed ON tasks(list_id, completed, date);
     CREATE INDEX IF NOT EXISTS idx_tasks_completed_priority_date ON tasks(completed, priority, date, created_at);
   `);
 
