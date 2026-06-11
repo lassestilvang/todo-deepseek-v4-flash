@@ -45,9 +45,10 @@ interface TaskCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onSelect?: (id: string, selected: boolean) => void;
+  onUpdate?: (task: TaskWithRelations) => void;
 }
 
-export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, onToggle, onEdit, onDelete, onSelect }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, onToggle, onEdit, onDelete, onSelect, onUpdate }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [togglingSubtask, setTogglingSubtask] = useState<string | null>(null);
@@ -101,14 +102,16 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
         body: JSON.stringify({ id: task.id, name: newName }),
       });
       if (!res.ok) throw new Error('Failed to update');
+      const updated = await res.json();
       invalidateCache('task-counts');
+      onUpdate?.(updated);
       toast('Task renamed', 'success');
     } catch (e) {
       toast('Failed to rename task', 'error');
       console.error('Inline rename failed', e);
     }
     setEditingName(false);
-  }, [editNameValue, task.id, task.name, toast]);
+  }, [editNameValue, task.id, task.name, toast, onUpdate]);
 
   const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -122,7 +125,6 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
 
   const handleTogglePin = useCallback(async () => {
     const previousPinned = task.pinned;
-    // Optimistic update via onToggle-like pattern
     try {
       const res = await fetch('/api/tasks', {
         method: 'PUT',
@@ -130,13 +132,15 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
         body: JSON.stringify({ id: task.id, _action: 'toggle-pin' }),
       });
       if (!res.ok) throw new Error('Failed to toggle pin');
+      const updated = await res.json();
       invalidateCache('task-counts');
+      onUpdate?.(updated);
       toast(previousPinned ? 'Task unpinned' : 'Task pinned', 'success');
     } catch (e) {
       toast('Failed to update pin', 'error');
       console.error('Pin toggle failed', e);
     }
-  }, [task.id, task.pinned, toast]);
+  }, [task.id, task.pinned, toast, onUpdate]);
 
   return (
     <div

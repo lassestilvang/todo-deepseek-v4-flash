@@ -14,7 +14,7 @@ import {
   Plus,
   CalendarDays,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useTaskCounts, useListCache, useLabelCache } from "@/hooks/use-cache";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,13 @@ export function MobileNav() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showNewList, setShowNewList] = useState(false);
   const [newListName, setNewListName] = useState("");
+  const prevPathname = useRef(pathname);
 
   useEffect(() => {
-    setDrawerOpen(false);
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      setDrawerOpen(false);
+    }
   }, [pathname]);
 
   useEffect(() => {

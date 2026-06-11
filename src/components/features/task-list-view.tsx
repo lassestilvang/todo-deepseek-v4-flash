@@ -298,6 +298,11 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     }
   }, [toast, focusedTaskId, setTasks]); // tasks via tasksRef ref
 
+  const handleUpdate = useCallback((updated: TaskWithRelations) => {
+    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
+    invalidateCache('task-counts');
+  }, []);
+
   const handleEdit = useCallback((id: string) => {
     const task = tasksRef.current.find(t => t.id === id);
     if (task) {
@@ -617,6 +622,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     }
   }, [toast]);
 
+  const ariaRef = useRef('');
   const [ariaAnnouncement, setAriaAnnouncement] = useState('');
 
   useEffect(() => {
@@ -629,8 +635,12 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   useEffect(() => {
     const active = tasks.filter(t => !t.completed).length;
     const completed = tasks.length - active;
-    setAriaAnnouncement(`${active} active${completed > 0 ? `, ${completed} done` : ''}`);
-  }, [tasks.length]);
+    const msg = `${active} active${completed > 0 ? `, ${completed} done` : ''}`;
+    if (msg !== ariaRef.current) {
+      ariaRef.current = msg;
+      setAriaAnnouncement(msg);
+    }
+  }, [tasks]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-4xl mx-auto animate-fade-in">
@@ -795,6 +805,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                                   onEdit={handleEdit}
                                   onDelete={handleDelete}
                                   onSelect={handleSelect}
+                                  onUpdate={handleUpdate}
                                 />
                               </SwipeableTaskCard>
                             </LazyTaskCardWrapper>
@@ -822,6 +833,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                                   onEdit={handleEdit}
                                   onDelete={handleDelete}
                                   onSelect={handleSelect}
+                                  onUpdate={handleUpdate}
                                 />
                               </SwipeableTaskCard>
                             </LazyTaskCardWrapper>
@@ -843,6 +855,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onSelect={handleSelect}
+                        onUpdate={handleUpdate}
                       />
                     </SwipeableTaskCard>
                     </LazyTaskCardWrapper>
@@ -878,6 +891,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onSelect={handleSelect}
+                            onUpdate={handleUpdate}
                           />
                         </SwipeableTaskCard>
                       </LazyTaskCardWrapper>
