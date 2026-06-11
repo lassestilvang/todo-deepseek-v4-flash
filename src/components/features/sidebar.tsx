@@ -248,9 +248,17 @@ export function Sidebar() {
       <aside ref={sidebarRef} className="hidden md:flex flex-col w-64 border-r bg-sidebar text-sidebar-foreground shrink-0 overflow-hidden" style={{ contain: 'layout' }}>
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-bold tracking-tight">
-              <span className="text-primary">Planner</span>
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight">
+                <span className="text-primary">Planner</span>
+              </h1>
+              {counts.overdue > 0 && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded-md animate-scale-in">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  {counts.overdue}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-0.5">
               <div className="relative">
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSearchOpen(!searchOpen)} aria-label="Search (Cmd+K)">
@@ -534,6 +542,20 @@ export function Sidebar() {
             );
           })}
         </div>
+
+        {/* Focus score mini display */}
+        {counts.focusScore > 0 && (
+          <div className="border-t border-sidebar-border px-3 py-1.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-muted-foreground/50">Focus score</span>
+              <span className="font-bold text-emerald-500 tabular-nums">{counts.focusScore.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/40">
+              <span>🔥 {counts.streak} day streak</span>
+              <span>✓ {counts.completedToday} today</span>
+            </div>
+          </div>
+        )}
 
         {/* Bottom toolbar */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
