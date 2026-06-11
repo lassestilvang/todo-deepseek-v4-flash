@@ -15,6 +15,7 @@ interface LazyTaskCardWrapperProps {
   onDragLeave?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
   isDragOver?: boolean;
+  isDragSource?: boolean;
 }
 
 /**
@@ -33,6 +34,7 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({
   onDragLeave,
   onDrop,
   isDragOver,
+  isDragSource,
 }: LazyTaskCardWrapperProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -77,7 +79,11 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({
       {visible ? (
         <div
           style={style}
-          className={cn('animate-fade-in transition-all duration-150', isDragOver && 'relative')}
+          className={cn(
+            'transition-all duration-200',
+            isDragOver && 'relative',
+            isDragSource && 'opacity-40 scale-[0.97] rotate-[-1deg]'
+          )}
           draggable={draggable}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
@@ -85,9 +91,14 @@ export const LazyTaskCardWrapper = memo(function LazyTaskCardWrapper({
           onDragLeave={onDragLeave}
           onDrop={onDrop}
         >
-          {/* Drop indicator */}
+          {/* Drop indicator line */}
           {isDragOver && (
-            <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded-full z-10 animate-fade-in" />
+            <>
+              <div className="absolute -top-[3px] left-2 right-2 h-[3px] bg-primary rounded-full z-20 animate-fade-in shadow-sm shadow-primary/50" />
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-full animate-scale-in shadow-md">
+                Drop here
+              </div>
+            </>
           )}
           {children}
         </div>

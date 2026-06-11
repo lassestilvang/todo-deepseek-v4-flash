@@ -120,10 +120,12 @@ export function MobileNav() {
                     <span
                       key={count}
                       className={cn(
-                        "absolute -top-0.5 -right-1 w-2 h-2 rounded-full animate-scale-in",
-                        active ? "bg-primary" : "bg-primary/60",
+                        "absolute -top-1.5 -right-2 min-w-[14px] h-[14px] rounded-full flex items-center justify-center text-[8px] font-bold tabular-nums animate-scale-in px-1",
+                        active ? "bg-primary text-primary-foreground" : "bg-primary/60 text-background",
                       )}
-                    />
+                    >
+                      {count > 9 ? '9+' : count}
+                    </span>
                   )}
                 </div>
                 <span

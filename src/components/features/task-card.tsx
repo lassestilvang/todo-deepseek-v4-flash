@@ -236,9 +236,9 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
                 ) : (
                   <h3
                     className={cn(
-                      'font-semibold text-sm leading-tight cursor-pointer transition-colors duration-150 rounded-md px-1 -ml-1',
+                      'font-semibold text-sm leading-tight cursor-pointer transition-all duration-300 rounded-md px-1 -ml-1',
                       'hover:text-primary hover:bg-muted/40',
-                      task.completed && 'line-through text-muted-foreground/60'
+                      task.completed && 'text-muted-foreground/60'
                     )}
                     onDoubleClick={(e) => {
                       e.stopPropagation();
@@ -249,7 +249,7 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
                     {task.pinned && (
                       <Pin className="h-3 w-3 inline-block -ml-0.5 mr-0.5 text-amber-500/70 fill-amber-500/20 align-middle" />
                     )}
-                    {task.name}
+                    <span className={cn(task.completed && 'text-strikethrough')}>{task.name}</span>
                   </h3>
                 )}
                 {task.description && (

@@ -185,17 +185,13 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
           if (!wasCompleted && activeCount === 0 && newTasks.length > 0) {
             setAllDoneConfetti({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
             setTimeout(() => {
-              toast('All tasks completed! Amazing job!', 'success');
+              toast('All tasks completed! Amazing job! 🎉', 'success');
             }, 500);
           }
           return newTasks;
         });
       });
       invalidateCache('task-counts');
-      toast(wasCompleted ? 'Task reopened' : 'Task completed', 'success', {
-        label: 'Undo',
-        onClick: () => toggleRef.current?.(id),
-      });
     } catch (e) {
       startTransition(() => {
         setTasks(prev => prev.map(t => t.id === id ? task : t));
@@ -512,25 +508,41 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
 
   // Drag-and-drop reordering
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragSourceId, setDragSourceId] = useState<string | null>(null);
   const dragIdRef = useRef<string | null>(null);
 
   const handleDragStart = useCallback((e: React.DragEvent, taskId: string) => {
     dragIdRef.current = taskId;
+    setDragSourceId(taskId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', taskId);
-    (e.target as HTMLElement).classList.add('opacity-50');
+    if (e.dataTransfer.setDragImage) {
+      const el = e.currentTarget as HTMLElement;
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.style.position = 'absolute';
+      clone.style.top = '-1000px';
+      clone.style.opacity = '0.8';
+      clone.style.transform = 'scale(0.95) rotate(-2deg)';
+      clone.style.borderRadius = '12px';
+      clone.style.boxShadow = '0 20px 60px rgba(0,0,0,0.2)';
+      document.body.appendChild(clone);
+      e.dataTransfer.setDragImage(clone, e.clientX - el.getBoundingClientRect().left, e.clientY - el.getBoundingClientRect().top);
+      setTimeout(() => document.body.removeChild(clone), 0);
+    }
   }, []);
 
-  const handleDragEnd = useCallback((e: React.DragEvent) => {
-    (e.target as HTMLElement).classList.remove('opacity-50');
+  const handleDragEnd = useCallback(() => {
     setDragOverId(null);
+    setDragSourceId(null);
     dragIdRef.current = null;
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent, taskId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverId(taskId);
+    if (taskId !== dragIdRef.current) {
+      setDragOverId(taskId);
+    }
   }, []);
 
   const handleDragLeave = useCallback(() => {
@@ -540,6 +552,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
   const handleDrop = useCallback(async (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     setDragOverId(null);
+    setDragSourceId(null);
     const sourceId = dragIdRef.current;
     if (!sourceId || sourceId === targetId) return;
 
@@ -565,6 +578,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       });
       if (!res.ok) throw new Error('Failed to reorder');
       invalidateCache('task-counts');
+      toast('Tasks reordered', 'success');
     } catch (e) {
       console.error('Reorder failed', e);
       toast('Failed to reorder tasks', 'error');
@@ -718,7 +732,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         </div>
                         <div className="space-y-2">
                           {groupedTasks.overdue.map((task, idx) => (
-                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id} isDragSource={dragSourceId === task.id}>
                               <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
                                 <TaskCardMemo
                                   task={task}
@@ -745,7 +759,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                         </div>
                         <div className="space-y-2">
                           {dateTasks.map((task, idx) => (
-                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id} isDragSource={dragSourceId === task.id}>
                               <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
                                 <TaskCardMemo
                                   task={task}
@@ -766,9 +780,9 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                 ) : (
                   // Flat view (all, list, label)
                   displayedTasks.filter(t => !t.completed).map((task, idx) => (
-                    <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
-                    <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
-                      <TaskCardMemo
+                            <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id} isDragSource={dragSourceId === task.id}>
+                              <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
+                                <TaskCardMemo
                         task={task}
                         isFocused={focusedTaskId === task.id}
                         isSelected={selectedTaskIds.has(task.id)}
@@ -801,7 +815,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
                       </Button>
                     </div>
                     {completedTasks.map((task, idx) => (
-                      <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id}>
+                      <LazyTaskCardWrapper key={task.id} id={`task-${task.id}`} style={{ animationDelay: `${idx * 0.03}s` }} draggable onDragStart={(e) => handleDragStart(e, task.id)} onDragEnd={handleDragEnd} onDragOver={(e) => handleDragOver(e, task.id)} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, task.id)} isDragOver={dragOverId === task.id} isDragSource={dragSourceId === task.id}>
                         <SwipeableTaskCard task={task} onToggle={handleToggle} onDelete={handleDelete}>
                           <TaskCardMemo
                             task={task}
