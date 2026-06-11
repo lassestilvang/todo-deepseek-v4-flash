@@ -69,7 +69,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <div key={pathname} className="animate-fade-in">
+      <div key={pathname} className="animate-fade-in" style={{ viewTransitionName: 'page-content' }}>
         {children}
       </div>
 
