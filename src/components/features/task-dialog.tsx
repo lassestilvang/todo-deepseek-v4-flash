@@ -72,24 +72,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
   const nameInputRef = useRef<HTMLInputElement>(null);
   const { lists } = useListCache();
   const { labels: allLabels } = useLabelCache();
-  const saveRef = useRef<() => Promise<void>>();
-
-  useEffect(() => {
-    saveRef.current = handleSave;
-  });
-
-  // Save on Cmd+Enter from anywhere in the dialog
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        saveRef.current?.();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [open]);
+  const saveRef = useRef<() => Promise<void>>(undefined!);
 
   useEffect(() => {
     if (open) {
@@ -179,6 +162,24 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
       setSaving(false);
     }
   };
+
+  // Sync saveRef so Cmd+Enter effect always has latest handler
+  useEffect(() => {
+    saveRef.current = handleSave;
+  });
+
+  // Save on Cmd+Enter from anywhere in the dialog
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        saveRef.current?.();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open]);
 
   const addSubtask = () => {
     if (!newSubtask.trim()) return;
