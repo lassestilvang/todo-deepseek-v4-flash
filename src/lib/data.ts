@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any -- database rows have dynamic schema */
 
 import Database from 'better-sqlite3';
 import { getDb } from './db';

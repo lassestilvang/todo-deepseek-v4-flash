@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteTasksBatch, updateTasksBatch } from '@/lib/data';
-import type { Priority } from '@/types';
 
 function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
