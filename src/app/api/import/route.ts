@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       for (const task of body.tasks as Record<string, unknown>[]) {
         if (!task.id || !task.name) continue;
         stmt.run(
-          task.id, task.name, String(task.description || ''), task.date || null,
+          task.id, String(task.name).slice(0, 500), String(task.description || '').slice(0, 5000), task.date || null,
           task.deadline || null, task.estimate || null, task.actual_time || null,
           String(task.priority || 'none'), String(task.list_id || 'inbox'), task.recurrence ? JSON.stringify(task.recurrence) : null,
           task.completed ? 1 : 0, task.completed_at || null, task.pinned ? 1 : 0,
