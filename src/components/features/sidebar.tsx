@@ -151,19 +151,22 @@ export function Sidebar() {
     if (!newListName.trim()) return;
     const colors = ['#d97706', '#059669', '#6366f1', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
     const icons = ['📋', '🎯', '⭐', '💼', '🏠', '📚', '🎨', '💪', '🎵', '✈️'];
-    await fetch('/api/lists', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: newListName,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        icon: icons[Math.floor(Math.random() * icons.length)],
-      }),
-    });
-    invalidateCache('lists');
-    invalidateCache('task-counts');
-    setNewListName('');
-    setShowNewList(false);
+    try {
+      const res = await fetch('/api/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newListName,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          icon: icons[Math.floor(Math.random() * icons.length)],
+        }),
+      });
+      if (!res.ok) { toast('Failed to create list', 'error'); return; }
+      invalidateCache('lists');
+      invalidateCache('task-counts');
+      setNewListName('');
+      setShowNewList(false);
+    } catch { toast('Failed to create list', 'error'); }
   };
 
   const updateList = async (id: string) => {
@@ -181,43 +184,42 @@ export function Sidebar() {
     setConfirmingDelete(null);
     try {
       const res = await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      if (!res.ok) { console.error('Failed to delete list', await res.text()); return; }
+      if (!res.ok) { toast('Failed to delete list', 'error'); return; }
       invalidateCache('lists');
       invalidateCache('task-counts');
-    } catch (e) {
-      console.error('Failed to delete list', e);
-    }
+    } catch { toast('Failed to delete list', 'error'); }
   };
 
   const createLabel = async () => {
     if (!newLabelName.trim()) return;
     const colors = ['#d97706', '#059669', '#6366f1', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
     const icons = ['🏷️', '🔖', '⭐', '❤️', '💡', '🎯', '📌', '🔥', '💎', '⚡'];
-    await fetch('/api/labels', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: newLabelName,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        icon: icons[Math.floor(Math.random() * icons.length)],
-      }),
-    });
-    invalidateCache('labels');
-    invalidateCache('task-counts');
-    setNewLabelName('');
-    setShowNewLabel(false);
+    try {
+      const res = await fetch('/api/labels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newLabelName,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          icon: icons[Math.floor(Math.random() * icons.length)],
+        }),
+      });
+      if (!res.ok) { toast('Failed to create label', 'error'); return; }
+      invalidateCache('labels');
+      invalidateCache('task-counts');
+      setNewLabelName('');
+      setShowNewLabel(false);
+    } catch { toast('Failed to create label', 'error'); }
   };
 
   const deleteLabel = async (id: string) => {
     setConfirmingDelete(null);
     try {
       const res = await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      if (!res.ok) { console.error('Failed to delete label', await res.text()); return; }
+      if (!res.ok) { toast('Failed to delete label', 'error'); return; }
       invalidateCache('labels');
       invalidateCache('task-counts');
-    } catch (e) {
-      console.error('Failed to delete label', e);
-    }
+    } catch { toast('Failed to delete label', 'error'); }
   };
 
   const doSearch = (q: string) => {
