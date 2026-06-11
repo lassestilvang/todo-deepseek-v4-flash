@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Command } from 'lucide-react';
 
@@ -12,9 +12,24 @@ const CommandPalette = dynamic(() => import('@/components/features/command-palet
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [commandOpen, setCommandOpen] = useState(false);
   const [showHints, setShowHints] = useState(false);
   const showHintsRef = useRef(showHints);
+
+  // Handle PWA shortcut — open quick-add form on page load
+  useEffect(() => {
+    if (searchParams?.get('quick') === '1') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('quick');
+      window.history.replaceState({}, '', url.toString());
+      // Focus the quick add input after a short delay for the page to mount
+      setTimeout(() => {
+        const quickAdd = document.querySelector<HTMLInputElement>('[data-quick-add]');
+        quickAdd?.focus();
+      }, 100);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     showHintsRef.current = showHints;

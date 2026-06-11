@@ -43,8 +43,7 @@ export function MobileNav() {
   const [newListName, setNewListName] = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => setDrawerOpen(prev => prev ? false : prev), 0);
-    return () => clearTimeout(t);
+    setDrawerOpen(false);
   }, [pathname]);
 
   useEffect(() => {

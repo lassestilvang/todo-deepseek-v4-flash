@@ -726,6 +726,7 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         )}
         <Input
           ref={quickAddRef}
+          data-quick-add
           value={quickAddValue}
           onChange={(e) => setQuickAddValue(e.target.value)}
           placeholder={quickAdding ? 'Adding...' : 'Quick add a task...'}
