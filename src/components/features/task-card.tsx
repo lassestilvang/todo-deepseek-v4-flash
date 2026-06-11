@@ -19,7 +19,7 @@ import {
   Pin,
   PinOff,
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue } from '@/lib/utils';
+import { cn, formatDate, formatRelativeDate, formatEstimate, getContrastColor, isOverdue, parseEstimateToMinutes } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -379,6 +379,13 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
                 <span className="text-[11px] text-muted-foreground/70 inline-flex items-center gap-1">
                   <Timer className="h-3 w-3" />
                   {formatEstimate(task.estimate)}
+                </span>
+              )}
+              {task.actualTime && parseEstimateToMinutes(task.actualTime) > 0 && (
+                <span className="text-[11px] text-emerald-500/70 inline-flex items-center gap-1">
+                  <Timer className="h-3 w-3" />
+                  <span className="font-medium">{formatEstimate(task.actualTime)}</span>
+                  <span className="text-[10px] text-muted-foreground/40">logged</span>
                 </span>
               )}
 

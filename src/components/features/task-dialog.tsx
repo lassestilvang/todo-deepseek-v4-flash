@@ -31,7 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import type { TaskWithRelations, Subtask, Priority, Recurrence, RecurrenceType, Reminder } from '@/types';
 import { useToast } from '@/components/toast-provider';
 import { useListCache, useLabelCache } from '@/hooks/use-cache';
-import { cn, getContrastColor, parseNaturalDate } from '@/lib/utils';
+import { cn, getContrastColor, parseNaturalDate, parseEstimateToMinutes, formatEstimate } from '@/lib/utils';
 
 const priorities = [
   { value: 'none', label: 'None', color: 'text-muted-foreground' },
@@ -694,6 +694,14 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
                 <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 leading-none mb-1">Modified</span>
                 <span className="text-[10px] text-muted-foreground/60 tabular-nums">
                   {new Date(task.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+            {task?.actualTime && parseEstimateToMinutes(task.actualTime) > 0 && (
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-500/50 leading-none mb-1">Focus time</span>
+                <span className="text-[10px] text-emerald-500/70 tabular-nums font-medium">
+                  {formatEstimate(task.actualTime)}
                 </span>
               </div>
             )}
