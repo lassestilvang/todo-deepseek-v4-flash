@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn, isToday, formatRelativeDate } from '@/lib/utils';
+import { cn, isToday, formatRelativeDate, formatEstimate, parseEstimateToMinutes } from '@/lib/utils';
 import { useToast } from '@/components/toast-provider';
 import { invalidateCache } from '@/hooks/use-cache';
 import type { TaskWithRelations } from '@/types';
@@ -50,6 +50,12 @@ export function CalendarView() {
       .catch(e => { if (!cancelled) console.error('Failed to fetch calendar tasks', e); });
     return () => { cancelled = true; };
   }, [monthStart, monthEnd]);
+
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  const overdueInMonth = useMemo(() =>
+    tasks.filter(t => !t.completed && t.date && t.date < todayStr),
+  [tasks, todayStr]);
 
   const tasksByDate = useMemo(() => {
     const map: Record<string, TaskWithRelations[]> = {};
@@ -137,6 +143,12 @@ export function CalendarView() {
           <p className="text-sm text-muted-foreground/70 mt-1">View and manage tasks by date</p>
         </div>
         <div className="flex items-center gap-2">
+          {overdueInMonth.length > 0 && (
+            <span className="h-8 flex items-center text-[11px] font-semibold text-red-500 bg-red-500/10 px-2.5 rounded-xl">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse-soft" />
+              {overdueInMonth.length} overdue
+            </span>
+          )}
           <Button variant="outline" size="sm" className="h-8 text-xs rounded-xl" onClick={goToday}>
             Today
           </Button>
@@ -204,7 +216,7 @@ export function CalendarView() {
                 </button>
               </div>
               <div className="space-y-0.5 overflow-hidden">
-                {activeTasks.slice(0, 3).map(task => (
+                {activeTasks.slice(0, 2).map(task => (
                   <div
                     key={task.id}
                     draggable
@@ -226,14 +238,26 @@ export function CalendarView() {
                     </span>
                   </div>
                 ))}
-                {activeTasks.length > 3 && (
+                {activeTasks.length > 2 && (
                   <span className="text-[9px] text-muted-foreground/50 font-medium px-1.5">
-                    +{activeTasks.length - 3} more
+                    +{activeTasks.length - 2} more
                   </span>
                 )}
-                {completedTasks.length > 0 && (
-                  <span className="text-[9px] text-muted-foreground/40 line-clamp-1 px-1.5">
-                    {completedTasks.length} done
+                {completedTasks.slice(0, 2).map(task => (
+                  <div
+                    key={task.id}
+                    className="text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-md truncate bg-primary/[0.03] text-muted-foreground/50 line-through"
+                    title={task.name}
+                  >
+                    <span className="flex items-center gap-1">
+                      {task.list && <span className="shrink-0">{task.list.icon}</span>}
+                      <span className="truncate">{task.name}</span>
+                    </span>
+                  </div>
+                ))}
+                {completedTasks.length > 2 && (
+                  <span className="text-[9px] text-muted-foreground/40 px-1.5">
+                    +{completedTasks.length - 2} done
                   </span>
                 )}
                 {dayTasks.length === 0 && (
