@@ -43,8 +43,6 @@ export const metadata: Metadata = {
   other: {
     'theme-color': '#fbf8f4',
     'dark:theme-color': '#1a1612',
-    'mobile-web-app-capable': 'yes',
-    'apple-touch-fullscreen': 'yes',
   },
 };
 

@@ -169,6 +169,7 @@ export function TaskDialog({ open, onOpenChange, task, onSave }: TaskDialogProps
       taskId: task?.id || '',
       title: newSubtask.trim(),
       completed: false,
+      position: subtasks.length,
       createdAt: new Date().toISOString(),
     };
     setSubtasks([...subtasks, st]);
