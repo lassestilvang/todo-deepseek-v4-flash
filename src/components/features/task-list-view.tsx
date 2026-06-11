@@ -227,8 +227,16 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     });
   }, [showCompleted, deferredTasks, sortField, sortDirection, priorityWeight]);
 
+  const deletedTasksRef = useRef<Map<string, TaskWithRelations>>(new Map());
+
   const handleDelete = useCallback(async (id: string) => {
-    const previousTasks = tasksRef.current;
+    const currentTasks = tasksRef.current;
+    const taskToDelete = currentTasks.find(t => t.id === id);
+    if (!taskToDelete) return;
+    
+    // Store full task data for undo
+    deletedTasksRef.current.set(id, taskToDelete);
+    
     startTransition(() => {
       setTasks(prev => prev.filter(t => t.id !== id));
     });
@@ -245,21 +253,45 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
       toast('Task deleted', 'success', {
         label: 'Undo',
         onClick: async () => {
-          const prev = previousTasks.find(t => t.id === id);
+          const prev = deletedTasksRef.current.get(id);
           if (prev) {
-            startTransition(() => setTasks(p => [...p, prev]));
-            await fetch('/api/tasks', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: prev.name, description: prev.description, date: prev.date, priority: prev.priority, listId: prev.listId }),
-            });
-            invalidateCache('task-counts');
+            deletedTasksRef.current.delete(id);
+            try {
+              const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: prev.name,
+                  description: prev.description,
+                  date: prev.date,
+                  deadline: prev.deadline,
+                  estimate: prev.estimate,
+                  priority: prev.priority,
+                  listId: prev.listId,
+                  labels: prev.labels,
+                  subtasks: prev.subtasks.map(s => ({ id: s.id, title: s.title, completed: s.completed })),
+                  reminders: prev.reminders.map(r => ({ id: r.id, time: r.time, type: r.type })),
+                  recurrence: prev.recurrence,
+                }),
+              });
+              if (res.ok) {
+                const restored = await res.json();
+                startTransition(() => setTasks(p => {
+                  const exists = p.find(t => t.id === restored.id);
+                  return exists ? p.map(t => t.id === restored.id ? restored : t) : [restored, ...p];
+                }));
+                invalidateCache('task-counts');
+                toast('Task restored', 'success');
+              }
+            } catch {
+              toast('Failed to restore task', 'error');
+            }
           }
         },
       });
     } catch (e) {
       startTransition(() => {
-        setTasks(previousTasks);
+        setTasks(currentTasks);
       });
       toast('Failed to delete task', 'error');
       console.error('Delete failed, reverted', e);

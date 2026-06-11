@@ -178,12 +178,12 @@ export function Sidebar() {
   };
 
   const deleteList = async (id: string) => {
-    invalidateCache('lists');
-    invalidateCache('task-counts');
     setConfirmingDelete(null);
     try {
       const res = await fetch('/api/lists', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       if (!res.ok) { console.error('Failed to delete list', await res.text()); return; }
+      invalidateCache('lists');
+      invalidateCache('task-counts');
     } catch (e) {
       console.error('Failed to delete list', e);
     }
@@ -209,12 +209,12 @@ export function Sidebar() {
   };
 
   const deleteLabel = async (id: string) => {
-    invalidateCache('labels');
-    invalidateCache('task-counts');
     setConfirmingDelete(null);
     try {
       const res = await fetch('/api/labels', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       if (!res.ok) { console.error('Failed to delete label', await res.text()); return; }
+      invalidateCache('labels');
+      invalidateCache('task-counts');
     } catch (e) {
       console.error('Failed to delete label', e);
     }
