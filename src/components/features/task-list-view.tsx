@@ -617,8 +617,28 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
     }
   }, [toast]);
 
+  const [ariaAnnouncement, setAriaAnnouncement] = useState('');
+
+  useEffect(() => {
+    if (ariaAnnouncement) {
+      const t = setTimeout(() => setAriaAnnouncement(''), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [ariaAnnouncement]);
+
+  useEffect(() => {
+    const active = tasks.filter(t => !t.completed).length;
+    const completed = tasks.length - active;
+    setAriaAnnouncement(`${active} active${completed > 0 ? `, ${completed} done` : ''}`);
+  }, [tasks.length]);
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-4xl mx-auto animate-fade-in">
+      {/* Screen reader announcements */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {ariaAnnouncement}
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
