@@ -6,11 +6,13 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-  <g transform="translate(128, 128)">
+  <g transform="translate(128, 160)">
     <rect x="0" y="0" width="256" height="32" rx="16" fill="rgba(255,255,255,0.9)"/>
-    <rect x="0" y="48" width="200" height="32" rx="16" fill="rgba(255,255,255,0.6)"/>
-    <rect x="0" y="96" width="220" height="32" rx="16" fill="rgba(255,255,255,0.4)"/>
-    <rect x="0" y="144" width="180" height="32" rx="16" fill="rgba(255,255,255,0.3)"/>
-    <rect x="0" y="192" width="240" height="32" rx="16" fill="rgba(255,255,255,0.2)"/>
+    <rect x="0" y="56" width="200" height="32" rx="16" fill="rgba(255,255,255,0.6)"/>
+    <rect x="0" y="112" width="220" height="32" rx="16" fill="rgba(255,255,255,0.4)"/>
+  </g>
+  <g transform="translate(128, 160)">
+    <circle cx="40" cy="16" r="10" fill="#6366f1" opacity="0.8"/>
+    <path d="M35 16l3.5 3.5 7-7" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

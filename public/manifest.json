@@ -1,18 +1,40 @@
 {
   "name": "Daily Planner",
   "short_name": "Planner",
-  "description": "A warm, beautiful daily task planner",
+  "description": "A warm, beautiful daily task planner with offline support, focus timer, and calendar view",
   "start_url": "/today",
   "display": "standalone",
   "background_color": "#fbf8f4",
   "theme_color": "#6366f1",
   "orientation": "portrait",
+  "categories": ["productivity", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "display_override": ["standalone", "minimal-ui"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today",
+      "short_name": "Today",
+      "description": "View today's tasks",
+      "url": "/today",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "New Task",
+      "short_name": "New Task",
+      "description": "Quickly create a new task",
+      "url": "/today?quick=1",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
     }
   ]
 }

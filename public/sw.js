@@ -1,83 +1,129 @@
-const CACHE = 'planner-v1';
+const CACHE = 'planner-v3';
+const API_CACHE = 'planner-api-v1';
+const STATIC_CACHE = 'planner-static-v1';
+
 const STATIC_ASSETS = [
   '/',
   '/today',
   '/next-7-days',
   '/upcoming',
   '/all',
+  '/calendar',
+  '/offline',
   '/manifest.json',
   '/icon.svg',
-  '/offline',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    Promise.all([
+      caches.open(CACHE).then((cache) => cache.addAll(STATIC_ASSETS)),
+      caches.open(STATIC_CACHE),
+      caches.open(API_CACHE),
+    ])
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== CACHE && k !== API_CACHE && k !== STATIC_CACHE)
+            .map((k) => caches.delete(k))
+        )
+      ),
+      self.clients.claim(),
+    ])
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
+  if (request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
+  const url = new URL(request.url);
+  const isSameOrigin = url.origin === self.location.origin;
 
-  // Network-first for navigation (HTML)
-  if (event.request.mode === 'navigate') {
+  if (!isSameOrigin) return;
+
+  // Navigation requests — use stale-while-revalidate pattern
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, clone));
-          return res;
-        })
-        .catch(() =>
-          caches.match(event.request).then((cached) => cached || caches.match('/offline'))
-        )
+      (async () => {
+        try {
+          const networkResponse = await fetch(request);
+          const cache = await caches.open(CACHE);
+          cache.put(request, networkResponse.clone());
+          return networkResponse;
+        } catch {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const offline = await caches.match('/offline');
+          return offline || new Response('Offline', { status: 503 });
+        }
+      })()
     );
     return;
   }
 
-  // Cache-first for static assets (JS, CSS, fonts, images)
+  // Static assets (_next/static, fonts, images) — cache-first with background refresh
   if (
     url.pathname.startsWith('/_next/static') ||
-    url.pathname.match(/\.(js|css|woff2?|svg|png|ico)$/)
+    url.pathname.match(/\.(js|css|woff2?|svg|png|ico|webp|avif)$/)
   ) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        const fetchPromise = fetch(event.request).then((res) => {
+      (async () => {
+        const cached = await caches.match(request);
+        const fetchPromise = fetch(request).then((res) => {
           if (res.ok) {
-            caches.open(CACHE).then((cache) => cache.put(event.request, res.clone()));
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, res.clone()));
           }
           return res;
-        });
-        return cached || fetchPromise;
-      })
+        }).catch(() => cached);
+        return cached || (await fetchPromise);
+      })()
     );
     return;
   }
 
-  // Network-only for API routes
+  // API routes — cache-first for GET with stale-while-revalidate
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(
-          JSON.stringify({ error: 'You are offline. API requests are unavailable.' }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        );
-      })
+      (async () => {
+        const cache = await caches.open(API_CACHE);
+        const cached = await cache.match(request);
+
+        const networkPromise = fetch(request).then((res) => {
+          if (res.ok) {
+            cache.put(request, res.clone());
+          }
+          return res;
+        }).catch(() => cached);
+
+        if (cached) {
+          // Return cached immediately, but update in background
+          networkPromise.catch(() => {});
+          return cached;
+        }
+
+        return networkPromise;
+      })()
     );
     return;
   }
+
+  // Default — network-first
+  event.respondWith(
+    (async () => {
+      try {
+        return await fetch(request);
+      } catch {
+        const cached = await caches.match(request);
+        return cached || new Response('Offline', { status: 503 });
+      }
+    })()
+  );
 });
