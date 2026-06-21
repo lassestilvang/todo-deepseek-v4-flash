@@ -194,6 +194,29 @@ export function TaskListView({ title, description, endpoint, showViewToggle = tr
         });
       });
       invalidateCache('task-counts');
+      if (!wasCompleted) {
+        toast('Task completed', 'success', {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              const undoRes = await fetch('/api/tasks', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, _action: 'toggle' }),
+              });
+              if (!undoRes.ok) throw new Error('Failed to undo');
+              const undone = await undoRes.json();
+              startTransition(() => {
+                setTasks(prev => prev.map(t => t.id === id ? undone : t));
+              });
+              invalidateCache('task-counts');
+              toast('Task uncompleted', 'success');
+            } catch {
+              toast('Failed to undo completion', 'error');
+            }
+          },
+        });
+      }
     } catch (e) {
       startTransition(() => {
         setTasks(prev => prev.map(t => t.id === id ? task : t));
