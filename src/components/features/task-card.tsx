@@ -55,6 +55,8 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
   const [confetti, setConfetti] = useState<{ x: number; y: number } | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [showFocusForTask, setShowFocusForTask] = useState(false);
+  const [showSnooze, setShowSnooze] = useState(false);
+  const snoozeRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const overdue = task.date ? isOverdue(task.date) && !task.completed : false;
   const completedSubtasks = task.subtasks.filter(s => s.completed).length;
@@ -89,6 +91,18 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
     }
   }, [editingName, task.name]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (snoozeRef.current && !snoozeRef.current.contains(e.target as Node)) {
+        setShowSnooze(false);
+      }
+    };
+    if (showSnooze) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSnooze]);
+
   const handleSaveInline = useCallback(async () => {
     const newName = editNameValue.trim();
     if (!newName || newName === task.name) {
@@ -122,6 +136,22 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
       setEditingName(false);
     }
   }, [handleSaveInline]);
+
+  const handleSnooze = useCallback(async (dateStr: string | null, label: string) => {
+    setShowSnooze(false);
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: task.id, date: dateStr }),
+      });
+      if (!res.ok) throw new Error('Failed to snooze');
+      const updated = await res.json();
+      invalidateCache('task-counts');
+      onUpdate?.(updated);
+      toast(`Snoozed to ${label}`, 'success');
+    } catch { toast('Failed to reschedule task', 'error'); }
+  }, [task.id, toast, onUpdate]);
 
   const handleTogglePin = useCallback(async () => {
     const previousPinned = task.pinned;
@@ -301,15 +331,46 @@ export const TaskCard = memo(function TaskCard({ task, isFocused, isSelected, on
               )}
 
               {task.date ? (
-                <span className={cn(
-                  'inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md transition-colors',
-                  overdue
-                    ? 'bg-red-500/10 text-red-500 font-semibold'
-                    : 'text-muted-foreground/70'
-                )}>
-                  <Calendar className="h-3 w-3" />
-                  {formatRelativeDate(task.date)}
-                </span>
+                <div ref={snoozeRef} className="relative inline-block">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowSnooze(v => !v); }}
+                    className={cn(
+                      'inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md transition-all cursor-pointer',
+                      'hover:bg-muted/70 active:scale-95',
+                      overdue
+                        ? 'bg-red-500/10 text-red-500 font-semibold hover:bg-red-500/20'
+                        : 'text-muted-foreground/70'
+                    )}
+                    title="Click to reschedule"
+                  >
+                    <Calendar className="h-3 w-3" />
+                    {formatRelativeDate(task.date)}
+                    <ChevronRight className="h-2.5 w-2.5 ml-0.5 opacity-40" />
+                  </button>
+                  {showSnooze && (
+                    <div className="absolute bottom-full left-0 mb-1.5 z-50 bg-popover border rounded-xl shadow-xl p-1.5 min-w-[150px] animate-in fade-in zoom-in-95 duration-150">
+                      <p className="px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Snooze to</p>
+                      {[
+                        { label: 'Today', getDate: () => new Date().toISOString().split('T')[0] },
+                        { label: 'Tomorrow', getDate: () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; } },
+                        { label: 'Next Monday', getDate: () => { const d = new Date(); const diff = d.getDay() <= 1 ? (1 - d.getDay() + 7) % 7 : 8 - d.getDay(); d.setDate(d.getDate() + diff); return d.toISOString().split('T')[0]; } },
+                        { label: '+1 Day', getDate: () => { const d = new Date(task.date!); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; } },
+                        { label: '+1 Week', getDate: () => { const d = new Date(task.date!); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; } },
+                        { label: 'Next Weekend', getDate: () => { const d = new Date(); const saturday = d.getDay() <= 6 ? 6 - d.getDay() : 6; d.setDate(d.getDate() + (saturday <= 0 ? 7 : saturday)); return d.toISOString().split('T')[0]; } },
+                        { label: 'No date', getDate: () => null },
+                      ].map(({ label, getDate }) => (
+                        <button
+                          key={label}
+                          onClick={(e) => { e.stopPropagation(); handleSnooze(getDate(), label); }}
+                          className="w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors flex items-center gap-2"
+                        >
+                          {label === 'No date' ? <X className="h-3 w-3 text-muted-foreground/50" /> : <Calendar className="h-3 w-3 text-muted-foreground/50" />}
+                          <span className="font-medium">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : !task.completed && (
                 <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200">
                   <button
