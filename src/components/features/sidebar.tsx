@@ -22,6 +22,7 @@ import {
   Timer as TimerIcon,
   Download,
   CalendarDays,
+  Maximize2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { useToast } from '@/components/toast-provider';
 import { useListCache, useLabelCache, useTaskCounts, invalidateCache } from '@/hooks/use-cache';
+import { useFocusMode } from '@/components/focus-mode-provider';
 import { FocusTimer } from './focus-timer';
 import type { TaskWithRelations } from '@/types';
 import type { TaskCounts } from '@/hooks/use-cache';
@@ -96,6 +98,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { toggleFocusMode } = useFocusMode();
   const { lists } = useListCache();
   const { labels } = useLabelCache();
   const { counts } = useTaskCounts();
@@ -262,6 +265,16 @@ export function Sidebar() {
               )}
             </div>
             <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg"
+                onClick={toggleFocusMode}
+                aria-label="Focus mode (⌘.)"
+                title="Focus mode"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
               <div className="relative">
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSearchOpen(!searchOpen)} aria-label="Search (Cmd+K)">
                   <Search className="h-4 w-4" />

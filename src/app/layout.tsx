@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { Suspense } from 'react';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ToastProvider } from '@/components/toast-provider';
 import { NavigationProgress } from '@/components/navigation-progress';
 import { NotificationProvider } from '@/components/notification-provider';
 import { OnlineStatus } from '@/components/online-status';
-import { Sidebar } from '@/components/features/sidebar';
+import { FocusModeProvider } from '@/components/focus-mode-provider';
+import { LayoutClient } from '@/components/layout-client';
 import { MobileNav } from '@/components/features/mobile-nav';
 
 
@@ -96,14 +96,11 @@ export default function RootLayout({
             >
               Skip to main content
             </a>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar />
-              <main id="main-content" className="flex-1 overflow-y-auto bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 contain-layout" tabIndex={-1}>
-                <Suspense fallback={null}>
-                  {children}
-                </Suspense>
-              </main>
-            </div>
+            <FocusModeProvider>
+            <LayoutClient>
+              {children}
+            </LayoutClient>
+            </FocusModeProvider>
             <MobileNav />
             </NotificationProvider>
           </ToastProvider>
