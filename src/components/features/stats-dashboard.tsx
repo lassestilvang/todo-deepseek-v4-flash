@@ -12,9 +12,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TaskCounts } from '@/hooks/use-cache';
+import type { List } from '@/types';
 
 interface StatsDashboardProps {
   counts: TaskCounts;
+  lists?: List[];
 }
 
 const StatCard = memo(function StatCard({
