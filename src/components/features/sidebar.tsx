@@ -136,19 +136,10 @@ export function Sidebar() {
         setSearchQuery('');
         setSearchResults([]);
       }
-      const activeEl = document.activeElement;
-      const isInput = activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
-      if (!isInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        if (e.key === '1' && pathname !== '/today') { router.push('/today'); }
-        if (e.key === '2' && pathname !== '/next-7-days') { router.push('/next-7-days'); }
-        if (e.key === '3' && pathname !== '/upcoming') { router.push('/upcoming'); }
-        if (e.key === '4' && pathname !== '/all') { router.push('/all'); }
-        if (e.key === '5' && pathname !== '/calendar') { router.push('/calendar'); }
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchOpen, pathname, router]);
+  }, [searchOpen]);
 
   const createList = async () => {
     if (!newListName.trim()) return;
@@ -311,7 +302,7 @@ export function Sidebar() {
                   {searchResults.map((task) => (
                     <Link
                       key={task.id}
-                      href={`/list/${task.listId}?edit=${task.id}`}
+                      href={`/all?edit=${task.id}`}
                       prefetch={true}
                       className="block px-3 py-2.5 text-sm rounded-lg hover:bg-accent/50 transition-colors"
                     >
