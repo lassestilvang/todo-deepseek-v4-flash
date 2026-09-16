@@ -41,8 +41,12 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if user is typing
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+      const active = document.activeElement;
+      const tag = active?.tagName;
+      // Skip when user is typing in an input, textarea, select, or contentEditable
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
+      // Skip when a dialog/modal is open
+      if (active?.closest('[role="dialog"]')) return;
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
